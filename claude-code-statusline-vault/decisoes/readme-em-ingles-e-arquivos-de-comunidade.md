@@ -31,9 +31,25 @@ que reproduz, e se o `.ps1` manteve o BOM.
 coisa que a pessoa vê, e três palavras em português no meio dela liam como bug. A história está em
 [[../pendentes/arquivo/2026-09-12-rotulos-da-barra-em-portugues]].
 
+## As mensagens de commit também são em inglês
+
+Decidido em 2026-09-12, depois da v1.2.0. Antes a regra era PT-BR.
+
+**Por quê:** num repositório público o `git log` é documentação. É para onde alguém vai quando quer
+saber por que uma linha é como é — e este projeto tem várias dessas: o `seq` do BSD, o BOM do
+PowerShell, o `read` que devolve erro mas preenche a variável. Esse raciocínio estava escrito numa
+língua que a maior parte de quem lê o repositório não fala, enquanto README, rótulos da barra,
+instalador e templates já estavam em inglês. O log era a última superfície fora do padrão.
+
+**O histórico anterior fica como está.** Reescrever significaria trocar todos os SHA já publicados nas
+releases, nos PRs e nos links do CHANGELOG, para retraduzir commit que ninguém vai reler.
+
+**O formato não muda:** Conventional Commits do mesmo jeito, só a língua.
+
 ## O que ficou em português mesmo assim
 
-- **As mensagens do `scripts/testar.sh`** e os comentários deste vault: são ferramenta interna.
+- **Este vault inteiro.** É a documentação de trabalho de quem mantém, não superfície de visitante.
+- **As mensagens que o `scripts/testar.sh` imprime:** ferramenta interna, lida por quem desenvolve.
 - **As mensagens do `install.sh` são em inglês**, porque ele é a porta de entrada citada no README.
 
 ## Consequência

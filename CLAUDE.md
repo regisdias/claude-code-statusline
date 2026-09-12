@@ -109,6 +109,9 @@ feat/12-short-description  →  develop  →  stg  →  main
   igual ao do Conventional Commits que o trabalho vai usar. Abre a issue primeiro — o número é o que
   amarra os dois.
 - **Versionamento semântico:** `fix/…` sobe o patch, `feat/…` sobe o minor. Tag só sai da `main`.
-- Mensagens de commit em PT-BR, no padrão Conventional Commits.
+- **Mensagens de commit em inglês**, no padrão Conventional Commits. O repositório é público e o
+  `git log` é a única superfície de leitura que ainda estava em português — o porquê está em
+  `claude-code-statusline-vault/decisoes/readme-em-ingles-e-arquivos-de-comunidade.md`. O histórico
+  anterior fica como está; a regra vale daqui para a frente.
 - Commit e push de código só a pedido de quem mantém o repositório; mudança no vault segue a regra acima.
 - O `CHANGELOG.md` é atualizado em **Unreleased** no mesmo PR da mudança.
