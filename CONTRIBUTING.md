@@ -101,9 +101,11 @@ Commit the regenerated SVGs along with the change.
 - One topic per PR.
 - Say which platforms you tested on (Linux, WSL, macOS, Windows PowerShell 5.1, PowerShell 7).
 - Include a before/after of the rendered line when you touch the output format.
-- Commit messages follow [Conventional Commits](https://www.conventionalcommits.org) and are written in
-  Portuguese, matching the existing log (`feat: …`, `fix: …`, `docs(vault): …`). English is fine too if
-  that's what you're comfortable with — the maintainer will adjust on merge.
+- Commit messages are **in English**, following [Conventional Commits](https://www.conventionalcommits.org)
+  (`feat: …`, `fix: …`, `docs(vault): …`). Commits older than v1.2.0 are in Portuguese; that history
+  stays as it is.
+- Say *why* in the body, not just *what* — the diff already shows what changed. On a public repository
+  the log is where someone goes to find out why a line looks the way it does.
 - Update `CHANGELOG.md` under **Unreleased** in the same PR.
 
 ## Reporting bugs

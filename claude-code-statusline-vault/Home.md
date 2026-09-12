@@ -19,7 +19,7 @@ Repositório público, licença MIT. A instalação e o uso ficam no README ([in
 | Como o script funciona por dentro | [[arquitetura/como-a-statusline-funciona]] |
 | Por que existem duas implementações | [[decisoes/duas-implementacoes-shell-e-powershell]] |
 | Por que o uso vem do payload, e não de custo estimado | [[decisoes/uso-do-plano-vem-do-payload]] |
-| Por que o README é em inglês e o que mais o GitHub espera | [[decisoes/readme-em-ingles-e-arquivos-de-comunidade]] |
+| Que idioma vai em quê — README, rótulos, **mensagens de commit** | [[decisoes/readme-em-ingles-e-arquivos-de-comunidade]] |
 | Por que o CI roda em push e PR | [[decisoes/ci-em-push-e-pr]] |
 | Fluxo de branches: main → stg → develop → tarefa | [[decisoes/fluxo-de-branches]] |
 | Por que a branch sai do `.git/HEAD`, e não do `git` | [[decisoes/branch-vem-do-git-head]] |
