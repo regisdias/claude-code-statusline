@@ -46,19 +46,22 @@ pick_color() {
 }
 
 # Progress bar of N blocks (█ / ░)
-# shellcheck disable=SC2034  # `i` is a plain counter; only the repetition matters
+#
+# No `seq` here on purpose. BSD seq (macOS) infers direction from the operands,
+# so `seq 1 0` prints "1 0" where GNU seq prints nothing — a full bar came out
+# 12 blocks wide on a Mac and 10 on Linux. Padding with printf and substituting
+# the spaces has no such edge case, and saves two subprocesses per render.
 make_bar() {
     local pct=$1
     local width=${2:-10}
-    local filled empty bar=""
+    local filled empty cheio vazio
     filled=$(echo "$pct $width" | awk '{printf "%d", ($1/100)*$2 + 0.5}')
     [ "$filled" -gt "$width" ] && filled=$width
     [ "$filled" -lt 0 ] && filled=0
     empty=$((width - filled))
-    local i
-    for i in $(seq 1 "$filled"); do bar="${bar}█"; done
-    for i in $(seq 1 "$empty");  do bar="${bar}░"; done
-    printf "%s" "$bar"
+    cheio=$(printf "%${filled}s" "")
+    vazio=$(printf "%${empty}s" "")
+    printf "%s%s" "${cheio// /█}" "${vazio// /░}"
 }
 
 # Format epoch: `date -d` is GNU (Linux, WSL, Git Bash); `date -r` is BSD (macOS)

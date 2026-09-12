@@ -25,6 +25,15 @@ All notable changes to this project are documented here. The format follows
 - README rebuilt: centered header, badges, generated screenshots, a before/after of the cost-based bar
   problem, and the install section moved to the top.
 
+### Fixed
+
+- **A full bar rendered 12 blocks wide instead of 10 on macOS.** `make_bar` drew with `seq`, and BSD
+  `seq` infers its direction from the operands: `seq 1 0` prints `1` and `0` where GNU `seq` prints
+  nothing. Any bar at 100% picked up two extra `░`. It now pads with `printf` and substitutes the
+  spaces, which has no such edge case — and drops two subprocesses per bar.
+- `statusline-command.ps1` no longer trips `PSAvoidUsingEmptyCatchBlock`. The `catch` around the
+  console encoding is still deliberate: a terminal that refuses UTF-8 is no reason to stop drawing.
+
 ## [1.0.0] — 2026-09-12
 
 ### Added

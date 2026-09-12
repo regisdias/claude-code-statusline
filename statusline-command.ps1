@@ -24,7 +24,9 @@
 
 $ErrorActionPreference = 'SilentlyContinue'
 # The bars are block characters: without UTF-8 the terminal prints garbage
-try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+# Swallowing this on purpose: a terminal that refuses the encoding is not a
+# reason to stop drawing the bar. PSScriptAnalyzer wants the catch non-empty.
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { $null = $_ }
 
 # ${ESC} with braces on purpose: "$ESC[32m" would be parsed as an array index and break the script
 $ESC = [char]27
