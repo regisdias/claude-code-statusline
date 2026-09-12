@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [1.2.0] — 2026-09-12
+
 ### Added
 
 - **The current git branch, at the start of the line** ([#1](https://github.com/regisdias/claude-code-statusline/issues/1)).
@@ -75,6 +79,7 @@ like a fix was a fix to what people could already `curl`.
 - `statusline-command.ps1` no longer trips `PSAvoidUsingEmptyCatchBlock`. The `catch` around the
   console encoding is still deliberate: a terminal that refuses UTF-8 is no reason to stop drawing.
 
-[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/regisdias/claude-code-statusline/releases/tag/v1.0.0

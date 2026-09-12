@@ -50,7 +50,11 @@ rebasing a promotion would rewrite SHAs and make them diverge permanently.
 
 **Versioning is [semantic](https://semver.org).** A `fix/…` branch bumps the patch, a `feat/…` branch
 the minor, and anything that changes the rendered line in a way people would notice gets called out in
-the `CHANGELOG` under the version it ships in. Tags are cut from `main` only.
+the `CHANGELOG` under the version it ships in.
+
+Each PR adds its entry under **Unreleased**. The version is stamped on `develop` right before promoting
+— `Unreleased` becomes `[1.2.0] — date` — and the tag is cut from `main` once the promotion lands, so a
+tag never points at a commit that is not in production.
 
 ## Getting set up
 
