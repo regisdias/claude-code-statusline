@@ -1,48 +1,131 @@
+<div align="center">
+
+<img src="assets/logo.svg" alt="" width="96" height="96">
+
 # claude-code-statusline
 
-A statusline for [Claude Code](https://claude.com/claude-code) that shows your **context window** and
-your **real plan usage** — the 5-hour block and the weekly limit — straight from the payload Claude Code
-hands to the statusline. Same numbers as `/usage`, no estimation, no extra process per render.
+**Your real plan usage in the Claude Code statusline.**<br>
+The same numbers as `/usage` — not an estimate, not a guess, no extra process per render.
+
+[![CI](https://img.shields.io/github/actions/workflow/status/regisdias/claude-code-statusline/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/regisdias/claude-code-statusline/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![Claude Code 2.1.251+](https://img.shields.io/badge/Claude%20Code-2.1.251%2B-d97757?style=flat-square)](https://claude.com/claude-code)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20WSL%20%7C%20Windows-2b7489?style=flat-square)](#requirements)
+[![Stars](https://img.shields.io/github/stars/regisdias/claude-code-statusline?style=flat-square&color=f5c518)](https://github.com/regisdias/claude-code-statusline/stargazers)
+
+🇬🇧 **English** · [🇧🇷 Português](README.pt-BR.md)
+
+<img src="assets/demo.svg" alt="Three statusline renders: context window, 5-hour block, weekly limit and session cost, with the bars turning green, yellow and red as usage climbs." width="100%">
+
+</div>
+
+---
+
+## Install
+
+**Linux · WSL · macOS · Git Bash**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/regisdias/claude-code-statusline/main/install.sh | bash
+```
+
+The installer drops the script in `~/.claude`, wires up `~/.claude/settings.json` (backing it up first,
+and never overwriting a `statusLine` you already have) and prints a preview. Prefer doing it by hand?
+See [manual install](#manual-install).
+
+**Windows (PowerShell)**
+
+```powershell
+iwr https://raw.githubusercontent.com/regisdias/claude-code-statusline/main/statusline-command.ps1 `
+  -OutFile "$env:USERPROFILE\.claude\statusline-command.ps1"
+```
+
+Then in `%USERPROFILE%\.claude\settings.json`:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File %USERPROFILE%\\.claude\\statusline-command.ps1"
+  }
+}
+```
+
+On PowerShell 7 use `pwsh` instead of `powershell`. Running Claude Code **inside WSL**? Use the Linux
+install — the WSL side has its own `~/.claude`.
+
+> [!IMPORTANT]
+> Keep the `.ps1` as **UTF-8 with BOM**. Windows PowerShell 5.1 reads a BOM-less file as ANSI and the
+> block characters break the parser. Downloading it as shown preserves the BOM; if you edit the file,
+> save it as "UTF-8 with BOM".
+
+The bar shows up on the next render. No restart needed.
+
+## What you get
 
 ```
 Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · reseta 06:20  │  semana [█░░░░░░░░░] 11% · 18/09 05:00  │  sessão $12.35
 ```
 
-Two implementations, same output:
-
-| File | For |
-|---|---|
-| `statusline-command.sh` | Linux, WSL, macOS, Git Bash (needs `jq`) |
-| `statusline-command.ps1` | Claude Code running natively on Windows (PowerShell 5.1+, no dependencies) |
-
 | Segment | What it means |
 |---|---|
 | `ctx` | Context window of the current conversation. Local to the session, unrelated to your plan quota. |
-| `5h` | 5-hour block of your plan, and when it resets. |
+| `5h` | 5-hour block of your plan, and the time it resets. |
 | `semana` | Weekly plan limit, and when it resets. |
 | `sessão` | Cost of this conversation, in USD. |
 
-Colors: green up to 60%, yellow up to 85%, red above that.
+Bars turn **green** up to 60%, **yellow** up to 85% and **red** above that.
 
 ## Why not a cost-based bar
 
-Statuslines that shell out to a usage estimator read the local transcript files, price the tokens with
-the public API table and divide by a ceiling you calibrate by hand. Two things go wrong:
+Most statuslines shell out to a usage estimator: it reads your local transcript files, prices the tokens
+with the public API table and divides by a ceiling you calibrate by hand. Two things go wrong.
 
-- **The bar goes past 100%** when the calibrated ceiling is lower than your real allowance. In one
-  measured case the bar read 112% while `/usage` reported 41%.
-- **Long sessions inflate the estimate.** Cache reads are cheap for your quota but still add up in USD.
+**Before** — estimated, and wrong:
+
+```
+ctx [███░░░░░░░] 33%   │   plan [███████████] 112%      ← /usage says 41%
+```
+
+**After** — straight from the payload:
+
+```
+ctx [███░░░░░░░] 33%   │   5h [████░░░░░░] 41%          ← the number the server reports
+```
+
+- **The bar runs past 100%** when the hand-calibrated ceiling sits below your real allowance. In one
+  measured case it read 112% while `/usage` reported 41%.
+- **Long sessions inflate the estimate.** Cache reads are cheap for your quota but still pile up in USD.
 
 Claude Code 2.1.251+ sends `rate_limits.five_hour` and `rate_limits.seven_day` (percentage and
-`resets_at`) in the statusline payload, so the real numbers are one JSON read away.
+`resets_at`) in the statusline payload, so the real numbers are one JSON read away — no subprocess, no
+transcript parsing, no calibration.
+
+## It degrades, it never breaks
+
+A missing field drops its segment and keeps the rest. A malformed payload prints `aguardando...` instead
+of a stack trace in your terminal.
+
+<div align="center">
+<img src="assets/demo-fallback.svg" alt="Statusline falling back gracefully: plan without rate limits shows only the context bar, and an empty payload shows 'aguardando...'." width="100%">
+</div>
 
 ## Requirements
 
-- Claude Code **2.1.251+** (`claude --version`)
-- Shell version: `jq`, `awk`, `bash` — Linux: `apt install jq` · macOS: `brew install jq`
-- PowerShell version: nothing beyond Windows PowerShell 5.1 (ships with Windows)
+| | |
+|---|---|
+| **Claude Code** | 2.1.251 or newer (`claude --version`) — older versions render the `ctx` bar only |
+| **Shell version** | `bash`, `jq`, `awk` — Linux: `apt install jq` · macOS: `brew install jq` |
+| **PowerShell version** | nothing beyond Windows PowerShell 5.1, which ships with Windows |
 
-## Install — Linux, WSL and macOS
+Two implementations, byte-for-byte identical output:
+
+| File | For |
+|---|---|
+| [`statusline-command.sh`](statusline-command.sh) | Linux, WSL, macOS, Git Bash |
+| [`statusline-command.ps1`](statusline-command.ps1) | Claude Code running natively on Windows |
+
+## Manual install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/regisdias/claude-code-statusline/main/statusline-command.sh \
@@ -61,166 +144,52 @@ In `~/.claude/settings.json`:
 }
 ```
 
-## Install — Windows (PowerShell)
-
-Use this one when Claude Code runs on Windows itself. If you use Claude Code **inside WSL**, follow the
-Linux instructions instead — the WSL side has its own `~/.claude`.
-
-```powershell
-iwr https://raw.githubusercontent.com/regisdias/claude-code-statusline/main/statusline-command.ps1 `
-  -OutFile "$env:USERPROFILE\.claude\statusline-command.ps1"
-```
-
-In `%USERPROFILE%\.claude\settings.json`:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File %USERPROFILE%\\.claude\\statusline-command.ps1"
-  }
-}
-```
-
-On PowerShell 7 use `pwsh` instead of `powershell`. The bar appears on the next render — no restart needed.
-
-> **Keep the file as UTF-8 with BOM.** Windows PowerShell 5.1 reads a BOM-less file as ANSI, and the
-> block characters break the script with a parser error. Downloading it as shown preserves the BOM;
-> if you edit the file, save it as "UTF-8 with BOM".
-
 ## Try it without Claude Code
 
+Feed it any of the payloads in [`scripts/payloads/`](scripts/payloads):
+
 ```bash
-bash statusline-command.sh < example-payload.json                          # Linux, WSL, macOS
+bash statusline-command.sh < scripts/payloads/verde.json       # green
+bash statusline-command.sh < scripts/payloads/vermelho.json    # red
 ```
 
 ```powershell
-Get-Content example-payload.json | powershell -NoProfile -File .\statusline-command.ps1
+Get-Content scripts\payloads\verde.json | powershell -NoProfile -File .\statusline-command.ps1
+```
+
+To check both implementations still agree, and that the `.ps1` kept its BOM:
+
+```bash
+bash scripts/testar.sh
 ```
 
 ## Troubleshooting
 
 | Symptom | Cause |
 |---|---|
-| Only the `ctx` bar shows | Claude Code older than 2.1.251, or the plan has no rate limits (API key billing). |
+| Only the `ctx` bar shows | Claude Code older than 2.1.251, or a plan with no rate limits (API key billing). |
 | `aguardando...` | The payload arrived empty, or `jq` is missing (shell version). |
-| Blocks show as `?` on Windows | The terminal is not using UTF-8. Windows Terminal handles it; the old console host may not. |
+| Blocks show as `?` on Windows | The terminal is not in UTF-8. Windows Terminal handles it; the old console host may not. |
+| PowerShell parser error | The `.ps1` lost its UTF-8 BOM. Re-download it. |
 | No colors | Your terminal is stripping ANSI codes. |
-| Reset time is wrong | Your machine's timezone. The script formats the epoch with the local clock. |
+| Reset time looks wrong | Your machine's timezone — the script formats the epoch with the local clock. |
+
+Still stuck? [Open an issue](https://github.com/regisdias/claude-code-statusline/issues/new/choose).
+
+## Contributing
+
+Pull requests welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). The one rule that matters: **both
+implementations must print the same bytes for the same payload**, and a format change lands in both in
+the same commit.
+
+- [Report a bug](https://github.com/regisdias/claude-code-statusline/issues/new?template=bug_report.yml)
+- [Request a feature](https://github.com/regisdias/claude-code-statusline/issues/new?template=feature_request.yml)
+- [Security policy](SECURITY.md) · [Code of Conduct](CODE_OF_CONDUCT.md) · [Changelog](CHANGELOG.md)
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+[MIT](LICENSE) © Regis Dias
 
----
-
-# Português
-
-Uma statusline para o [Claude Code](https://claude.com/claude-code) que mostra a **janela de contexto** e
-o **uso real do plano** — o bloco de 5 horas e o limite semanal — direto do payload que o Claude Code
-entrega para a statusline. São os mesmos números do `/usage`: sem estimativa e sem subir um processo a
-cada desenho da barra.
-
-Duas implementações, com a mesma saída:
-
-| Arquivo | Para |
-|---|---|
-| `statusline-command.sh` | Linux, WSL, macOS e Git Bash (precisa do `jq`) |
-| `statusline-command.ps1` | Claude Code rodando direto no Windows (PowerShell 5.1+, sem dependência) |
-
-| Trecho | O que é |
-|---|---|
-| `ctx` | Janela de contexto da conversa atual. É local, não tem relação com a cota do plano. |
-| `5h` | Bloco de 5 horas do plano, e a hora em que zera. |
-| `semana` | Limite semanal do plano, e quando zera. |
-| `sessão` | Custo desta conversa, em dólar. |
-
-Cores: verde até 60%, amarelo até 85%, vermelho acima disso.
-
-## Por que não usar barra baseada em custo
-
-Statuslines que chamam um estimador de uso leem os arquivos de transcrição locais, convertem os tokens
-em dólar pela tabela pública da API e dividem por um teto calibrado na mão. Duas coisas dão errado:
-
-- **A barra passa de 100%** quando o teto calibrado está abaixo da cota real. Num caso medido, a barra
-  marcava 112% enquanto o `/usage` dizia 41%.
-- **Sessão longa infla a estimativa:** leitura de cache pesa pouco na cota e muito na conta em dólar.
-
-O Claude Code 2.1.251+ manda `rate_limits.five_hour` e `rate_limits.seven_day` (porcentagem e
-`resets_at`) no payload da statusline — o número real está a uma leitura de JSON de distância.
-
-## Requisitos
-
-- Claude Code **2.1.251+** (`claude --version`)
-- Versão shell: `jq`, `awk` e `bash` — Linux: `apt install jq` · macOS: `brew install jq`
-- Versão PowerShell: nada além do Windows PowerShell 5.1, que já vem no Windows
-
-## Instalação — Linux, WSL e macOS
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/regisdias/claude-code-statusline/main/statusline-command.sh \
-  -o ~/.claude/statusline-command.sh
-chmod +x ~/.claude/statusline-command.sh
-```
-
-No `~/.claude/settings.json`:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "bash ~/.claude/statusline-command.sh"
-  }
-}
-```
-
-## Instalação — Windows (PowerShell)
-
-Use esta quando o Claude Code roda no próprio Windows. Se você usa o Claude Code **dentro do WSL**, siga
-a instalação de Linux: o lado WSL tem o seu próprio `~/.claude`.
-
-```powershell
-iwr https://raw.githubusercontent.com/regisdias/claude-code-statusline/main/statusline-command.ps1 `
-  -OutFile "$env:USERPROFILE\.claude\statusline-command.ps1"
-```
-
-No `%USERPROFILE%\.claude\settings.json`:
-
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File %USERPROFILE%\\.claude\\statusline-command.ps1"
-  }
-}
-```
-
-No PowerShell 7, troque `powershell` por `pwsh`. A barra aparece no próximo desenho, sem reiniciar nada.
-
-> **Mantenha o arquivo em UTF-8 com BOM.** O Windows PowerShell 5.1 lê arquivo sem BOM como ANSI, e os
-> caracteres de bloco quebram o script com erro de parser. Baixando como acima, o BOM vem junto; se for
-> editar, salve como "UTF-8 com BOM".
-
-## Testar sem abrir o Claude Code
-
-```bash
-bash statusline-command.sh < example-payload.json                          # Linux, WSL, macOS
-```
-
-```powershell
-Get-Content example-payload.json | powershell -NoProfile -File .\statusline-command.ps1
-```
-
-## Se algo não aparecer
-
-| Sintoma | Causa |
-|---|---|
-| Só a barra `ctx` aparece | Claude Code anterior ao 2.1.251, ou plano sem limite de cota (cobrança por API key). |
-| `aguardando...` | O payload veio vazio, ou falta o `jq` (versão shell). |
-| Os blocos viram `?` no Windows | O terminal não está em UTF-8. O Windows Terminal resolve; o console antigo pode não. |
-| Sem cores | O terminal está removendo os códigos ANSI. |
-| Hora do reset errada | Fuso do seu computador: o script formata o epoch com o relógio local. |
-
-## Licença
-
-MIT — veja [LICENSE](LICENSE).
+<div align="center">
+<sub>If this saved you from a surprise rate limit, a ⭐ helps other people find it.</sub>
+</div>

@@ -1,0 +1,50 @@
+name: Feature request
+description: Suggest a new segment, format or option
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two constraints shape what fits here, so it's worth knowing them up front:
+
+        - **No new runtime dependency.** The bar is redrawn constantly; anything that spawns a process
+          or boots a runtime per render is out. The budget is roughly 50 ms.
+        - **Both implementations, same bytes.** Anything added to the shell version has to be doable in
+          PowerShell 5.1 without extra tooling, and land in both at once.
+
+  - type: textarea
+    id: problema
+    attributes:
+      label: What's the problem?
+      description: What are you trying to see, or avoid, that the statusline doesn't give you today?
+      placeholder: I can't tell at a glance whether I'm burning the weekly limit faster than the 5-hour one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposta
+    attributes:
+      label: What would the line look like?
+      description: Sketch the rendered output. A mock is worth more than a description.
+      render: text
+      placeholder: "Opus 5  ctx [███░░░░░░░] 33%  │  5h [████░░░░░░] 41% ↑  │  semana [█░░░░░░░░░] 11%"
+    validations:
+      required: true
+
+  - type: textarea
+    id: dados
+    attributes:
+      label: Where does the data come from?
+      description: |
+        A field in the statusline payload? Something computed from what's already there? If it needs
+        reading a file or calling a command, say which — that's usually the deciding factor.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: conferido
+    attributes:
+      label: Before submitting
+      options:
+        - label: This needs no new dependency and no subprocess per render
+        - label: This can be implemented in PowerShell 5.1 as well as in bash

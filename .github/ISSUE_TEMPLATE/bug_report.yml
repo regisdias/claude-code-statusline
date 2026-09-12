@@ -1,0 +1,78 @@
+name: Bug report
+description: The statusline renders wrong, breaks, or shows nothing
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. The [Troubleshooting table](https://github.com/regisdias/claude-code-statusline#troubleshooting)
+        covers the usual suspects — worth a glance first.
+
+  - type: dropdown
+    id: implementacao
+    attributes:
+      label: Which implementation?
+      options:
+        - statusline-command.sh (Linux / WSL / macOS / Git Bash)
+        - statusline-command.ps1 (Windows PowerShell)
+        - Both
+    validations:
+      required: true
+
+  - type: textarea
+    id: esperado
+    attributes:
+      label: What happened, and what you expected
+      description: Paste the line it rendered, and describe what it should have shown.
+      placeholder: |
+        It rendered:
+          Opus 5  ctx [███░░░░░░░] 33%
+
+        I expected the 5h and semana segments too — /usage shows 41% and 11%.
+    validations:
+      required: true
+
+  - type: textarea
+    id: payload
+    attributes:
+      label: Payload that reproduces it
+      description: |
+        The single most useful thing you can attach — see
+        [CONTRIBUTING.md](https://github.com/regisdias/claude-code-statusline/blob/main/CONTRIBUTING.md#reporting-bugs)
+        for how to capture it. **Redact it first:** it carries your cost and usage numbers.
+      render: json
+      placeholder: '{"model": {"display_name": "..."}, "context_window": { ... }}'
+
+  - type: input
+    id: versao_claude
+    attributes:
+      label: Claude Code version
+      description: Output of `claude --version`. Plan limits need 2.1.251 or newer.
+      placeholder: "2.1.269"
+    validations:
+      required: true
+
+  - type: input
+    id: ambiente
+    attributes:
+      label: OS and terminal
+      placeholder: "Ubuntu 24.04 on WSL2, Windows Terminal · or: Windows 11, PowerShell 5.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: teste
+    attributes:
+      label: Output of the test script
+      description: "`bash scripts/testar.sh` from a clone of the repo, if you can run it."
+      render: shell
+
+  - type: checkboxes
+    id: conferido
+    attributes:
+      label: Before submitting
+      options:
+        - label: I'm on Claude Code 2.1.251 or newer
+          required: true
+        - label: My plan has rate limits (not API key billing)
+        - label: "Windows only: the `.ps1` still has its UTF-8 BOM"

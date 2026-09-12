@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="claude-code-statusline">
+  <rect x="1" y="1" width="126" height="126" rx="28" fill="#0d1117" stroke="#30363d" stroke-width="2"/>
+
+  <!-- prompt chevron -->
+  <path d="M26 40 L40 52 L26 64" fill="none" stroke="#6e7681" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- three usage bars: context, 5-hour block, week -->
+  <g stroke-linecap="round" stroke-width="9">
+    <line x1="56" y1="44" x2="104" y2="44" stroke="#21262d"/>
+    <line x1="56" y1="44" x2="88" y2="44" stroke="#3fb950"/>
+
+    <line x1="26" y1="76" x2="104" y2="76" stroke="#21262d"/>
+    <line x1="26" y1="76" x2="82" y2="76" stroke="#d29922"/>
+
+    <line x1="26" y1="100" x2="104" y2="100" stroke="#21262d"/>
+    <line x1="26" y1="100" x2="96" y2="100" stroke="#f85149"/>
+  </g>
+</svg>

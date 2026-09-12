@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Troubleshooting
+    url: https://github.com/regisdias/claude-code-statusline#troubleshooting
+    about: Blocks showing as "?", no colors, only the ctx bar, wrong reset time — start here.
+  - name: Security vulnerability
+    url: https://github.com/regisdias/claude-code-statusline/security/advisories/new
+    about: Report it privately instead of opening a public issue.
+  - name: Claude Code itself
+    url: https://github.com/anthropics/claude-code/issues
+    about: Wrong numbers in /usage, or the payload missing rate_limits, are Claude Code issues — not this statusline's.
