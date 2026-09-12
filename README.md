@@ -29,8 +29,8 @@ Colors: green up to 60%, yellow up to 85%, red above that.
 Statuslines that shell out to a usage estimator read the local transcript files, price the tokens with
 the public API table and divide by a ceiling you calibrate by hand. Two things go wrong:
 
-- **The bar goes past 100%** when the calibrated ceiling is lower than your real allowance. Mine read
-  112% while `/usage` said 41%.
+- **The bar goes past 100%** when the calibrated ceiling is lower than your real allowance. In one
+  measured case the bar read 112% while `/usage` reported 41%.
 - **Long sessions inflate the estimate.** Cache reads are cheap for your quota but still add up in USD.
 
 Claude Code 2.1.251+ sends `rate_limits.five_hour` and `rate_limits.seven_day` (percentage and
@@ -142,8 +142,8 @@ Cores: verde até 60%, amarelo até 85%, vermelho acima disso.
 Statuslines que chamam um estimador de uso leem os arquivos de transcrição locais, convertem os tokens
 em dólar pela tabela pública da API e dividem por um teto calibrado na mão. Duas coisas dão errado:
 
-- **A barra passa de 100%** quando o teto calibrado está abaixo da cota real. A minha marcava 112%
-  enquanto o `/usage` dizia 41%.
+- **A barra passa de 100%** quando o teto calibrado está abaixo da cota real. Num caso medido, a barra
+  marcava 112% enquanto o `/usage` dizia 41%.
 - **Sessão longa infla a estimativa:** leitura de cache pesa pouco na cota e muito na conta em dólar.
 
 O Claude Code 2.1.251+ manda `rate_limits.five_hour` e `rate_limits.seven_day` (porcentagem e

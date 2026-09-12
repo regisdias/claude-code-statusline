@@ -1,0 +1,5 @@
+# Configuração local do Obsidian, de cada pessoa
+claude-code-statusline-vault/.obsidian/
+
+# Saídas de teste
+/tmp-saida-*.txt
