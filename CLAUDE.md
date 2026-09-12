@@ -25,6 +25,7 @@ BOM do `.ps1`. Sem `pwsh` instalado, testa só o lado shell e avisa. É o mesmo 
 | `scripts/testar.sh` | Comparação das duas implementações + guarda do BOM |
 | `scripts/gerar-svg.py` | Gera as imagens do README a partir da saída real |
 | `scripts/gerar-social-preview.py` | Gera o card 1280x640 de compartilhamento (upload manual no GitHub) |
+| `scripts/testar.sh` (branch/*) | Fixtures de `.git/HEAD` criadas na hora — git não versiona caminho com `.git` |
 | `assets/` | **Gerado.** Não editar à mão — veja abaixo |
 | `README.md` / `README.pt-BR.md` | Inglês é a porta de entrada; conteúdo entra nos dois |
 | `.github/` | CI, templates de issue e de PR |
@@ -62,6 +63,10 @@ sharp-cli para rasterizar). O GitHub não tem API para ele: sobe à mão em Sett
 - Campo novo do payload só pode ser usado se existir nas duas implementações, e sempre com degradação:
   campo ausente não pode quebrar a barra, e erro nunca vira stack trace no terminal.
 - Nada de dependência que suba runtime a cada desenho da barra: o alvo é ~50 ms por execução.
+- **A branch não vem no payload.** O Claude Code manda `workspace.repo` (host/owner/name) e
+  `worktree.branch` (só em sessão de worktree). A branch sai da leitura direta do `.git/HEAD` — `git
+  branch --show-current` seria um exec por desenho. As duas implementações têm de tratar igual: `.git`
+  como diretório e como arquivo (`gitdir:`), HEAD solto (sha curto), CR no fim da linha e walk-up.
 - **`seq` não entra no caminho de desenho:** o do BSD infere direção e `seq 1 0` imprime `1 0`, o que já
   alargou a barra cheia no macOS. Preencher com `printf` e substituir não tem caso de borda.
 - O lint do CI é `shellcheck --severity=warning`. Supressão só com comentário explicando o porquê.
@@ -87,7 +92,23 @@ versionado junto com o código. **Entrada única: `claude-code-statusline-vault/
 
 ## Git
 
-- Branch `main`. Mensagens de commit em PT-BR.
+**Nada entra direto na `main`.** O fluxo é de baixo para cima:
+
+```
+feat/12-short-description  →  develop  →  stg  →  main
+```
+
+| Branch | O que é |
+|---|---|
+| `main` | Produção. O README instala com `curl .../main/install.sh`, então o que entra aqui é o que as pessoas recebem. Protegida: exige PR e CI verde. |
+| `stg` | Homologação: candidata a release antes de subir. Protegida igual. |
+| `develop` | Integração. O trabalho pronto acumula aqui entre releases. |
+| `feat/…` `fix/…` `docs/…` `ci/…` | Uma tarefa cada, saindo da `develop`. |
+
+- **Nome da branch de tarefa:** `<tipo>/<número da issue>-<descrição-curta-em-inglês>`, com o `<tipo>`
+  igual ao do Conventional Commits que o trabalho vai usar. Abre a issue primeiro — o número é o que
+  amarra os dois.
+- **Versionamento semântico:** `fix/…` sobe o patch, `feat/…` sobe o minor. Tag só sai da `main`.
+- Mensagens de commit em PT-BR, no padrão Conventional Commits.
 - Commit e push de código só a pedido de quem mantém o repositório; mudança no vault segue a regra acima.
-- A `main` é a produção: o README instala com `curl .../main/install.sh | bash`. Push quebrado é
-  instalação quebrada — por isso o CI roda em push e PR.
+- O `CHANGELOG.md` é atualizado em **Unreleased** no mesmo PR da mudança.

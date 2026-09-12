@@ -18,6 +18,40 @@ It feeds every payload in `scripts/payloads/` to both implementations, diffs the
 `.ps1` still carries its UTF-8 BOM. Without `pwsh` installed it checks the shell side only and says so —
 CI runs the full comparison on every PR.
 
+## Branching model
+
+Four levels, and changes only ever move up:
+
+```
+feat/12-short-description  →  develop  →  stg  →  main
+```
+
+| Branch | What it is |
+|---|---|
+| `main` | Production. The README installs from it with `curl .../main/install.sh`, so whatever lands here is what people get. Protected: pull request and green CI required. |
+| `stg` | Staging. Where a release candidate sits before promotion. Protected the same way. |
+| `develop` | Integration. Finished work accumulates here between releases. |
+| `feat/…`, `fix/…`, `docs/…`, `ci/…` | One task each, branched off `develop`. |
+
+Task branches are named `<type>/<issue number>-<short-description-in-english>`, where `<type>` matches
+the Conventional Commits type the work will use:
+
+```
+feat/12-git-branch-in-bar
+fix/13-bsd-seq-widens-bar
+docs/14-worktree-section
+```
+
+Open an issue first — the number in the branch name is what ties the two together.
+
+A task branch is **squashed** into `develop` — one commit per task. Promotions up the chain
+(`develop → stg → main`) are **merge commits**, so the three branches stay on one lineage; squashing or
+rebasing a promotion would rewrite SHAs and make them diverge permanently.
+
+**Versioning is [semantic](https://semver.org).** A `fix/…` branch bumps the patch, a `feat/…` branch
+the minor, and anything that changes the rendered line in a way people would notice gets called out in
+the `CHANGELOG` under the version it ships in. Tags are cut from `main` only.
+
 ## Getting set up
 
 ```bash
@@ -59,11 +93,14 @@ Commit the regenerated SVGs along with the change.
 
 ## Pull requests
 
+- Target `develop`, never `main` or `stg` directly.
 - One topic per PR.
 - Say which platforms you tested on (Linux, WSL, macOS, Windows PowerShell 5.1, PowerShell 7).
 - Include a before/after of the rendered line when you touch the output format.
-- Commit messages are in Portuguese, following the existing log (`docs(vault): …`, and so on). English is
-  fine too if that's what you're comfortable with — the maintainer will adjust on merge.
+- Commit messages follow [Conventional Commits](https://www.conventionalcommits.org) and are written in
+  Portuguese, matching the existing log (`feat: …`, `fix: …`, `docs(vault): …`). English is fine too if
+  that's what you're comfortable with — the maintainer will adjust on merge.
+- Update `CHANGELOG.md` under **Unreleased** in the same PR.
 
 ## Reporting bugs
 
