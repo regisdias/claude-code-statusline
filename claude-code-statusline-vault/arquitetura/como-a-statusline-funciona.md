@@ -21,6 +21,7 @@ Os campos usados, todos opcionais na leitura (campo ausente vira `-` no shell e 
 | `rate_limits.five_hour.used_percentage` e `.resets_at` | barra `5h` e a hora do reset |
 | `rate_limits.seven_day.used_percentage` e `.resets_at` | barra `week` |
 | `cost.total_cost_usd` | `session $12.35` |
+| `workspace.current_dir` (ou `cwd`) | ponto de partida para achar o `.git/HEAD` → trecho da branch |
 
 `resets_at` é epoch em segundos, formatado com o relógio local: só a hora quando o reset é hoje, dia e
 hora quando é outro dia.

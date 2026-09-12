@@ -64,11 +64,12 @@ The bar shows up on the next render. No restart needed.
 ## What you get
 
 ```
-Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
+main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
 ```
 
 | Segment | What it means |
 |---|---|
+| `main` | Current git branch, read live from `.git/HEAD`. Absent outside a git repository. |
 | `ctx` | Context window of the current conversation. Local to the session, unrelated to your plan quota. |
 | `5h` | 5-hour block of your plan, and the time it resets. |
 | `week` | Weekly plan limit, and when it resets. |
@@ -173,6 +174,7 @@ bash scripts/testar.sh
 | PowerShell parser error | The `.ps1` lost its UTF-8 BOM. Re-download it. |
 | No colors | Your terminal is stripping ANSI codes. |
 | Reset time looks wrong | Your machine's timezone — the script formats the epoch with the local clock. |
+| No branch shown | The session is not inside a git repository, or Claude Code is older than the version that sends `workspace.current_dir`. |
 
 Still stuck? [Open an issue](https://github.com/regisdias/claude-code-statusline/issues/new/choose).
 

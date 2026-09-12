@@ -8,6 +8,30 @@ All notable changes to this project are documented here. The format follows
 
 Nothing yet.
 
+## [1.2.0] — 2026-09-12
+
+### Added
+
+- **The current git branch, at the start of the line** ([#1](https://github.com/regisdias/claude-code-statusline/issues/1)).
+  Read live from `.git/HEAD` on every render, so it follows a `git checkout` mid-session, and dropped
+  entirely outside a git repository.
+
+  Claude Code does not send the branch in the payload — `workspace.repo` carries host/owner/name, and
+  `worktree.branch` exists only inside a worktree session — and the documented approach is
+  `git branch --show-current`. That is an exec of git per render, against this project's no-subprocess
+  rule. Reading `.git/HEAD` costs a file open: 0.1 ms against 1.35 ms, and nothing spawned.
+
+  Handled: branch names containing a slash, detached HEAD (short sha), `.git` as a file pointing at a
+  worktree or submodule, a `HEAD` written with CRLF, a `HEAD` with no trailing newline, and
+  walking up from a subdirectory.
+- Branch fixtures in `scripts/testar.sh` covering all six of those cases plus the outside-a-repo one,
+  so the two implementations are compared on them too.
+
+### Changed
+
+- CI now runs on `develop` and `stg` as well as `main`, following the branching model documented in
+  `CONTRIBUTING.md`.
+
 ## [1.1.0] — 2026-09-12
 
 ### Changed
@@ -55,6 +79,7 @@ like a fix was a fix to what people could already `curl`.
 - `statusline-command.ps1` no longer trips `PSAvoidUsingEmptyCatchBlock`. The `catch` around the
   console encoding is still deliberate: a terminal that refuses UTF-8 is no reason to stop drawing.
 
-[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/regisdias/claude-code-statusline/releases/tag/v1.0.0

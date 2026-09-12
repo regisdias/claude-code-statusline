@@ -16,6 +16,7 @@
 #   3. The bar shows up on the next render. No restart needed.
 #
 # HOW TO READ IT
+#   <branch> → current git branch, when the session is inside a repository
 #   ctx      → how much of this conversation's context window is used (not a plan quota)
 #   5h       → 5-hour block of your plan, with the time it resets
 #   week     → weekly plan limit
@@ -52,6 +53,63 @@ function Get-Bar([double]$pct, [int]$width = 10) {
 
 function Get-Inteiro([double]$n) {
     return [int][Math]::Round($n)
+}
+
+# First line of a file, without the trailing CR a Windows-written .git/HEAD carries
+function Read-PrimeiraLinha($caminho) {
+    try { $linhas = [System.IO.File]::ReadAllLines($caminho) } catch { return '' }
+    if ($linhas.Count -eq 0) { return '' }
+    return ([string]$linhas[0]).TrimEnd("`r")
+}
+
+# Current git branch, read straight from .git/HEAD.
+#
+# Claude Code does not send the branch in the payload (`worktree.branch` exists only
+# inside a worktree session), and the documented way is `git branch --show-current`.
+# That spawns git on every render, which is expensive on Windows. The branch is plain
+# text in .git/HEAD, so reading it costs a file open and nothing else.
+#
+# Must stay byte-identical to achar_branch() in the .sh: same walk, same parsing,
+# same fallbacks.
+function Get-Branch($dir) {
+    if ([string]::IsNullOrWhiteSpace($dir) -or $dir -eq '-') { return '' }
+    try { $atual = [System.IO.Path]::GetFullPath($dir) } catch { return '' }
+
+    while ($atual) {
+        $marca = [System.IO.Path]::Combine($atual, '.git')
+        $head = ''
+
+        if ([System.IO.Directory]::Exists($marca)) {
+            $head = [System.IO.Path]::Combine($marca, 'HEAD')
+        } elseif ([System.IO.File]::Exists($marca)) {
+            # Worktree or submodule: ".git" is a file holding "gitdir: <path>"
+            $gitdir = Read-PrimeiraLinha $marca
+            if (-not $gitdir.StartsWith('gitdir: ')) { return '' }
+            $gitdir = $gitdir.Substring(8)
+            if (-not [System.IO.Path]::IsPathRooted($gitdir)) {
+                $gitdir = [System.IO.Path]::Combine($atual, $gitdir)
+            }
+            $head = [System.IO.Path]::Combine($gitdir, 'HEAD')
+        }
+
+        if ($head) {
+            if (-not [System.IO.File]::Exists($head)) { return '' }
+            $cabeca = Read-PrimeiraLinha $head
+            if ($cabeca.StartsWith('ref: ')) {
+                $ref = $cabeca.Substring(5)
+                if ($ref.StartsWith('refs/heads/')) { $ref = $ref.Substring(11) }
+                return $ref
+            }
+            # Detached HEAD: short sha
+            if ($cabeca.Length -gt 7) { return $cabeca.Substring(0, 7) }
+            return $cabeca
+        }
+
+        $pai = [System.IO.Path]::GetDirectoryName($atual)
+        if (-not $pai -or $pai -eq $atual) { return '' }
+        $atual = $pai
+    }
+    return ''
 }
 
 # Epoch → "06:20" when it is today, "18/09 05:00" otherwise
@@ -118,5 +176,13 @@ if ($limites -and $null -ne $limites.seven_day.used_percentage) {
 if ($dados -and $dados.cost -and $dados.cost.total_cost_usd -gt 0) {
     $partes += ('session $' + ([Math]::Round([double]$dados.cost.total_cost_usd, 2)).ToString('0.00', $INV))
 }
+
+$dirAtual = ''
+if ($dados) {
+    if ($dados.workspace -and $dados.workspace.current_dir) { $dirAtual = $dados.workspace.current_dir }
+    elseif ($dados.cwd) { $dirAtual = $dados.cwd }
+}
+$branch = Get-Branch $dirAtual
+if ($branch) { $partes = ,$branch + $partes }
 
 [Console]::Out.Write(($partes -join '  │  '))

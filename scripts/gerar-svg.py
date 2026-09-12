@@ -20,6 +20,7 @@ midnight.
 import html
 import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -55,12 +56,17 @@ PAD_BAIXO = 18
 PADRAO_ANSI = re.compile(r"\033\[([0-9;]*)m")
 
 
-def rodar(payload: Path) -> str:
+def rodar(payload: Path, branch: bool = True) -> str:
     """Run the shell implementation and return its raw output, ANSI included.
 
-    The payloads carry fixed epochs so the test suite stays deterministic; here
-    they are pushed to "in 2 hours" and "in 3 days" so the picture shows the two
-    reset formats the script produces (`06:20` for today, `18/09 05:00` beyond).
+    Two things are rewritten so the picture stays honest and reproducible:
+
+    - the fixed epochs are pushed to "in 2 hours" and "in 3 days", so the image
+      shows both reset formats the script produces (`06:20` today, `18/09 05:00`
+      beyond);
+    - `workspace.current_dir` points at a throwaway fixture whose `.git/HEAD`
+      always says `main`, so the bar shows a branch without the image depending
+      on whichever branch this repo happens to be on.
     """
     try:
         dados = json.loads(payload.read_text(encoding="utf-8"))
@@ -72,6 +78,8 @@ def rodar(payload: Path) -> str:
         for chave, adiante in (("five_hour", 2 * 3600), ("seven_day", 3 * 86400)):
             if chave in dados["rate_limits"]:
                 dados["rate_limits"][chave]["resets_at"] = agora + adiante
+        if branch:
+            dados["workspace"] = {"current_dir": str(fixture_branch())}
         entrada = json.dumps(dados).encode("utf-8")
     else:
         entrada = payload.read_bytes()
@@ -80,6 +88,25 @@ def rodar(payload: Path) -> str:
         ["bash", str(SHELL)], input=entrada, capture_output=True, check=True
     )
     return p.stdout.decode("utf-8")
+
+
+_FIXTURE = None
+
+
+def fixture_branch() -> Path:
+    """A throwaway directory whose .git/HEAD says `main`, for a stable picture."""
+    global _FIXTURE
+    if _FIXTURE is None:
+        _FIXTURE = Path(tempfile.mkdtemp(prefix="ccsl-demo-"))
+        git = _FIXTURE / ".git"
+        git.mkdir()
+        (git / "HEAD").write_text("ref: refs/heads/main\n", encoding="utf-8")
+    return _FIXTURE
+
+
+def limpar_fixture() -> None:
+    if _FIXTURE is not None:
+        shutil.rmtree(_FIXTURE, ignore_errors=True)
 
 
 def em_trechos(texto: str):
@@ -204,7 +231,7 @@ def main() -> int:
 
     montar(
         [
-            ("# plan without rate limits (API key billing)", rodar(PAYLOADS / "sem-limites.json")),
+            ("# plan without rate limits (API key billing)", rodar(PAYLOADS / "sem-limites.json", branch=False)),
             ("# first render, payload still empty", rodar(PAYLOADS / "vazio.json")),
         ],
         destino / "demo-fallback.svg",
@@ -226,6 +253,8 @@ def main() -> int:
             print("rode: python3 scripts/gerar-svg.py", file=sys.stderr)
             return 1
         print("assets/ em dia")
+
+    limpar_fixture()
     return 0
 
 
