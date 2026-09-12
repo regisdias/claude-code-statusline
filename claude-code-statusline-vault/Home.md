@@ -24,11 +24,12 @@ Repositório público, licença MIT. A instalação e o uso ficam no README ([in
 | Testar sem abrir o Claude Code | [[guias/testar-local]] |
 | Regerar as imagens do README | [[guias/regenerar-imagens-do-readme]] |
 | Armadilhas do PowerShell que já custaram caro | [[bugs-fixes/2026-09-12-powershell-bom-e-colisao-de-variavel]] |
+| Por que a barra cheia saía torta no macOS | [[bugs-fixes/2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]] |
 
 ## Pendências
 
-- [[pendentes/2026-09-12-confirmar-no-macos|Confirmar no macOS]] — `fazendo`: o CI cobre o `date -r`,
-  falta um terminal de Mac de verdade
+- [[pendentes/2026-09-12-confirmar-no-macos|Confirmar no macOS]] — `fazendo`: o CI achou e corrigiu o
+  bug do `seq`; falta um terminal de Mac de verdade
 - [[pendentes/2026-09-12-rotulos-da-barra-em-portugues|Rótulos da barra em português]] — `semana` e
   `sessão` numa barra de projeto em inglês
 
@@ -39,6 +40,7 @@ Resolvidas ficam em `pendentes/arquivo/`.
 | Arquivo | Vem de |
 |---|---|
 | `assets/demo.svg`, `assets/demo-fallback.svg` | `python3 scripts/gerar-svg.py`, a partir da saída real do script |
+| `assets/social-preview.png` | `python3 scripts/gerar-social-preview.py` — o card de compartilhamento do GitHub |
 
 Mudou o formato da barra? Regere e commite junto — o CI reprova se ficarem para trás.
 

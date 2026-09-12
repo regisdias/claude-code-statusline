@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <rect width="1280" height="640" fill="#0d1117"/>
+  <rect x="0" y="0" width="1280" height="6" fill="#d97757"/>
+
+  <text x="640" y="130" text-anchor="middle" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="54"
+        font-weight="bold" fill="#e6edf3">claude-code-statusline</text>
+  <text x="640" y="182" text-anchor="middle" font-family="'DejaVu Sans', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="27" fill="#8b949e">
+    Your real plan usage in the Claude Code statusline
+  </text>
+
+  <rect x="110" y="250" width="1060" height="230" rx="14" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+  <text x="150" y="300" font-family="'DejaVu Sans', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" fill="#8b949e">
+    the same numbers as /usage — no estimation
+  </text>
+  <text x="150" y="356" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="30" fill="#8b949e">ctx</text><text x="330" y="356" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="30"><tspan fill="#3fb950">[███</tspan><tspan fill="#1c3b28">░░░░░░░</tspan><tspan fill="#3fb950">]</tspan></text><text x="700" y="356" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="30" fill="#e6edf3" text-anchor="end">33%</text><text x="750" y="356" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="26" fill="#8b949e">330k/1000k</text><text x="150" y="412" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="30" fill="#8b949e">5h</text><text x="330" y="412" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="30"><tspan fill="#3fb950">[████</tspan><tspan fill="#1c3b28">░░░░░░</tspan><tspan fill="#3fb950">]</tspan></text><text x="700" y="412" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="30" fill="#e6edf3" text-anchor="end">41%</text><text x="750" y="412" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="26" fill="#8b949e">reseta 06:20</text><text x="150" y="468" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="30" fill="#8b949e">semana</text><text x="330" y="468" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="30"><tspan fill="#3fb950">[█</tspan><tspan fill="#1c3b28">░░░░░░░░░</tspan><tspan fill="#3fb950">]</tspan></text><text x="700" y="468" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="30" fill="#e6edf3" text-anchor="end">11%</text><text x="750" y="468" font-family="'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="26" fill="#8b949e">18/09 05:00</text>
+
+  <text x="640" y="562" text-anchor="middle" font-family="'DejaVu Sans', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" fill="#8b949e">
+    bash + PowerShell · Linux · WSL · macOS · Windows · MIT
+  </text>
+</svg>

@@ -17,6 +17,11 @@ O job `paridade` do CI roda o `scripts/testar.sh` em `macos-latest`, então o ca
 ser exercitado a cada push — veja [[../decisoes/ci-em-push-e-pr]]. Isso cobre a parte que quebraria em
 silêncio: horário em branco ou erro de `date`.
 
+**E achou um bug de verdade logo no primeiro push** — mas não no `date`: o `seq` do BSD alargava a barra
+cheia para 12 blocos. Corrigido, com a história em
+[[../bugs-fixes/2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]]. O `date -r` passou limpo em
+todos os seis payloads.
+
 **Falta ainda:** alguém olhando um terminal de Mac. O runner do GitHub não diz se os blocos `█░` e o
 separador `│` desenham direito no Terminal.app e no iTerm2, nem se o `Get-Reset` acerta o fuso de uma
 máquina configurada fora do UTC.

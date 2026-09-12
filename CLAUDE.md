@@ -24,6 +24,7 @@ BOM do `.ps1`. Sem `pwsh` instalado, testa só o lado shell e avisa. É o mesmo 
 | `scripts/payloads/` | Payloads de teste: verde, amarelo, vermelho, sem limites, vazio, inválido |
 | `scripts/testar.sh` | Comparação das duas implementações + guarda do BOM |
 | `scripts/gerar-svg.py` | Gera as imagens do README a partir da saída real |
+| `scripts/gerar-social-preview.py` | Gera o card 1280x640 de compartilhamento (upload manual no GitHub) |
 | `assets/` | **Gerado.** Não editar à mão — veja abaixo |
 | `README.md` / `README.pt-BR.md` | Inglês é a porta de entrada; conteúdo entra nos dois |
 | `.github/` | CI, templates de issue e de PR |
@@ -48,6 +49,9 @@ python3 scripts/gerar-svg.py --verificar # o que o CI roda
 Mexeu no formato da barra? Regere e commite junto. O `--verificar` ignora a hora do reset e as
 coordenadas `x` — sem isso ele falharia toda meia-noite.
 
+O `assets/social-preview.png` sai do `scripts/gerar-social-preview.py` (precisa de `npx`, usa o
+sharp-cli para rasterizar). O GitHub não tem API para ele: sobe à mão em Settings → General.
+
 ## Armadilhas conhecidas
 
 - O `.ps1` tem de ficar em **UTF-8 com BOM**: sem BOM, o PowerShell 5.1 lê como ANSI e o script não
@@ -58,6 +62,8 @@ coordenadas `x` — sem isso ele falharia toda meia-noite.
 - Campo novo do payload só pode ser usado se existir nas duas implementações, e sempre com degradação:
   campo ausente não pode quebrar a barra, e erro nunca vira stack trace no terminal.
 - Nada de dependência que suba runtime a cada desenho da barra: o alvo é ~50 ms por execução.
+- **`seq` não entra no caminho de desenho:** o do BSD infere direção e `seq 1 0` imprime `1 0`, o que já
+  alargou a barra cheia no macOS. Preencher com `printf` e substituir não tem caso de borda.
 - O lint do CI é `shellcheck --severity=warning`. Supressão só com comentário explicando o porquê.
 
 ## Vault do projeto
