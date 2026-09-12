@@ -30,10 +30,9 @@ Repositório público, licença MIT. A instalação e o uso ficam no README ([in
 
 - [[pendentes/2026-09-12-confirmar-no-macos|Confirmar no macOS]] — `fazendo`: o CI achou e corrigiu o
   bug do `seq`; falta um terminal de Mac de verdade
-- [[pendentes/2026-09-12-rotulos-da-barra-em-portugues|Rótulos da barra em português]] — `semana` e
-  `sessão` numa barra de projeto em inglês
 
-Resolvidas ficam em `pendentes/arquivo/`.
+Resolvidas ficam em `pendentes/arquivo/` — a mais recente é
+[[pendentes/arquivo/2026-09-12-rotulos-da-barra-em-portugues|a tradução dos rótulos da barra]].
 
 ## O que é gerado, e não escrito à mão
 

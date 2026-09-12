@@ -18,8 +18,8 @@
 # HOW TO READ IT
 #   ctx      → how much of this conversation's context window is used (not a plan quota)
 #   5h       → 5-hour block of your plan, with the time it resets
-#   semana   → weekly plan limit ("week")
-#   sessão   → cost of this conversation, in USD ("session")
+#   week     → weekly plan limit
+#   session  → cost of this conversation, in USD
 #   Colors: green up to 60%, yellow up to 85%, red above that.
 
 $ErrorActionPreference = 'SilentlyContinue'
@@ -80,7 +80,7 @@ $ctxPct = $null
 if ($dados -and $dados.context_window) { $ctxPct = $dados.context_window.used_percentage }
 
 if ($null -eq $ctxPct) {
-    $partes = @("$modelo  aguardando...")
+    $partes = @("$modelo  waiting...")
 } else {
     $tamanho = $dados.context_window.context_window_size
     $usados = $null
@@ -103,20 +103,20 @@ if ($limites -and $null -ne $limites.five_hour.used_percentage) {
     $pct = $limites.five_hour.used_percentage
     $quandoReseta = Get-Reset $limites.five_hour.resets_at
     $texto = '5h {0}[{1}]{2} {3}%' -f (Get-Color $pct), (Get-Bar $pct), $RESET, (Get-Inteiro $pct)
-    if ($quandoReseta) { $texto += " · reseta $quandoReseta" }
+    if ($quandoReseta) { $texto += " · resets $quandoReseta" }
     $partes += $texto
 }
 
 if ($limites -and $null -ne $limites.seven_day.used_percentage) {
     $pct = $limites.seven_day.used_percentage
     $quandoReseta = Get-Reset $limites.seven_day.resets_at
-    $texto = 'semana {0}[{1}]{2} {3}%' -f (Get-Color $pct), (Get-Bar $pct), $RESET, (Get-Inteiro $pct)
+    $texto = 'week {0}[{1}]{2} {3}%' -f (Get-Color $pct), (Get-Bar $pct), $RESET, (Get-Inteiro $pct)
     if ($quandoReseta) { $texto += " · $quandoReseta" }
     $partes += $texto
 }
 
 if ($dados -and $dados.cost -and $dados.cost.total_cost_usd -gt 0) {
-    $partes += ('sessão $' + ([Math]::Round([double]$dados.cost.total_cost_usd, 2)).ToString('0.00', $INV))
+    $partes += ('session $' + ([Math]::Round([double]$dados.cost.total_cost_usd, 2)).ToString('0.00', $INV))
 }
 
 [Console]::Out.Write(($partes -join '  │  '))

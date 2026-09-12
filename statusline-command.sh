@@ -21,8 +21,8 @@
 # HOW TO READ IT
 #   ctx      → how much of this conversation's context window is used (not a plan quota)
 #   5h       → 5-hour block of your plan, with the time it resets
-#   semana   → weekly plan limit ("week")
-#   sessão   → cost of this conversation, in USD ("session")
+#   week     → weekly plan limit
+#   session  → cost of this conversation, in USD
 #   Colors: green up to 60%, yellow up to 85%, red above that.
 
 input=$(cat)
@@ -98,7 +98,7 @@ EOF
 # Context window
 # ---------------------------------------------------------------------------
 if [ -z "$ctx_pct" ] || [ "$ctx_pct" = "-" ]; then
-    ctx_part=$(printf "%s  aguardando..." "${modelo:-Claude}")
+    ctx_part=$(printf "%s  waiting..." "${modelo:-Claude}")
 else
     ctx_int=$(echo "$ctx_pct" | awk '{printf "%.0f", $1}')
     if [ "$ctx_usados" != "-" ] && [ "$ctx_size" != "-" ]; then
@@ -117,19 +117,19 @@ bloco_part=""
 if [ "$bloco_pct" != "-" ] && [ -n "$bloco_pct" ]; then
     reset=$(hora_reset "$bloco_reset")
     bloco_part=$(printf "5h $(pick_color "$bloco_pct")[%s]${RESET} %.0f%%%s" \
-        "$(make_bar "$bloco_pct" 10)" "$bloco_pct" "${reset:+ · reseta $reset}")
+        "$(make_bar "$bloco_pct" 10)" "$bloco_pct" "${reset:+ · resets $reset}")
 fi
 
 semana_part=""
 if [ "$semana_pct" != "-" ] && [ -n "$semana_pct" ]; then
     reset=$(hora_reset "$semana_reset")
-    semana_part=$(printf "semana $(pick_color "$semana_pct")[%s]${RESET} %.0f%%%s" \
+    semana_part=$(printf "week $(pick_color "$semana_pct")[%s]${RESET} %.0f%%%s" \
         "$(make_bar "$semana_pct" 10)" "$semana_pct" "${reset:+ · $reset}")
 fi
 
 custo_part=""
 if [ "$custo" != "-" ] && [ -n "$custo" ]; then
-    custo_part=$(echo "$custo" | awk '{if ($1 > 0) printf "sessão $%.2f", $1}')
+    custo_part=$(echo "$custo" | awk '{if ($1 > 0) printf "session $%.2f", $1}')
 fi
 
 # ---------------------------------------------------------------------------

@@ -15,8 +15,8 @@ casos que importam já estão em `scripts/payloads/`:
 | `amarelo.json` | limiar amarelo (60–85%) |
 | `vermelho.json` | limiar vermelho (acima de 85%) |
 | `sem-limites.json` | plano sem cota, só a barra `ctx` |
-| `vazio.json` | `{}` → `Claude  aguardando...` |
-| `invalido.json` | texto que não é JSON → `Claude  aguardando...` |
+| `vazio.json` | `{}` → `Claude  waiting...` |
+| `invalido.json` | texto que não é JSON → `Claude  waiting...` |
 
 ## O atalho: `scripts/testar.sh`
 

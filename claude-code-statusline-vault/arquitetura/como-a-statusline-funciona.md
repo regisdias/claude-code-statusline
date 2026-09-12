@@ -19,8 +19,8 @@ Os campos usados, todos opcionais na leitura (campo ausente vira `-` no shell e 
 | `context_window.used_percentage` | barra `ctx` |
 | `context_window.context_window_size` e `current_usage.input_tokens` | `330k/1000k` |
 | `rate_limits.five_hour.used_percentage` e `.resets_at` | barra `5h` e a hora do reset |
-| `rate_limits.seven_day.used_percentage` e `.resets_at` | barra `semana` |
-| `cost.total_cost_usd` | `sessão $12.35` |
+| `rate_limits.seven_day.used_percentage` e `.resets_at` | barra `week` |
+| `cost.total_cost_usd` | `session $12.35` |
 
 `resets_at` é epoch em segundos, formatado com o relógio local: só a hora quando o reset é hoje, dia e
 hora quando é outro dia.
@@ -35,7 +35,7 @@ hora quando é outro dia.
 ## Degradação
 
 - Sem `rate_limits` (Claude Code anterior ao 2.1.251, ou cobrança por API key): sai só a barra `ctx`.
-- Payload vazio, inválido, ou `jq` ausente: sai `<modelo>  aguardando...`.
+- Payload vazio, inválido, ou `jq` ausente: sai `<modelo>  waiting...`.
 
 Nenhum caminho de erro imprime stack trace: a statusline é uma linha do terminal, e barulho ali atrapalha
 quem está trabalhando.

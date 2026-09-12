@@ -6,7 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-Nothing yet.
+### Changed
+
+- **The bar's labels are in English.** `semana` → `week`, `· reseta` → `· resets`, `sessão $` →
+  `session $`, and `aguardando...` → `waiting...`. The three Portuguese words sat in a line that is
+  otherwise English, and read as a bug rather than a choice to anyone who does not speak it. The
+  rendered line is the only thing that changed — no payload field, no colour, no spacing.
 
 ## [1.0.0] — 2026-09-12
 
@@ -20,7 +25,7 @@ like a fix was a fix to what people could already `curl`.
 - `statusline-command.ps1` — same output, byte for byte, for Claude Code running natively on Windows,
   with no dependency beyond Windows PowerShell 5.1.
 - Four segments — context window, 5-hour block, weekly limit and session cost — each dropping out on
-  its own when the corresponding payload field is absent. A malformed payload renders `aguardando...`
+  its own when the corresponding payload field is absent. A malformed payload renders `waiting...`
   rather than a stack trace.
 - Colour thresholds: green to 60%, yellow to 85%, red above.
 - `install.sh` — one-line installer for Linux, WSL, macOS and Git Bash. Downloads the script, wires up

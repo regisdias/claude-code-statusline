@@ -35,7 +35,7 @@ bash statusline-command.sh < scripts/payloads/verde.json
 Esperado, igual ao do Linux:
 
 ```
-Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · reseta 06:20  │  semana [█░░░░░░░░░] 11% · 18/09 05:00  │  sessão $12.35
+Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
 ```
 
 O que pode divergir: o horário do reset (fuso da máquina) e a data `18/09 05:00`, que depende de quando

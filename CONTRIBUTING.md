@@ -41,7 +41,7 @@ These are not style preferences — each one comes from a bug that already happe
 - **PowerShell variables are case-insensitive.** `$reset` and `$RESET` are the same variable. Never name
   a local that differs from a constant only by case.
 - **Every payload field is optional.** A missing field drops its own segment and leaves the rest intact.
-  An error never becomes a stack trace in someone's terminal — the worst case is `aguardando...`.
+  An error never becomes a stack trace in someone's terminal — the worst case is `waiting...`.
 - **No new runtime dependency.** The statusline is redrawn constantly; anything that spawns a process or
   boots a runtime per render is out. The target is around 50 ms per execution.
 - **A new payload field may only be used once both implementations support it.**

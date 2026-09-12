@@ -64,15 +64,15 @@ A barra aparece no próximo desenho, sem reiniciar nada.
 ## O que aparece
 
 ```
-Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · reseta 06:20  │  semana [█░░░░░░░░░] 11% · 18/09 05:00  │  sessão $12.35
+Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
 ```
 
 | Trecho | O que é |
 |---|---|
 | `ctx` | Janela de contexto da conversa atual. É local: não tem relação com a cota do plano. |
 | `5h` | Bloco de 5 horas do plano, e a hora em que zera. |
-| `semana` | Limite semanal do plano, e quando zera. |
-| `sessão` | Custo desta conversa, em dólar. |
+| `week` | Limite semanal do plano, e quando zera. |
+| `session` | Custo desta conversa, em dólar. |
 
 As barras ficam **verdes** até 60%, **amarelas** até 85% e **vermelhas** acima disso.
 
@@ -104,11 +104,11 @@ subprocesso, sem ler transcrição, sem calibragem.
 
 ## Degrada, mas não quebra
 
-Campo que falta derruba só o seu trecho e mantém o resto. Payload malformado imprime `aguardando...` em
+Campo que falta derruba só o seu trecho e mantém o resto. Payload malformado imprime `waiting...` em
 vez de despejar um stack trace no seu terminal.
 
 <div align="center">
-<img src="assets/demo-fallback.svg" alt="Statusline degradando com elegância: plano sem limites de cota mostra só a barra de contexto, e payload vazio mostra 'aguardando...'." width="100%">
+<img src="assets/demo-fallback.svg" alt="Statusline degradando com elegância: plano sem limites de cota mostra só a barra de contexto, e payload vazio mostra 'waiting...'." width="100%">
 </div>
 
 ## Requisitos
@@ -169,7 +169,7 @@ bash scripts/testar.sh
 | Sintoma | Causa |
 |---|---|
 | Só a barra `ctx` aparece | Claude Code anterior ao 2.1.251, ou plano sem limite de cota (cobrança por API key). |
-| `aguardando...` | O payload veio vazio, ou falta o `jq` (versão shell). |
+| `waiting...` | O payload veio vazio, ou falta o `jq` (versão shell). |
 | Os blocos viram `?` no Windows | O terminal não está em UTF-8. O Windows Terminal resolve; o console antigo pode não. |
 | Erro de parser no PowerShell | O `.ps1` perdeu o BOM UTF-8. Baixe de novo. |
 | Sem cores | O terminal está removendo os códigos ANSI. |

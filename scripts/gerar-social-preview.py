@@ -54,8 +54,8 @@ def main() -> int:
 
     linhas = [
         ("ctx", ctx["used_percentage"], "330k/1000k"),
-        ("5h", limites["five_hour"]["used_percentage"], "reseta 06:20"),
-        ("semana", limites["seven_day"]["used_percentage"], "18/09 05:00"),
+        ("5h", limites["five_hour"]["used_percentage"], "resets 06:20"),
+        ("week", limites["seven_day"]["used_percentage"], "18/09 05:00"),
     ]
 
     corpo = []

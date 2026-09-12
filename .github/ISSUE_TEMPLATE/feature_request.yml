@@ -27,7 +27,7 @@ body:
       label: What would the line look like?
       description: Sketch the rendered output. A mock is worth more than a description.
       render: text
-      placeholder: "Opus 5  ctx [███░░░░░░░] 33%  │  5h [████░░░░░░] 41% ↑  │  semana [█░░░░░░░░░] 11%"
+      placeholder: "Opus 5  ctx [███░░░░░░░] 33%  │  5h [████░░░░░░] 41% ↑  │  week [█░░░░░░░░░] 11%"
     validations:
       required: true
 

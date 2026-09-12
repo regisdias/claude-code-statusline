@@ -28,7 +28,7 @@ body:
         It rendered:
           Opus 5  ctx [███░░░░░░░] 33%
 
-        I expected the 5h and semana segments too — /usage shows 41% and 11%.
+        I expected the 5h and week segments too — /usage shows 41% and 11%.
     validations:
       required: true
 

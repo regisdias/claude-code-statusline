@@ -64,15 +64,15 @@ The bar shows up on the next render. No restart needed.
 ## What you get
 
 ```
-Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · reseta 06:20  │  semana [█░░░░░░░░░] 11% · 18/09 05:00  │  sessão $12.35
+Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
 ```
 
 | Segment | What it means |
 |---|---|
 | `ctx` | Context window of the current conversation. Local to the session, unrelated to your plan quota. |
 | `5h` | 5-hour block of your plan, and the time it resets. |
-| `semana` | Weekly plan limit, and when it resets. |
-| `sessão` | Cost of this conversation, in USD. |
+| `week` | Weekly plan limit, and when it resets. |
+| `session` | Cost of this conversation, in USD. |
 
 Bars turn **green** up to 60%, **yellow** up to 85% and **red** above that.
 
@@ -103,11 +103,11 @@ transcript parsing, no calibration.
 
 ## It degrades, it never breaks
 
-A missing field drops its segment and keeps the rest. A malformed payload prints `aguardando...` instead
+A missing field drops its segment and keeps the rest. A malformed payload prints `waiting...` instead
 of a stack trace in your terminal.
 
 <div align="center">
-<img src="assets/demo-fallback.svg" alt="Statusline falling back gracefully: plan without rate limits shows only the context bar, and an empty payload shows 'aguardando...'." width="100%">
+<img src="assets/demo-fallback.svg" alt="Statusline falling back gracefully: plan without rate limits shows only the context bar, and an empty payload shows 'waiting...'." width="100%">
 </div>
 
 ## Requirements
@@ -168,7 +168,7 @@ bash scripts/testar.sh
 | Symptom | Cause |
 |---|---|
 | Only the `ctx` bar shows | Claude Code older than 2.1.251, or a plan with no rate limits (API key billing). |
-| `aguardando...` | The payload arrived empty, or `jq` is missing (shell version). |
+| `waiting...` | The payload arrived empty, or `jq` is missing (shell version). |
 | Blocks show as `?` on Windows | The terminal is not in UTF-8. Windows Terminal handles it; the old console host may not. |
 | PowerShell parser error | The `.ps1` lost its UTF-8 BOM. Re-download it. |
 | No colors | Your terminal is stripping ANSI codes. |
