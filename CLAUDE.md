@@ -1,26 +1,64 @@
 # claude-code-statusline
 
 Statusline do Claude Code em duas implementações: `statusline-command.sh` (Linux, WSL, macOS, Git Bash)
-e `statusline-command.ps1` (Windows nativo, PowerShell 5.1+). O repositório é público e a documentação de
-instalação e uso é o [README](README.md), que é bilíngue.
+e `statusline-command.ps1` (Windows nativo, PowerShell 5.1+). Repositório público.
 
 ## Regra central: as duas implementações têm a mesma saída
 
 Para o mesmo payload, o shell e o PowerShell devolvem **os mesmos bytes**. Mudança de formato entra nas
-duas no mesmo commit, e o teste de comparação roda antes de publicar — o passo a passo está em
-`claude-code-statusline-vault/guias/testar-local.md`.
+duas no mesmo commit.
 
-Antes de publicar, rode também os quatro payloads (completo, sem `rate_limits`, `{}` e texto inválido).
+```bash
+bash scripts/testar.sh
+```
+
+Roda todos os payloads de `scripts/payloads/` nas duas implementações, compara byte a byte e confere o
+BOM do `.ps1`. Sem `pwsh` instalado, testa só o lado shell e avisa. É o mesmo comando do CI.
+
+## Mapa do repositório
+
+| Caminho | O que é |
+|---|---|
+| `statusline-command.sh` / `.ps1` | As duas implementações — o produto |
+| `install.sh` | Instalador de uma linha citado no README (Linux, WSL, macOS, Git Bash) |
+| `scripts/payloads/` | Payloads de teste: verde, amarelo, vermelho, sem limites, vazio, inválido |
+| `scripts/testar.sh` | Comparação das duas implementações + guarda do BOM |
+| `scripts/gerar-svg.py` | Gera as imagens do README a partir da saída real |
+| `assets/` | **Gerado.** Não editar à mão — veja abaixo |
+| `README.md` / `README.pt-BR.md` | Inglês é a porta de entrada; conteúdo entra nos dois |
+| `.github/` | CI, templates de issue e de PR |
+
+## Documentação em dois lugares diferentes
+
+- **README (inglês e pt-BR):** instalar e usar. É o que a pessoa de fora lê.
+- **Vault (`claude-code-statusline-vault/`):** por que as coisas são como são, e o que está em aberto.
+
+Mudança de conteúdo no README entra nos **dois** arquivos — não há geração automática de um a partir do
+outro.
+
+## `assets/` é gerado
+
+`assets/demo.svg` e `assets/demo-fallback.svg` saem de:
+
+```bash
+python3 scripts/gerar-svg.py             # regerar
+python3 scripts/gerar-svg.py --verificar # o que o CI roda
+```
+
+Mexeu no formato da barra? Regere e commite junto. O `--verificar` ignora a hora do reset e as
+coordenadas `x` — sem isso ele falharia toda meia-noite.
 
 ## Armadilhas conhecidas
 
 - O `.ps1` tem de ficar em **UTF-8 com BOM**: sem BOM, o PowerShell 5.1 lê como ANSI e o script não
-  compila. Conferir com `head -c3 statusline-command.ps1 | xxd -p` (tem de ser `efbbbf`).
+  compila. Conferir com `head -c3 statusline-command.ps1 | xxd -p` (tem de ser `efbbbf`). O
+  `.gitattributes` mantém o arquivo em CRLF pelo mesmo motivo — não normalizar.
 - **Variável em PowerShell não distingue maiúscula:** `$reset` e `$RESET` são a mesma. Não crie local que
   difira de uma constante só pela caixa.
 - Campo novo do payload só pode ser usado se existir nas duas implementações, e sempre com degradação:
   campo ausente não pode quebrar a barra, e erro nunca vira stack trace no terminal.
 - Nada de dependência que suba runtime a cada desenho da barra: o alvo é ~50 ms por execução.
+- O lint do CI é `shellcheck --severity=warning`. Supressão só com comentário explicando o porquê.
 
 ## Vault do projeto
 
@@ -45,3 +83,5 @@ versionado junto com o código. **Entrada única: `claude-code-statusline-vault/
 
 - Branch `main`. Mensagens de commit em PT-BR.
 - Commit e push de código só a pedido de quem mantém o repositório; mudança no vault segue a regra acima.
+- A `main` é a produção: o README instala com `curl .../main/install.sh | bash`. Push quebrado é
+  instalação quebrada — por isso o CI roda em push e PR.

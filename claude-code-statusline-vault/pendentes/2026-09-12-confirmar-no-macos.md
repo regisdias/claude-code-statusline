@@ -1,6 +1,6 @@
 ---
 tipo: pendente
-status: aberto
+status: fazendo
 data: 2026-09-12
 codigo: CCS-1
 ---
@@ -9,12 +9,22 @@ codigo: CCS-1
 
 O `statusline-command.sh` formata o horário de reset com `date`, e as duas famílias divergem: `date -d`
 é GNU (Linux, WSL, Git Bash) e `date -r` é BSD (macOS). A função `fmt_epoch` tenta o GNU e cai no BSD
-quando o primeiro falha, mas **esse segundo caminho nunca foi executado num Mac**.
+quando o primeiro falha, mas **esse segundo caminho nunca foi executado num Mac de verdade**.
 
-## Como confirmar
+## Andamento
+
+O job `paridade` do CI roda o `scripts/testar.sh` em `macos-latest`, então o caminho `date -r` passou a
+ser exercitado a cada push — veja [[../decisoes/ci-em-push-e-pr]]. Isso cobre a parte que quebraria em
+silêncio: horário em branco ou erro de `date`.
+
+**Falta ainda:** alguém olhando um terminal de Mac. O runner do GitHub não diz se os blocos `█░` e o
+separador `│` desenham direito no Terminal.app e no iTerm2, nem se o `Get-Reset` acerta o fuso de uma
+máquina configurada fora do UTC.
+
+## Como confirmar na mão
 
 ```bash
-bash statusline-command.sh < example-payload.json
+bash statusline-command.sh < scripts/payloads/verde.json
 ```
 
 Esperado, igual ao do Linux:
