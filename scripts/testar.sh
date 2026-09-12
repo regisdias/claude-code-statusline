@@ -83,6 +83,8 @@ fixture "comum/.git/HEAD"      $'ref: refs/heads/main\n'
 fixture "com-barra/.git/HEAD"  $'ref: refs/heads/docs/assunto\n'
 fixture "solto/.git/HEAD"      $'3b230b4a9f8e7d6c5b4a3928176554433221100f\n'
 fixture "crlf/.git/HEAD"       $'ref: refs/heads/feature/x\r\n'
+# Sem newline final: `read` devolve não-zero mas preenche a variável
+fixture "sem-nl/.git/HEAD"     'ref: refs/heads/sem-newline'
 mkdir -p "$temporario/fundo/a/b/c"
 fixture "fundo/.git/HEAD"      $'ref: refs/heads/main\n'
 # Worktree/submodule: ".git" is a file pointing at the real git dir
@@ -110,6 +112,7 @@ branch_caso "simples"   "$temporario/comum"      "main"
 branch_caso "com-barra" "$temporario/com-barra"  "docs/assunto"
 branch_caso "detached"  "$temporario/solto"      "3b230b4"
 branch_caso "crlf"      "$temporario/crlf"       "feature/x"
+branch_caso "sem-nl"    "$temporario/sem-nl"     "sem-newline"
 branch_caso "walk-up"   "$temporario/fundo/a/b/c" "main"
 branch_caso "worktree"  "$temporario/arvore"     "wt-branch"
 

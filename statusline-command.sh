@@ -86,8 +86,12 @@ achar_branch() {
             head="$marca/HEAD"
         elif [ -f "$marca" ]; then
             # Worktree or submodule: ".git" is a file holding "gitdir: <path>"
-            read -r gitdir < "$marca" || return
+            # `read` returns non-zero on a file with no trailing newline but still
+            # fills the variable, so check the content instead of the exit code —
+            # PowerShell's ReadAllLines has no such quirk, and the two must agree.
+            read -r gitdir < "$marca"
             gitdir=${gitdir%$'\r'}
+            [ -n "$gitdir" ] || return
             case $gitdir in
                 "gitdir: "*) gitdir=${gitdir#gitdir: } ;;
                 *) return ;;
@@ -100,8 +104,9 @@ achar_branch() {
         fi
 
         [ -r "$head" ] || return
-        read -r cabeca < "$head" || return
+        read -r cabeca < "$head"
         cabeca=${cabeca%$'\r'}   # .git/HEAD written on Windows carries a CR
+        [ -n "$cabeca" ] || return
         case $cabeca in
             "ref: "*)
                 cabeca=${cabeca#ref: }

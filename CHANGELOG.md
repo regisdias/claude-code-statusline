@@ -18,7 +18,8 @@ All notable changes to this project are documented here. The format follows
   rule. Reading `.git/HEAD` costs a file open: 0.1 ms against 1.35 ms, and nothing spawned.
 
   Handled: branch names containing a slash, detached HEAD (short sha), `.git` as a file pointing at a
-  worktree or submodule, a `HEAD` written with CRLF, and walking up from a subdirectory.
+  worktree or submodule, a `HEAD` written with CRLF, a `HEAD` with no trailing newline, and
+  walking up from a subdirectory.
 - Branch fixtures in `scripts/testar.sh` covering all six of those cases plus the outside-a-repo one,
   so the two implementations are compared on them too.
 
