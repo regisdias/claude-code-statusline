@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Lint every shell script
+        run: shellcheck --severity=warning statusline-command.sh install.sh scripts/testar.sh
+
+  powershell:
+    name: PSScriptAnalyzer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Analyse statusline-command.ps1
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
+          $achados = Invoke-ScriptAnalyzer -Path statusline-command.ps1 -Severity Error,Warning
+          if ($achados) { $achados | Format-Table -AutoSize | Out-String | Write-Host; exit 1 }
+          Write-Host 'sem achados'
+
+  bom:
+    name: UTF-8 BOM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # Without the BOM, Windows PowerShell 5.1 reads the file as ANSI and the
+      # block characters break the parser before the script ever runs.
+      - name: statusline-command.ps1 must keep its BOM
+        run: |
+          bom=$(head -c3 statusline-command.ps1 | od -An -tx1 | tr -d ' \n')
+          [ "$bom" = "efbbbf" ] || { echo "BOM ausente: $bom"; exit 1; }
+          echo "ok"
+
+  paridade:
+    name: Same bytes (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install jq
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            brew list jq >/dev/null 2>&1 || brew install jq
+          else
+            sudo apt-get update -qq && sudo apt-get install -y -qq jq
+          fi
+      - name: shell vs PowerShell, byte for byte
+        run: bash scripts/testar.sh
+
+  windows:
+    name: Windows PowerShell 5.1
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Render every payload
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-ChildItem scripts/payloads/*.json | ForEach-Object {
+              $saida = Get-Content $_.FullName -Raw |
+                  powershell -NoProfile -ExecutionPolicy Bypass -File .\statusline-command.ps1
+              if ([string]::IsNullOrWhiteSpace($saida)) {
+                  Write-Host "FALHA $($_.Name): saída vazia"
+                  exit 1
+              }
+              Write-Host "ok $($_.Name): $saida"
+          }
+
+  imagens:
+    name: README images are current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install jq
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq jq
+      # The SVGs are rendered from the script's real output, never hand-drawn.
+      # A format change that forgets to regenerate them leaves the README
+      # advertising a bar the script no longer prints.
+      - name: Committed images match the current output
+        run: python3 scripts/gerar-svg.py --verificar
+
+      - name: Committed images are well-formed SVG
+        run: |
+          for svg in assets/*.svg; do
+            python3 -c "import sys, xml.dom.minidom as m; m.parse(sys.argv[1])" "$svg"
+            echo "ok $svg"
+          done
