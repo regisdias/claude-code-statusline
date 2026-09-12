@@ -17,6 +17,7 @@ catches a format change nobody regenerated, without failing every day at
 midnight.
 """
 
+import datetime
 import html
 import json
 import re
@@ -24,7 +25,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import time
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -61,9 +61,12 @@ def rodar(payload: Path, branch: bool = True) -> str:
 
     Two things are rewritten so the picture stays honest and reproducible:
 
-    - the fixed epochs are pushed to "in 2 hours" and "in 3 days", so the image
-      shows both reset formats the script produces (`06:20` today, `18/09 05:00`
-      beyond);
+    - the fixed epochs are anchored to the local day, so each segment always
+      renders in the same form: the 5-hour block lands today (short `06:20`) and
+      the weekly one six days out (long `18/09 05:00`). Anchoring to "now + 2h"
+      instead would flip the 5-hour block to the long form whenever the run
+      happened within two hours of midnight, and six extra characters move the
+      image width;
     - `workspace.current_dir` points at a throwaway fixture whose `.git/HEAD`
       always says `main`, so the bar shows a branch without the image depending
       on whichever branch this repo happens to be on.
@@ -74,10 +77,17 @@ def rodar(payload: Path, branch: bool = True) -> str:
         dados = None
 
     if isinstance(dados, dict) and "rate_limits" in dados:
-        agora = int(time.time())
-        for chave, adiante in (("five_hour", 2 * 3600), ("seven_day", 3 * 86400)):
+        # Midnight today, local time — the anchor both offsets hang off.
+        hoje = datetime.datetime.now().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        quando = {
+            "five_hour": hoje + datetime.timedelta(hours=6, minutes=20),
+            "seven_day": hoje + datetime.timedelta(days=6, hours=5),
+        }
+        for chave, momento in quando.items():
             if chave in dados["rate_limits"]:
-                dados["rate_limits"][chave]["resets_at"] = agora + adiante
+                dados["rate_limits"][chave]["resets_at"] = int(momento.timestamp())
         if branch:
             dados["workspace"] = {"current_dir": str(fixture_branch())}
         entrada = json.dumps(dados).encode("utf-8")
