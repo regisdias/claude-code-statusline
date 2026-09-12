@@ -44,6 +44,10 @@ docs/14-worktree-section
 
 Open an issue first — the number in the branch name is what ties the two together.
 
+A task branch is **squashed** into `develop` — one commit per task. Promotions up the chain
+(`develop → stg → main`) are **merge commits**, so the three branches stay on one lineage; squashing or
+rebasing a promotion would rewrite SHAs and make them diverge permanently.
+
 **Versioning is [semantic](https://semver.org).** A `fix/…` branch bumps the patch, a `feat/…` branch
 the minor, and anything that changes the rendered line in a way people would notice gets called out in
 the `CHANGELOG` under the version it ships in. Tags are cut from `main` only.
