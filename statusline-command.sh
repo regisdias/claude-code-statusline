@@ -19,6 +19,7 @@
 #   5. The bar shows up on the next render. No restart needed.
 #
 # HOW TO READ IT
+#   <branch> → current git branch, when the session is inside a repository
 #   ctx      → how much of this conversation's context window is used (not a plan quota)
 #   5h       → 5-hour block of your plan, with the time it resets
 #   week     → weekly plan limit
@@ -64,6 +65,54 @@ make_bar() {
     printf "%s%s" "${cheio// /█}" "${vazio// /░}"
 }
 
+# Current git branch, read straight from .git/HEAD.
+#
+# Claude Code does not send the branch in the payload (`worktree.branch` exists only
+# inside a worktree session), and the documented way is `git branch --show-current`.
+# That is an exec of git on every render — measured at ~1.35 ms here and much worse on
+# Windows. The branch is plain text in .git/HEAD, and walking up to find it is just
+# parameter expansion, so this costs ~0.1 ms and spawns nothing.
+#
+# Sets BRANCH instead of printing: a command substitution would fork, which is the one
+# thing this function exists to avoid.
+BRANCH=""
+achar_branch() {
+    local dir=$1 marca head cabeca gitdir
+    [ -n "$dir" ] && [ "$dir" != "-" ] || return
+    while [ -n "$dir" ] && [ "$dir" != "/" ]; do
+        marca="$dir/.git"
+        head=""
+        if [ -d "$marca" ]; then
+            head="$marca/HEAD"
+        elif [ -f "$marca" ]; then
+            # Worktree or submodule: ".git" is a file holding "gitdir: <path>"
+            read -r gitdir < "$marca" || return
+            gitdir=${gitdir%$'\r'}
+            case $gitdir in
+                "gitdir: "*) gitdir=${gitdir#gitdir: } ;;
+                *) return ;;
+            esac
+            case $gitdir in /*) ;; *) gitdir="$dir/$gitdir" ;; esac
+            head="$gitdir/HEAD"
+        else
+            dir=${dir%/*}
+            continue
+        fi
+
+        [ -r "$head" ] || return
+        read -r cabeca < "$head" || return
+        cabeca=${cabeca%$'\r'}   # .git/HEAD written on Windows carries a CR
+        case $cabeca in
+            "ref: "*)
+                cabeca=${cabeca#ref: }
+                BRANCH=${cabeca#refs/heads/}
+                ;;
+            *) BRANCH=${cabeca:0:7} ;;   # detached HEAD: short sha
+        esac
+        return
+    done
+}
+
 # Format epoch: `date -d` is GNU (Linux, WSL, Git Bash); `date -r` is BSD (macOS)
 fmt_epoch() {
     date -d "@$1" "+$2" 2>/dev/null || date -r "$1" "+$2" 2>/dev/null
@@ -80,7 +129,7 @@ hora_reset() {
 }
 
 # Single read of the payload; "-" marks a missing field
-IFS=$'\t' read -r modelo ctx_pct ctx_size ctx_usados bloco_pct bloco_reset semana_pct semana_reset custo <<EOF
+IFS=$'\t' read -r modelo ctx_pct ctx_size ctx_usados bloco_pct bloco_reset semana_pct semana_reset custo dir_atual <<EOF
 $(printf '%s' "$input" | jq -r '[
     (.model.display_name // "Claude"),
     (.context_window.used_percentage // "-"),
@@ -90,7 +139,8 @@ $(printf '%s' "$input" | jq -r '[
     (.rate_limits.five_hour.resets_at // "-"),
     (.rate_limits.seven_day.used_percentage // "-"),
     (.rate_limits.seven_day.resets_at // "-"),
-    (.cost.total_cost_usd // "-")
+    (.cost.total_cost_usd // "-"),
+    (.workspace.current_dir // .cwd // "-")
 ] | @tsv' 2>/dev/null)
 EOF
 
@@ -135,8 +185,11 @@ fi
 # ---------------------------------------------------------------------------
 # Join whatever exists, separated by │
 # ---------------------------------------------------------------------------
+achar_branch "$dir_atual"
+
 saida="$ctx_part"
 for parte in "$bloco_part" "$semana_part" "$custo_part"; do
     [ -n "$parte" ] && saida="$saida  │  $parte"
 done
+[ -n "$BRANCH" ] && saida="$BRANCH  │  $saida"
 printf "%b" "$saida"

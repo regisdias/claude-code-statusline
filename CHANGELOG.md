@@ -6,7 +6,26 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **The current git branch, at the start of the line** ([#1](https://github.com/regisdias/claude-code-statusline/issues/1)).
+  Read live from `.git/HEAD` on every render, so it follows a `git checkout` mid-session, and dropped
+  entirely outside a git repository.
+
+  Claude Code does not send the branch in the payload — `workspace.repo` carries host/owner/name, and
+  `worktree.branch` exists only inside a worktree session — and the documented approach is
+  `git branch --show-current`. That is an exec of git per render, against this project's no-subprocess
+  rule. Reading `.git/HEAD` costs a file open: 0.1 ms against 1.35 ms, and nothing spawned.
+
+  Handled: branch names containing a slash, detached HEAD (short sha), `.git` as a file pointing at a
+  worktree or submodule, a `HEAD` written with CRLF, and walking up from a subdirectory.
+- Branch fixtures in `scripts/testar.sh` covering all six of those cases plus the outside-a-repo one,
+  so the two implementations are compared on them too.
+
+### Changed
+
+- CI now runs on `develop` and `stg` as well as `main`, following the branching model documented in
+  `CONTRIBUTING.md`.
 
 ## [1.1.0] — 2026-09-12
 

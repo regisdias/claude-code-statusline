@@ -64,11 +64,12 @@ A barra aparece no próximo desenho, sem reiniciar nada.
 ## O que aparece
 
 ```
-Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
+main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
 ```
 
 | Trecho | O que é |
 |---|---|
+| `main` | Branch do git no momento, lida direto do `.git/HEAD`. Some fora de um repositório. |
 | `ctx` | Janela de contexto da conversa atual. É local: não tem relação com a cota do plano. |
 | `5h` | Bloco de 5 horas do plano, e a hora em que zera. |
 | `week` | Limite semanal do plano, e quando zera. |
@@ -174,6 +175,7 @@ bash scripts/testar.sh
 | Erro de parser no PowerShell | O `.ps1` perdeu o BOM UTF-8. Baixe de novo. |
 | Sem cores | O terminal está removendo os códigos ANSI. |
 | Hora do reset errada | Fuso do seu computador: o script formata o epoch com o relógio local. |
+| A branch não aparece | A sessão não está dentro de um repositório git, ou o Claude Code é anterior à versão que manda `workspace.current_dir`. |
 
 Continua travado? [Abra uma issue](https://github.com/regisdias/claude-code-statusline/issues/new/choose).
 
