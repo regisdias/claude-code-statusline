@@ -1,0 +1,14 @@
+{
+  "model": { "display_name": "Sonnet 5" },
+  "version": "2.1.269",
+  "cost": { "total_cost_usd": 4.7 },
+  "context_window": {
+    "used_percentage": 62,
+    "context_window_size": 200000,
+    "current_usage": { "input_tokens": 124000 }
+  },
+  "rate_limits": {
+    "five_hour": { "used_percentage": 78, "resets_at": 1789204800 },
+    "seven_day": { "used_percentage": 34, "resets_at": 1789718400 }
+  }
+}

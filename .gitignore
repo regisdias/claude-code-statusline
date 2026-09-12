@@ -3,3 +3,6 @@ claude-code-statusline-vault/.obsidian/
 
 # Saídas de teste
 /tmp-saida-*.txt
+
+# Backups do instalador ao mexer no settings.json
+*.bak

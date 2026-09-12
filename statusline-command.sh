@@ -46,6 +46,7 @@ pick_color() {
 }
 
 # Progress bar of N blocks (█ / ░)
+# shellcheck disable=SC2034  # `i` is a plain counter; only the repetition matters
 make_bar() {
     local pct=$1
     local width=${2:-10}
