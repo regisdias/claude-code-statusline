@@ -68,6 +68,12 @@ sharp-cli para rasterizar). O GitHub não tem API para ele: sobe à mão em Sett
   `worktree.branch` (só em sessão de worktree). A branch sai da leitura direta do `.git/HEAD` — `git
   branch --show-current` seria um exec por desenho. As duas implementações têm de tratar igual: `.git`
   como diretório e como arquivo (`gitdir:`), HEAD solto (sha curto), CR no fim da linha e walk-up.
+- **A ordem dos trechos vem do `ccsl.order` no `settings.json`**, lido na **mesma** chamada do `jq` via
+  `--slurpfile` — nada de segundo processo por desenho. Config ausente, vazia, com nome desconhecido ou
+  com JSON quebrado cai na ordem padrão; a barra nunca fica em branco por causa de config.
+- **O separador é uniforme (`│`).** Não recrie exceção de espaçamento entre trechos: foi exatamente o
+  que impedia reordenar.
+- **`case`, não array associativo**, na montagem: o macOS ainda traz bash 3.2.
 - **A barra não faz rede nem escreve em disco, e isso é promessa escrita no `SECURITY.md`.** Quem faz
   as duas coisas é o hook de update, que é opt-in e roda uma vez por sessão; a barra só **lê** o cache.
   Não mova essa fronteira.

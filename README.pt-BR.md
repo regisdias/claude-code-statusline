@@ -113,6 +113,46 @@ vez de despejar um stack trace no seu terminal.
 <img src="assets/demo-fallback.svg" alt="Statusline degradando com elegância: plano sem limites de cota mostra só a barra de contexto, e payload vazio mostra 'waiting...'." width="100%">
 </div>
 
+## Escolher os trechos, e a ordem deles
+
+Uma lista só resolve as duas coisas: **a ordem é a configuração.** Trecho que você deixar de fora não
+aparece.
+
+```bash
+bash ~/.claude/ccsl-install.sh --configure
+```
+
+Ele lista os trechos como a *sua* statusline desenha, aceita os números na ordem que você quiser,
+mostra a barra resultante e salva se você confirmar:
+
+```
+  1  branch   ⎇ main
+  2  model    Opus 5 (1M context)
+  3  ctx      ctx [███░░░░░░░] 330k/1000k 33%
+  4  5h       5h [████░░░░░░] 41% · resets 06:20
+  5  week     week [█░░░░░░░░░] 11% · 18/09 05:00
+  6  session  session $12.35
+  7  update   ↑1.4.0
+
+> 1 3 4 6
+
+It would look like this:
+
+  ⎇ main  │  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  session $12.35
+```
+
+Fica no próprio `settings.json` do Claude Code, então dá para editar na mão também:
+
+```json
+{
+  "statusLine": { "type": "command", "command": "bash ~/.claude/statusline-command.sh" },
+  "ccsl": { "order": ["branch", "ctx", "5h", "session"] }
+}
+```
+
+Sem a chave `ccsl`, com lista vazia, com nome que ninguém reconhece ou com o `settings.json` quebrado na
+mão — qualquer um desses cai na ordem padrão completa, em vez de te deixar com a barra em branco.
+
 ## Aviso de atualização (opcional)
 
 Desligado por padrão, e de propósito: a statusline não faz chamada de rede nem escreve em disco, e isso
@@ -120,7 +160,7 @@ Desligado por padrão, e de propósito: a statusline não faz chamada de rede ne
 faz, sem a parte interativa, que statusline não tem como ter.
 
 ```bash
-bash ~/.claude/install.sh --enable-update-check     # ou rode o one-liner com a flag
+bash ~/.claude/ccsl-install.sh --enable-update-check     # ou rode o one-liner com a flag
 ```
 
 No começo da sessão:
@@ -147,7 +187,7 @@ A divisão existe para a barra manter a promessa:
 Para parar de vez — marcador, cache e hook, tudo removido:
 
 ```bash
-bash ~/.claude/install.sh --disable-update-check
+bash ~/.claude/ccsl-install.sh --disable-update-check
 ```
 
 ## Requisitos

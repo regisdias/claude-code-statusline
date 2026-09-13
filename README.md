@@ -112,6 +112,45 @@ of a stack trace in your terminal.
 <img src="assets/demo-fallback.svg" alt="Statusline falling back gracefully: plan without rate limits shows only the context bar, and an empty payload shows 'waiting...'." width="100%">
 </div>
 
+## Choosing the segments, and their order
+
+One list does both jobs: **the order is the configuration.** A segment you leave out does not render.
+
+```bash
+bash ~/.claude/ccsl-install.sh --configure
+```
+
+It lists the segments as *your* status line draws them, takes the numbers you want in the order you
+want them, shows the resulting bar, and saves on confirmation:
+
+```
+  1  branch   ⎇ main
+  2  model    Opus 5 (1M context)
+  3  ctx      ctx [███░░░░░░░] 330k/1000k 33%
+  4  5h       5h [████░░░░░░] 41% · resets 06:20
+  5  week     week [█░░░░░░░░░] 11% · 18/09 05:00
+  6  session  session $12.35
+  7  update   ↑1.4.0
+
+> 1 3 4 6
+
+It would look like this:
+
+  ⎇ main  │  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  session $12.35
+```
+
+It lands in Claude Code's own `settings.json`, so you can edit it there directly too:
+
+```json
+{
+  "statusLine": { "type": "command", "command": "bash ~/.claude/statusline-command.sh" },
+  "ccsl": { "order": ["branch", "ctx", "5h", "session"] }
+}
+```
+
+No `ccsl` key, an empty list, a name nobody recognises, or a `settings.json` broken by hand — any of
+those falls back to the full default order rather than leaving you with a blank bar.
+
 ## Update notice (optional)
 
 Off by default, and deliberately so: the status line makes no network call and writes nothing, and that
@@ -119,7 +158,7 @@ is a property worth keeping. Turn it on and you get told when a release is out, 
 does — minus the interactive prompt, which a status line cannot have.
 
 ```bash
-bash ~/.claude/install.sh --enable-update-check     # or re-run the one-liner with the flag
+bash ~/.claude/ccsl-install.sh --enable-update-check     # or re-run the one-liner with the flag
 ```
 
 At the start of a session:
@@ -146,7 +185,7 @@ The work is split so the bar keeps its promise:
 To stop it completely — marker, cache and hook all removed:
 
 ```bash
-bash ~/.claude/install.sh --disable-update-check
+bash ~/.claude/ccsl-install.sh --disable-update-check
 ```
 
 ## Requirements
