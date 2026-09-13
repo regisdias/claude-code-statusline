@@ -1,6 +1,6 @@
 ---
-tipo: home
-atualizado: 2026-09-13
+type: home
+updated: 2026-09-13
 ---
 
 # claude-code-statusline
@@ -17,38 +17,38 @@ decisions lives, and what is still open.
 
 | Topic | Note |
 |---|---|
-| How the script works inside | [[arquitetura/como-a-statusline-funciona]] |
-| Why there are two implementations | [[decisoes/duas-implementacoes-shell-e-powershell]] |
-| Why usage comes from the payload rather than estimated cost | [[decisoes/uso-do-plano-vem-do-payload]] |
-| Which language goes where | [[decisoes/readme-em-ingles-e-arquivos-de-comunidade]] |
-| Why CI runs on push and pull request | [[decisoes/ci-em-push-e-pr]] |
-| Branching model: main → stg → develop → task | [[decisoes/fluxo-de-branches]] |
-| Why the branch comes from `.git/HEAD` and not from `git` | [[decisoes/branch-vem-do-git-head]] |
-| Why the update notice is opt-in and lives outside the bar | [[decisoes/aviso-de-atualizacao-opt-in]] |
-| How the segment order is configured | [[decisoes/ordem-dos-trechos-configuravel]] |
-| Why the bar wraps itself | [[decisoes/quebra-na-largura-do-terminal]] |
-| Why the branch says `git` rather than a glyph | [[decisoes/rotulo-da-branch-em-texto]] |
-| Testing without opening Claude Code | [[guias/testar-local]] |
-| Regenerating the README images | [[guias/regenerar-imagens-do-readme]] |
-| Validating on a Mac | [[guias/validar-no-macos]] |
-| PowerShell traps that already cost us | [[bugs-fixes/2026-09-12-powershell-bom-e-colisao-de-variavel]] |
-| Why a full bar came out crooked on macOS | [[bugs-fixes/2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]] |
-| Why the cost read `$12,00` on a Mac set to Portuguese | [[bugs-fixes/2026-09-13-locale-com-virgula-quebrava-os-numeros]] |
+| How the script works inside | [[architecture/how-the-status-line-works]] |
+| Why there are two implementations | [[decisions/two-implementations-shell-and-powershell]] |
+| Why usage comes from the payload rather than estimated cost | [[decisions/plan-usage-comes-from-the-payload]] |
+| Which language goes where | [[decisions/english-and-the-community-files]] |
+| Why CI runs on push and pull request | [[decisions/ci-on-push-and-pull-request]] |
+| Branching model: main → stg → develop → task | [[decisions/branching-model]] |
+| Why the branch comes from `.git/HEAD` and not from `git` | [[decisions/branch-from-git-head]] |
+| Why the update notice is opt-in and lives outside the bar | [[decisions/opt-in-update-notice]] |
+| How the segment order is configured | [[decisions/configurable-segment-order]] |
+| Why the bar wraps itself | [[decisions/wrap-to-terminal-width]] |
+| Why the branch says `git` rather than a glyph | [[decisions/branch-label-as-text]] |
+| Testing without opening Claude Code | [[guides/testing-locally]] |
+| Regenerating the README images | [[guides/regenerating-readme-images]] |
+| Validating on a Mac | [[guides/validating-on-macos]] |
+| PowerShell traps that already cost us | [[bugs-fixes/2026-09-12-powershell-bom-and-variable-collision]] |
+| Why a full bar came out crooked on macOS | [[bugs-fixes/2026-09-12-bsd-seq-widened-the-full-bar-on-macos]] |
+| Why the cost read `$12,00` on a Mac set to Portuguese | [[bugs-fixes/2026-09-13-comma-locale-broke-the-numbers]] |
 
 ## Open items
 
 None.
 
-Resolved ones live in `pendentes/arquivo/` — the most recent is
-[[pendentes/arquivo/2026-09-13-glifo-da-branch-no-macos|swapping `⎇` for `git`]] (CCS-4), which closed
-alongside [[pendentes/arquivo/2026-09-12-confirmar-no-macos|validating on macOS]] (CCS-1).
+Resolved ones live in `pending/archive/` — the most recent is
+[[pending/archive/2026-09-13-branch-glyph-on-macos|swapping `⎇` for `git`]] (CCS-4), which closed
+alongside [[pending/archive/2026-09-12-confirm-on-macos|validating on macOS]] (CCS-1).
 
 ## What is generated, not written by hand
 
 | File | Comes from |
 |---|---|
-| `assets/demo.svg`, `assets/demo-fallback.svg` | `python3 scripts/gerar-svg.py`, from the script's real output |
-| `assets/social-preview.png` | `python3 scripts/gerar-social-preview.py` — the GitHub share card |
+| `assets/demo.svg`, `assets/demo-fallback.svg` | `python3 scripts/generate-svg.py`, from the script's real output |
+| `assets/social-preview.png` | `python3 scripts/generate-social-preview.py` — the GitHub share card |
 
 Changed the bar's format? Regenerate and commit it in the same change — CI fails if they fall behind.
 
@@ -59,12 +59,12 @@ tooling, which greps for exactly these strings. Everything a person reads is in 
 
 | Folder | What goes in |
 |---|---|
-| `pendentes/` | One note per open item; `arquivo/` holds the resolved ones |
-| `decisoes/` | The standing decision and the reason for it |
-| `arquitetura/` | How the script works and where the data comes from |
-| `guias/` | How-to: testing, publishing, debugging |
+| `pending/` | One note per open item; `arquivo/` holds the resolved ones |
+| `decisions/` | The standing decision and the reason for it |
+| `architecture/` | How the script works and where the data comes from |
+| `guides/` | How-to: testing, publishing, debugging |
 | `bugs-fixes/` | Problem found, cause and fix |
-| `planos/` | Execution plans; `arquivo/` for finished ones |
+| `plans/` | Execution plans; `arquivo/` for finished ones |
 | `roadmap/` | What is intended to be added |
-| `reunioes/` | Minutes, if any |
+| `meetings/` | Minutes, if any |
 | `_assets/` | Images used by the notes |

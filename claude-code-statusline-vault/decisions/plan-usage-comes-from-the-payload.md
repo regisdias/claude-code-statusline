@@ -1,6 +1,6 @@
 ---
-tipo: decisao
-data: 2026-09-12
+type: decision
+date: 2026-09-12
 ---
 
 # Plan usage comes from the payload, not from estimated cost

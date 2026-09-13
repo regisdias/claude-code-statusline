@@ -21,7 +21,7 @@ All notable changes to this project are documented here. The format follows
   The wrap counts the icon in columns — one per code point, two outside the BMP — so the shell, which
   counts bytes, and PowerShell break at the same place. Control characters and backslashes are dropped.
   `--configure` previews with your own icon.
-- `scripts/testar-instalador.sh`, and a CI job for it. The installer had no tests and this was its
+- `scripts/test-installer.sh`, and a CI job for it. The installer had no tests and this was its
   second bug, after `~/.claude/install.sh` being documented at a path it never created. Nine cases:
   each spelling of our own path, a genuinely foreign status line, invalid JSON, and the update check
   going on and off without duplicating hooks or dropping your `env`.
@@ -64,7 +64,7 @@ All notable changes to this project are documented here. The format follows
   ([#27](https://github.com/regisdias/claude-code-statusline/issues/27)). With `LANG=pt_BR.UTF-8` or
   `de_DE.UTF-8`, `awk` read `12.3456` as `12` and bash's `printf` rejected `84.7`, so the bar showed
   `session $12,00` and a `0%` plan limit whenever the percentage was fractional. The shell script now
-  formats numbers in the C locale, and `testar.sh` renders under `pt_BR` and `de_DE` and compares with
+  formats numbers in the C locale, and `test.sh` renders under `pt_BR` and `de_DE` and compares with
   the C output. The PowerShell side already used `InvariantCulture` and was never affected.
 
 ## [1.4.0] — 2026-09-13
@@ -147,7 +147,7 @@ All notable changes to this project are documented here. The format follows
   Handled: branch names containing a slash, detached HEAD (short sha), `.git` as a file pointing at a
   worktree or submodule, a `HEAD` written with CRLF, a `HEAD` with no trailing newline, and
   walking up from a subdirectory.
-- Branch fixtures in `scripts/testar.sh` covering all six of those cases plus the outside-a-repo one,
+- Branch fixtures in `scripts/test.sh` covering all six of those cases plus the outside-a-repo one,
   so the two implementations are compared on them too.
 
 ### Changed
@@ -181,11 +181,11 @@ like a fix was a fix to what people could already `curl`.
 - Colour thresholds: green to 60%, yellow to 85%, red above.
 - `install.sh` — one-line installer for Linux, WSL, macOS and Git Bash. Downloads the script, wires up
   `settings.json` (with a backup, and never clobbering an existing `statusLine`) and prints a preview.
-- `scripts/testar.sh` — runs every payload through both implementations and diffs the bytes, plus a
+- `scripts/test.sh` — runs every payload through both implementations and diffs the bytes, plus a
   guard that the `.ps1` still carries its UTF-8 BOM.
 - `scripts/payloads/` — six fixtures covering the green, yellow and red thresholds, a plan with no rate
   limits, an empty payload and malformed input.
-- `scripts/gerar-svg.py` and `scripts/gerar-social-preview.py` — the README images and the GitHub social
+- `scripts/generate-svg.py` and `scripts/generate-social-preview.py` — the README images and the GitHub social
   card, both rendered from the script's real output.
 - Continuous integration on every push and pull request: ShellCheck, PSScriptAnalyzer, the UTF-8 BOM
   guard, the cross-implementation comparison on Ubuntu **and macOS**, a real Windows PowerShell 5.1

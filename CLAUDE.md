@@ -9,7 +9,7 @@ For the same payload, the shell and the PowerShell side return **the same bytes*
 in both in the same commit.
 
 ```bash
-bash scripts/testar.sh
+bash scripts/test.sh
 ```
 
 Runs every payload in `scripts/payloads/` through both implementations, diffs the bytes and checks the
@@ -23,16 +23,16 @@ runs.
 | `statusline-command.sh` / `.ps1` | The two implementations — the product |
 | `install.sh` | The one-line installer the README points at (Linux, WSL, macOS, Git Bash) |
 | `scripts/payloads/` | Test payloads: green, yellow, red, no limits, empty, invalid |
-| `scripts/testar.sh` | Cross-implementation comparison + the BOM guard |
-| `scripts/testar-instalador.sh` | Installer suite; needs the network, skips itself without it |
-| `scripts/gerar-svg.py` | Generates the README images from the real output |
-| `scripts/gerar-social-preview.py` | Generates the 1280x640 share card (uploaded to GitHub by hand) |
+| `scripts/test.sh` | Cross-implementation comparison + the BOM guard |
+| `scripts/test-installer.sh` | Installer suite; needs the network, skips itself without it |
+| `scripts/generate-svg.py` | Generates the README images from the real output |
+| `scripts/generate-social-preview.py` | Generates the 1280x640 share card (uploaded to GitHub by hand) |
 | `assets/` | **Generated.** Do not edit by hand — see below |
 | `README.md` / `README.pt-BR.md` | English is the front door; content lands in both |
 | `hooks/ccsl-update-check.{sh,ps1}` | Update notice — **opt-in**, the only component that uses the network |
 | `.github/` | CI, issue and pull request templates |
 
-The `branch/*` cases in `scripts/testar.sh` build their `.git/HEAD` fixtures at run time: git refuses to
+The `branch/*` cases in `scripts/test.sh` build their `.git/HEAD` fixtures at run time: git refuses to
 track a path containing `.git`.
 
 ## Documentation lives in two places
@@ -47,14 +47,14 @@ A content change in the README lands in **both** files — neither is generated 
 `assets/demo.svg` and `assets/demo-fallback.svg` come from:
 
 ```bash
-python3 scripts/gerar-svg.py             # regenerate
-python3 scripts/gerar-svg.py --verificar # what CI runs
+python3 scripts/generate-svg.py             # regenerate
+python3 scripts/generate-svg.py --check # what CI runs
 ```
 
-Changed the bar's format? Regenerate and commit it in the same change. `--verificar` ignores the reset
+Changed the bar's format? Regenerate and commit it in the same change. `--check` ignores the reset
 clock and the `x` coordinates — without that it would fail every midnight.
 
-`assets/social-preview.png` comes from `scripts/gerar-social-preview.py` (needs `npx`, rasterises with
+`assets/social-preview.png` comes from `scripts/generate-social-preview.py` (needs `npx`, rasterises with
 sharp-cli). GitHub has no API for it: upload it by hand under Settings → General.
 
 ## Known traps
@@ -78,14 +78,14 @@ sharp-cli). GitHub has no API for it: upload it by hand under Settings → Gener
   runs with no `LANG` — so the width is measured by folding each known glyph (`█ ░ │ ↑ ·`) to one ASCII
   character before counting, and the branch icon to the width `jq` computed. Do not replace that with a
   plain `${#s}`.
-- **`gerar-svg.py` pins `COLUMNS=999`**, or the README image would come out differently on every
+- **`generate-svg.py` pins `COLUMNS=999`**, or the README image would come out differently on every
   machine.
 - **The segment order comes from `ccsl.order` in `settings.json`**, read in the **same** `jq` call via
   `--slurpfile` — no second process per render. A missing key, an empty list, an unknown name or broken
   JSON all fall back to the default order; the bar never goes blank because of configuration.
 - **The branch carries the word `git`, not a glyph.** `⎇` (U+2387) is drawn as the Option key on macOS,
   and real git icons require a Nerd Font. Anyone who wants an icon sets `ccsl.branch_icon`. Do not put a
-  glyph back in the default — the reasoning is in `decisoes/rotulo-da-branch-em-texto.md`.
+  glyph back in the default — the reasoning is in `decisions/branch-label-as-text.md`.
 - **The separator is uniform (`│`).** Do not reintroduce a spacing exception between segments: that is
   exactly what made reordering impossible.
 - **`case`, not an associative array**, in the assembly: macOS still ships bash 3.2.
@@ -110,12 +110,12 @@ versioned alongside the code. **Single entry point: `claude-code-statusline-vaul
 
 - **Read the Home** before deciding anything or entering an area you do not know. A mechanical task
   (adjusting text, running a test, fixing a reported error) does not need the vault.
-- **What goes in each folder:** `pendentes/` (one note per open item, resolved ones in
-  `pendentes/arquivo/`), `decisoes/`, `arquitetura/`, `guias/`, `bugs-fixes/`, `planos/` (with
-  `arquivo/`), `roadmap/`, `reunioes/`, `_assets/`.
-- **Open-item format:** `tipo: pendente`, `status: aberto|fazendo|resolvido`, `data: YYYY-MM-DD` and an
-  optional `prazo`. On resolving: `status: resolvido`, a line saying how it was resolved, and `git mv`
-  into `pendentes/arquivo/` in the same commit.
+- **What goes in each folder:** `pending/` (one note per open item, resolved ones in
+  `pending/archive/`), `decisions/`, `architecture/`, `guides/`, `bugs-fixes/`, `plans/` (with
+  `archive/`), `roadmap/`, `meetings/`, `_assets/`.
+- **Open-item format:** `type: pending`, `status: open|in-progress|resolved`, `date: YYYY-MM-DD` and an
+  optional `due`. On resolving: `status: resolved`, a line saying how it was resolved, and `git mv`
+  into `pending/archive/` in the same commit.
 
   Folder names and these frontmatter values stay in Portuguese on purpose: they are the contract with
   the maintainer's cross-project vault tooling, which greps for exactly these strings. Everything a
@@ -148,7 +148,7 @@ feat/12-short-description  →  develop  →  stg  →  main
 - **English in everything, except `README.pt-BR.md`.** Commit messages, release titles and bodies, pull
   requests, issues, the default README, the bar's labels, installer output, templates, this file and the
   whole vault. Commits follow Conventional Commits. The reasoning is in
-  `claude-code-statusline-vault/decisoes/readme-em-ingles-e-arquivos-de-comunidade.md`.
+  `claude-code-statusline-vault/decisions/english-and-the-community-files.md`.
 
   The exceptions are structural, not editorial: vault folder names and the frontmatter values the
   maintainer's tooling greps for. History before v1.1.0 stays as it is.

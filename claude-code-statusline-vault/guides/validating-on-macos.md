@@ -1,11 +1,11 @@
 ---
-tipo: guia
-data: 2026-09-13
+type: guide
+date: 2026-09-13
 ---
 
 # Validating on macOS — step by step
 
-Written to close [[../pendentes/arquivo/2026-09-12-confirmar-no-macos|CCS-1]], now resolved; still the
+Written to close [[../pending/archive/2026-09-12-confirm-on-macos|CCS-1]], now resolved; still the
 way to validate any change on a Mac. Done on a real Mac, not on a runner: CI covers the rest.
 
 **What only a Mac answers:** whether the glyphs draw on screen, and whether the reset time comes out
@@ -108,14 +108,14 @@ the screen shows `?`, the problem is the terminal font — the script is correct
 bug.
 
 > Up to v1.5.0 the branch carried the `⎇` glyph, and this table checked it. On the Mac it read as the
-> Option key, and it became `git` — see [[../decisoes/rotulo-da-branch-em-texto]].
+> Option key, and it became `git` — see [[../decisions/branch-label-as-text]].
 
 ## 5. Closing an open item
 
-- **All correct:** the note becomes `status: resolvido`, gains a line saying which macOS and which
-  terminal it was verified on, and moves with `git mv` into `pendentes/arquivo/` in the same commit.
+- **All correct:** the note becomes `status: resolved`, gains a line saying which macOS and which
+  terminal it was verified on, and moves with `git mv` into `pending/archive/` in the same commit.
 - **Only one glyph comes out wrong:** open a note of its own — that is how `⎇` became `git` (CCS-4).
 - **Any other divergence:** a new issue with the full diagnostic output, and the original note stays
   open until it is resolved.
 
-See also [[testar-local]].
+See also [[testing-locally]].

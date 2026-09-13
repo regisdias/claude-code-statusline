@@ -1,6 +1,6 @@
 ---
-tipo: decisao
-data: 2026-09-13
+type: decision
+date: 2026-09-13
 ---
 
 # The bar wraps itself, to the terminal's width
@@ -43,7 +43,7 @@ Outside a UTF-8 locale, bash's `${#s}` counts **bytes**, and the status line fre
 
 The way out was folding every glyph the bar emits (`█ ░ │ ↑ ·`) to one ASCII character before counting.
 The branch icon, which is configurable, folds to the width `jq` computes — see
-[[rotulo-da-branch-em-texto]]. Substitution matches the same bytes in either locale, so the count is
+[[branch-label-as-text]]. Substitution matches the same bytes in either locale, so the count is
 right in both — and with no subprocess. A branch or model name with an accent still over-counts, which
 only wraps slightly early; it never hides anything.
 
@@ -79,8 +79,8 @@ segment.
 
 ## Consequence for the README images
 
-`scripts/gerar-svg.py` pins `COLUMNS=999`. Without it the image would come out differently depending on
+`scripts/generate-svg.py` pins `COLUMNS=999`. Without it the image would come out differently depending on
 the window of whoever generated it, and the `README images are current` job would report a difference on
 every machine.
 
-See also [[ordem-dos-trechos-configuravel]].
+See also [[configurable-segment-order]].

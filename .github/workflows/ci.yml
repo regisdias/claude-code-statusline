@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Lint every shell script
-        run: shellcheck --severity=warning statusline-command.sh install.sh scripts/testar.sh scripts/testar-instalador.sh hooks/ccsl-update-check.sh
+        run: shellcheck --severity=warning statusline-command.sh install.sh scripts/test.sh scripts/test-installer.sh hooks/ccsl-update-check.sh
 
   powershell:
     name: PSScriptAnalyzer
@@ -39,7 +39,7 @@ jobs:
           if ($achados) { $achados | Format-Table -AutoSize | Out-String | Write-Host; exit 1 }
           Write-Host 'sem achados'
 
-  versao:
+  versions:
     name: Versions agree
     runs-on: ubuntu-latest
     steps:
@@ -79,7 +79,7 @@ jobs:
             echo "ok $f"
           done
 
-  paridade:
+  parity:
     name: Same bytes (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -95,13 +95,13 @@ jobs:
           else
             sudo apt-get update -qq && sudo apt-get install -y -qq jq
           fi
-      # The runner image ships no comma-decimal locale, and testar.sh skips the
+      # The runner image ships no comma-decimal locale, and test.sh skips the
       # locale case without one (#27). macOS has them out of the box.
       - name: Generate comma-decimal locales
         if: runner.os == 'Linux'
         run: sudo locale-gen pt_BR.UTF-8 de_DE.UTF-8
       - name: shell vs PowerShell, byte for byte
-        run: bash scripts/testar.sh
+        run: bash scripts/test.sh
 
   windows:
     name: Windows PowerShell 5.1
@@ -122,7 +122,7 @@ jobs:
               Write-Host "ok $($_.Name): $saida"
           }
 
-  instalador:
+  installer:
     name: Installer
     runs-on: ubuntu-latest
     steps:
@@ -134,9 +134,9 @@ jobs:
       - name: Run the installer suite against this branch
         env:
           CCSL_BRANCH: ${{ github.head_ref || github.ref_name }}
-        run: bash scripts/testar-instalador.sh
+        run: bash scripts/test-installer.sh
 
-  imagens:
+  images:
     name: README images are current
     runs-on: ubuntu-latest
     steps:
@@ -147,7 +147,7 @@ jobs:
       # A format change that forgets to regenerate them leaves the README
       # advertising a bar the script no longer prints.
       - name: Committed images match the current output
-        run: python3 scripts/gerar-svg.py --verificar
+        run: python3 scripts/generate-svg.py --check
 
       - name: Committed images are well-formed SVG
         run: |

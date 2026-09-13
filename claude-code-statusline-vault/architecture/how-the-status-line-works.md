@@ -1,6 +1,6 @@
 ---
-tipo: arquitetura
-data: 2026-09-12
+type: architecture
+date: 2026-09-12
 ---
 
 # How the status line works
@@ -48,4 +48,4 @@ the way of whoever is working.
 
 The bar is redrawn constantly, so the cost per execution matters: the current implementation sits around
 50 ms. That is why there is a single read of the JSON and no dependency that has to boot a runtime — see
-[[../decisoes/uso-do-plano-vem-do-payload]].
+[[../decisions/plan-usage-comes-from-the-payload]].

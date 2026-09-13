@@ -1,6 +1,6 @@
 ---
-tipo: bug-fix
-data: 2026-09-13
+type: bug-fix
+date: 2026-09-13
 ---
 
 # A comma-decimal locale broke the numbers
@@ -9,7 +9,7 @@ Issue #27.
 
 ## Symptom
 
-On a Mac with `LANG=pt_BR.UTF-8`, running [[../guias/validar-no-macos]]:
+On a Mac with `LANG=pt_BR.UTF-8`, running [[../guides/validating-on-macos]]:
 
 ```
 session $12,00      ← the payload sent 12.3456; the right answer is $12.35
@@ -42,7 +42,7 @@ PowerShell never had the problem: it has formatted with `InvariantCulture` from 
 
 Two reasons together. The runner runs in the default locale, with a dot. And every payload in
 `scripts/payloads/` has an **integer** percentage — `printf %.0f 41` works in any locale, and the cost
-only goes wrong in the decimal part, which `verde.json` does have but which never ran under a
+only goes wrong in the decimal part, which `green.json` does have but which never ran under a
 comma locale.
 
 ## Fix
@@ -59,7 +59,7 @@ variable. Nothing in the script depends on the character locale — the glyphs p
 
 ## The test
 
-Section 6 of `scripts/testar.sh` builds a fractional payload from `verde.json`, renders it under C as
+Section 6 of `scripts/test.sh` builds a fractional payload from `green.json`, renders it under C as
 the reference, and compares with `pt_BR.UTF-8` and `de_DE.UTF-8`, via both `LC_ALL` and `LANG`,
 **including stderr**. Confirmed red without the fix (4 failures) and green with it.
 
@@ -72,11 +72,11 @@ Two traps inside the test itself:
   an inherited `LANG` would mask the missing locale. And it formats `1`, not `1.5`: under `pt_BR`,
   `1.5` is itself an invalid number.
 
-The Ubuntu runner does not ship `pt_BR`; CI generates it with `locale-gen` before `testar.sh`. macOS
+The Ubuntu runner does not ship `pt_BR`; CI generates it with `locale-gen` before `test.sh`. macOS
 already has it.
 
 ## Lesson
 
-The same one as [[2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]]: the test payload has to carry
+The same one as [[2026-09-12-bsd-seq-widened-the-full-bar-on-macos]]: the test payload has to carry
 the extremes — here, a fractional number — and the test environment has to vary what an outsider varies.
 Locale is one of those things.

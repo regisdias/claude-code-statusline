@@ -1,8 +1,8 @@
 ---
-tipo: pendente
-status: resolvido
-data: 2026-09-12
-codigo: CCS-3
+type: pending
+status: resolved
+date: 2026-09-12
+code: CCS-3
 ---
 
 # The bar's labels were in Portuguese, in an English-README project
@@ -12,7 +12,7 @@ codigo: CCS-3
 
 The status line drew `semana`, `sessão` and `reseta` in Portuguese while the README, `install.sh` and
 the issue templates were in English — the decision recorded in
-[[../../decisoes/readme-em-ingles-e-arquivos-de-comunidade]]. To someone arriving from outside, three
+[[../../decisions/english-and-the-community-files]]. To someone arriving from outside, three
 words in a language they do not read, in the middle of an English bar, looked like a bug rather than a
 choice.
 

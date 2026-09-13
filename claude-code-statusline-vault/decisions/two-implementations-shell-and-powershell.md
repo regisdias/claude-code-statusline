@@ -1,6 +1,6 @@
 ---
-tipo: decisao
-data: 2026-09-12
+type: decision
+date: 2026-09-12
 ---
 
 # Two implementations, with identical output
@@ -26,7 +26,7 @@ on Linux, WSL or macOS copies the other.
 ## The contract between them
 
 The output has to be **byte-for-byte identical** for the same payload. That is the test that matters
-before publishing any change — see [[../guias/testar-local]].
+before publishing any change — see [[../guides/testing-locally]].
 
 Practical consequences: neither may gain a field the other lacks, and a format change lands in both in
 the same commit.
