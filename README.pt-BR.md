@@ -64,12 +64,12 @@ A barra aparece no próximo desenho, sem reiniciar nada.
 ## O que aparece
 
 ```
-⎇ main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
+git main  │  Opus 5 (1M context)  │  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
 ```
 
 | Trecho | O que é |
 |---|---|
-| `⎇ main` | Branch do git no momento, lida direto do `.git/HEAD`. Some fora de um repositório. |
+| `git main` | Branch do git no momento, lida direto do `.git/HEAD`. Some fora de um repositório. O rótulo [pode virar um ícone](#o-ícone-da-branch). |
 | `ctx` | Janela de contexto da conversa atual. É local: não tem relação com a cota do plano. |
 | `5h` | Bloco de 5 horas do plano, e a hora em que zera. |
 | `week` | Limite semanal do plano, e quando zera. |
@@ -120,10 +120,10 @@ o que configurar: em terminal largo continua uma linha só, igual a antes.
 
 ```
 170 colunas:
-⎇ main  │  Opus 5 (1M context)  │  ctx [███░░░░░░░] 33%  │  5h […] 41%  │  week […] 11%  │  session $12.35
+git main  │  Opus 5 (1M context)  │  ctx [███░░░░░░░] 33%  │  5h […] 41%  │  week […] 11%  │  session $12.35
 
 80 colunas:
-⎇ feat/28-wrap-to-terminal-width  │  Opus 5 (1M context)
+git feat/28-wrap-to-terminal-width  │  Opus 5 (1M context)
 ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20
 week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
 ```
@@ -147,7 +147,7 @@ Ele lista os trechos como a *sua* statusline desenha, aceita os números na orde
 mostra a barra resultante e salva se você confirmar:
 
 ```
-  1  branch   ⎇ main
+  1  branch   git main
   2  model    Opus 5 (1M context)
   3  ctx      ctx [███░░░░░░░] 330k/1000k 33%
   4  5h       5h [████░░░░░░] 41% · resets 06:20
@@ -159,7 +159,7 @@ mostra a barra resultante e salva se você confirmar:
 
 It would look like this:
 
-  ⎇ main  │  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  session $12.35
+  git main  │  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  session $12.35
 ```
 
 Fica no próprio `settings.json` do Claude Code, então dá para editar na mão também:
@@ -173,6 +173,27 @@ Fica no próprio `settings.json` do Claude Code, então dá para editar na mão 
 
 Sem a chave `ccsl`, com lista vazia, com nome que ninguém reconhece ou com o `settings.json` quebrado na
 mão — qualquer um desses cai na ordem padrão completa, em vez de te deixar com a barra em branco.
+
+### O ícone da branch
+
+A branch vem com o rótulo `git`, porque ele se lê igual em qualquer terminal. Se você usa uma
+[Nerd Font](https://www.nerdfonts.com/) ou uma fonte Powerline, troque a palavra pelo ícone:
+
+```json
+{ "ccsl": { "branch_icon": "\ue0a0" } }
+```
+
+| `branch_icon` | Aparece |
+|---|---|
+| sem a chave | `git main` |
+| `"\ue0a0"` | o ícone de branch do Powerline, e `main` |
+| `"⎇"` | `⎇ main` — o visual de antes da 1.6.0 |
+| `""` | `main` |
+
+Por que não um glifo por padrão: não existe caractere Unicode padrão para git. Os ícones de verdade
+ficam na área de uso privado e viram quadrado sem uma fonte adaptada, e o U+2387 `⎇` — a alternativa de
+costume — é desenhado como o símbolo da tecla Option no macOS. Caracteres de controle e barras
+invertidas no valor são descartados.
 
 ## Aviso de atualização (opcional)
 
@@ -194,7 +215,7 @@ claude-code-statusline 1.3.0 is available (you have 1.2.0)
 e um trecho na barra até você atualizar:
 
 ```
-⎇ main  │  Opus 5  ctx [███░░░░░░░] 33%  │  …  │  session $12.35  │  ↑1.3.0
+git main  │  Opus 5  │  ctx [███░░░░░░░] 33%  │  …  │  session $12.35  │  ↑1.3.0
 ```
 
 A divisão existe para a barra manter a promessa:
@@ -250,18 +271,18 @@ No `~/.claude/settings.json`:
 Jogue qualquer payload de [`scripts/payloads/`](scripts/payloads) na entrada:
 
 ```bash
-bash statusline-command.sh < scripts/payloads/verde.json       # verde
-bash statusline-command.sh < scripts/payloads/vermelho.json    # vermelho
+bash statusline-command.sh < scripts/payloads/green.json       # verde
+bash statusline-command.sh < scripts/payloads/red.json    # vermelho
 ```
 
 ```powershell
-Get-Content scripts\payloads\verde.json | powershell -NoProfile -File .\statusline-command.ps1
+Get-Content scripts\payloads\green.json | powershell -NoProfile -File .\statusline-command.ps1
 ```
 
 Para conferir se as duas implementações continuam batendo, e se o `.ps1` manteve o BOM:
 
 ```bash
-bash scripts/testar.sh
+bash scripts/test.sh
 ```
 
 ## Se algo não aparecer
@@ -271,7 +292,7 @@ bash scripts/testar.sh
 | Só a barra `ctx` aparece | Claude Code anterior ao 2.1.251, ou plano sem limite de cota (cobrança por API key). |
 | `waiting...` | O payload veio vazio, ou falta o `jq` (versão shell). |
 | Os blocos viram `?` no Windows | O terminal não está em UTF-8. O Windows Terminal resolve; o console antigo pode não. |
-| O `⎇` antes da branch vira `?` | Sua fonte não tem o glifo U+2387. É só exibição — o nome da branch continua certo. |
+| O ícone da branch vira quadrado ou `?` | A fonte do terminal não tem o glifo do `branch_icon` que você escolheu — ícone de Nerd Font precisa de Nerd Font. É só exibição; o nome da branch continua certo. |
 | Erro de parser no PowerShell | O `.ps1` perdeu o BOM UTF-8. Baixe de novo. |
 | Sem cores | O terminal está removendo os códigos ANSI. |
 | Hora do reset errada | Fuso do seu computador: o script formata o epoch com o relógio local. |

@@ -8,6 +8,39 @@ All notable changes to this project are documented here. The format follows
 
 Nothing yet.
 
+## [1.6.0] — 2026-09-13
+
+### Changed
+
+- **The branch segment reads `git main` instead of `⎇ main`**
+  ([#35](https://github.com/regisdias/claude-code-statusline/issues/35)). On macOS, U+2387 is drawn as
+  the Option key symbol, not as a branch — it is literally *ALTERNATIVE KEY SYMBOL*. There is no standard
+  Unicode glyph for git, and the real icons need a Nerd Font, so the default is now a word, like every
+  other segment.
+
+### Added
+
+- **`ccsl.branch_icon`** replaces the `git` label: `"\ue0a0"` for the Powerline icon with a Nerd Font,
+  `"⎇"` for the old look, `""` for the bare branch name. Read in the same `jq` call as `ccsl.order`.
+  The wrap counts the icon in columns — one per code point, two outside the BMP — so the shell, which
+  counts bytes, and PowerShell break at the same place. Control characters and backslashes are dropped.
+  `--configure` previews with your own icon.
+- `scripts/test-installer.sh`, and a CI job for it. The installer had no tests and this was its
+  second bug, after `~/.claude/install.sh` being documented at a path it never created. Nine cases:
+  each spelling of our own path, a genuinely foreign status line, invalid JSON, and the update check
+  going on and off without duplicating hooks or dropping your `env`.
+
+### Fixed
+
+- `ccsl-install.sh --configure` exited silently when `settings.json` was missing: under `set -e`, a
+  failing `jq` inside an assignment ended the script before the menu.
+- **The installer called your own status line a stranger's**
+  ([#36](https://github.com/regisdias/claude-code-statusline/issues/36)). It compared the configured
+  command against the literal string `bash ~/.claude/statusline-command.sh`, so a `settings.json`
+  holding the absolute path — which is what you get writing it by hand — was reported as somebody
+  else's. Worse than the scare: that path ends in `exit 0`, so every update silently skipped the Claude
+  Code version check and the preview. It now compares the resolved path.
+
 ## [1.5.0] — 2026-09-13
 
 ### Added
@@ -35,7 +68,7 @@ Nothing yet.
   ([#27](https://github.com/regisdias/claude-code-statusline/issues/27)). With `LANG=pt_BR.UTF-8` or
   `de_DE.UTF-8`, `awk` read `12.3456` as `12` and bash's `printf` rejected `84.7`, so the bar showed
   `session $12,00` and a `0%` plan limit whenever the percentage was fractional. The shell script now
-  formats numbers in the C locale, and `testar.sh` renders under `pt_BR` and `de_DE` and compares with
+  formats numbers in the C locale, and `test.sh` renders under `pt_BR` and `de_DE` and compares with
   the C output. The PowerShell side already used `InvariantCulture` and was never affected.
 
 ## [1.4.0] — 2026-09-13
@@ -118,7 +151,7 @@ Nothing yet.
   Handled: branch names containing a slash, detached HEAD (short sha), `.git` as a file pointing at a
   worktree or submodule, a `HEAD` written with CRLF, a `HEAD` with no trailing newline, and
   walking up from a subdirectory.
-- Branch fixtures in `scripts/testar.sh` covering all six of those cases plus the outside-a-repo one,
+- Branch fixtures in `scripts/test.sh` covering all six of those cases plus the outside-a-repo one,
   so the two implementations are compared on them too.
 
 ### Changed
@@ -152,11 +185,11 @@ like a fix was a fix to what people could already `curl`.
 - Colour thresholds: green to 60%, yellow to 85%, red above.
 - `install.sh` — one-line installer for Linux, WSL, macOS and Git Bash. Downloads the script, wires up
   `settings.json` (with a backup, and never clobbering an existing `statusLine`) and prints a preview.
-- `scripts/testar.sh` — runs every payload through both implementations and diffs the bytes, plus a
+- `scripts/test.sh` — runs every payload through both implementations and diffs the bytes, plus a
   guard that the `.ps1` still carries its UTF-8 BOM.
 - `scripts/payloads/` — six fixtures covering the green, yellow and red thresholds, a plan with no rate
   limits, an empty payload and malformed input.
-- `scripts/gerar-svg.py` and `scripts/gerar-social-preview.py` — the README images and the GitHub social
+- `scripts/generate-svg.py` and `scripts/generate-social-preview.py` — the README images and the GitHub social
   card, both rendered from the script's real output.
 - Continuous integration on every push and pull request: ShellCheck, PSScriptAnalyzer, the UTF-8 BOM
   guard, the cross-implementation comparison on Ubuntu **and macOS**, a real Windows PowerShell 5.1
@@ -173,7 +206,8 @@ like a fix was a fix to what people could already `curl`.
 - `statusline-command.ps1` no longer trips `PSAvoidUsingEmptyCatchBlock`. The `catch` around the
   console encoding is still deliberate: a terminal that refuses UTF-8 is no reason to stop drawing.
 
-[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.3.0...v1.4.0

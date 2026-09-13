@@ -1,67 +1,70 @@
 ---
-tipo: home
-atualizado: 2026-09-13
+type: home
+updated: 2026-09-13
 ---
 
 # claude-code-statusline
 
-Statusline do [Claude Code](https://claude.com/claude-code) que mostra a janela de contexto e o **uso
-real do plano** — bloco de 5 horas e limite semanal — lendo `rate_limits` do payload que o próprio
-Claude Code entrega para a statusline. São os mesmos números do `/usage`.
+A [Claude Code](https://claude.com/claude-code) status line showing the context window and your **real
+plan usage** — the 5-hour block and the weekly limit — by reading `rate_limits` from the payload Claude
+Code hands to the status line. The same numbers as `/usage`.
 
-Repositório público, licença MIT. A instalação e o uso ficam no README ([inglês](../README.md) ·
-[português](../README.pt-BR.md)); aqui mora o porquê das decisões e o que está em aberto.
+Public repository, MIT licence. Installing and using it are covered in the README
+([English](../README.md) · [Portuguese](../README.pt-BR.md)); this is where the reasoning behind the
+decisions lives, and what is still open.
 
-## Por onde começar
+## Where to start
 
-| Tema | Nota |
+| Topic | Note |
 |---|---|
-| Como o script funciona por dentro | [[arquitetura/como-a-statusline-funciona]] |
-| Por que existem duas implementações | [[decisoes/duas-implementacoes-shell-e-powershell]] |
-| Por que o uso vem do payload, e não de custo estimado | [[decisoes/uso-do-plano-vem-do-payload]] |
-| Que idioma vai em quê — README, rótulos, **mensagens de commit** | [[decisoes/readme-em-ingles-e-arquivos-de-comunidade]] |
-| Por que o CI roda em push e PR | [[decisoes/ci-em-push-e-pr]] |
-| Fluxo de branches: main → stg → develop → tarefa | [[decisoes/fluxo-de-branches]] |
-| Por que a branch sai do `.git/HEAD`, e não do `git` | [[decisoes/branch-vem-do-git-head]] |
-| Por que o aviso de atualização é opt-in e vive fora da barra | [[decisoes/aviso-de-atualizacao-opt-in]] |
-| Como a ordem dos trechos é configurada | [[decisoes/ordem-dos-trechos-configuravel]] |
-| Por que a barra se quebra sozinha | [[decisoes/quebra-na-largura-do-terminal]] |
-| Testar sem abrir o Claude Code | [[guias/testar-local]] |
-| Regerar as imagens do README | [[guias/regenerar-imagens-do-readme]] |
-| **Validar num Mac** (fecha a CCS-1) | [[guias/validar-no-macos]] |
-| Armadilhas do PowerShell que já custaram caro | [[bugs-fixes/2026-09-12-powershell-bom-e-colisao-de-variavel]] |
-| Por que a barra cheia saía torta no macOS | [[bugs-fixes/2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]] |
-| Por que o custo saía `$12,00` num Mac em português | [[bugs-fixes/2026-09-13-locale-com-virgula-quebrava-os-numeros]] |
+| How the script works inside | [[architecture/how-the-status-line-works]] |
+| Why there are two implementations | [[decisions/two-implementations-shell-and-powershell]] |
+| Why usage comes from the payload rather than estimated cost | [[decisions/plan-usage-comes-from-the-payload]] |
+| Which language goes where | [[decisions/english-and-the-community-files]] |
+| Why CI runs on push and pull request | [[decisions/ci-on-push-and-pull-request]] |
+| Branching model: main → stg → develop → task | [[decisions/branching-model]] |
+| Why the branch comes from `.git/HEAD` and not from `git` | [[decisions/branch-from-git-head]] |
+| Why the update notice is opt-in and lives outside the bar | [[decisions/opt-in-update-notice]] |
+| How the segment order is configured | [[decisions/configurable-segment-order]] |
+| Why the bar wraps itself | [[decisions/wrap-to-terminal-width]] |
+| Why the branch says `git` rather than a glyph | [[decisions/branch-label-as-text]] |
+| Testing without opening Claude Code | [[guides/testing-locally]] |
+| Regenerating the README images | [[guides/regenerating-readme-images]] |
+| Validating on a Mac | [[guides/validating-on-macos]] |
+| PowerShell traps that already cost us | [[bugs-fixes/2026-09-12-powershell-bom-and-variable-collision]] |
+| Why a full bar came out crooked on macOS | [[bugs-fixes/2026-09-12-bsd-seq-widened-the-full-bar-on-macos]] |
+| Why the cost read `$12,00` on a Mac set to Portuguese | [[bugs-fixes/2026-09-13-comma-locale-broke-the-numbers]] |
 
-## Pendências
+## Open items
 
-- [[pendentes/2026-09-12-confirmar-no-macos|Confirmar no macOS]] — `fazendo`: rodada num Mac de verdade, achou
-  o bug do locale (#27); espera a CCS-4
-- [[pendentes/2026-09-13-glifo-da-branch-no-macos|O `⎇` não lê como git no macOS]] — `aberto`: parece a
-  tecla Option; escolher outro glifo ou um rótulo
+None.
 
-Resolvidas ficam em `pendentes/arquivo/` — a mais recente é
-[[pendentes/arquivo/2026-09-12-rotulos-da-barra-em-portugues|a tradução dos rótulos da barra]].
+Resolved ones live in `pending/archive/` — the most recent is
+[[pending/archive/2026-09-13-branch-glyph-on-macos|swapping `⎇` for `git`]] (CCS-4), which closed
+alongside [[pending/archive/2026-09-12-confirm-on-macos|validating on macOS]] (CCS-1).
 
-## O que é gerado, e não escrito à mão
+## What is generated, not written by hand
 
-| Arquivo | Vem de |
+| File | Comes from |
 |---|---|
-| `assets/demo.svg`, `assets/demo-fallback.svg` | `python3 scripts/gerar-svg.py`, a partir da saída real do script |
-| `assets/social-preview.png` | `python3 scripts/gerar-social-preview.py` — o card de compartilhamento do GitHub |
+| `assets/demo.svg`, `assets/demo-fallback.svg` | `python3 scripts/generate-svg.py`, from the script's real output |
+| `assets/social-preview.png` | `python3 scripts/generate-social-preview.py` — the GitHub share card |
 
-Mudou o formato da barra? Regere e commite junto — o CI reprova se ficarem para trás.
+Changed the bar's format? Regenerate and commit it in the same change — CI fails if they fall behind.
 
-## Estrutura do vault
+## Vault structure
 
-| Pasta | O que entra |
+Folder names stay in Portuguese: they are the contract with the maintainer's cross-project vault
+tooling, which greps for exactly these strings. Everything a person reads is in English.
+
+| Folder | What goes in |
 |---|---|
-| `pendentes/` | Uma nota por pendência; `arquivo/` guarda as resolvidas |
-| `decisoes/` | Decisão vigente e o motivo dela |
-| `arquitetura/` | Como o script funciona e de onde vêm os dados |
-| `guias/` | How-to: testar, publicar, depurar |
-| `bugs-fixes/` | Problema encontrado, causa e correção |
-| `planos/` | Planos de execução; `arquivo/` para os concluídos |
-| `roadmap/` | O que se pretende adicionar |
-| `reunioes/` | Atas, se houver |
-| `_assets/` | Imagens das notas |
+| `pending/` | One note per open item; `arquivo/` holds the resolved ones |
+| `decisions/` | The standing decision and the reason for it |
+| `architecture/` | How the script works and where the data comes from |
+| `guides/` | How-to: testing, publishing, debugging |
+| `bugs-fixes/` | Problem found, cause and fix |
+| `plans/` | Execution plans; `arquivo/` for finished ones |
+| `roadmap/` | What is intended to be added |
+| `meetings/` | Minutes, if any |
+| `_assets/` | Images used by the notes |
