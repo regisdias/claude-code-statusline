@@ -28,7 +28,7 @@
 
 # Bumped in the same commit that stamps the version in CHANGELOG.md; CI checks
 # that this, the .ps1 and the CHANGELOG agree.
-CCSL_VERSION="1.2.0"
+CCSL_VERSION="1.3.0"
 
 input=$(cat)
 

@@ -25,7 +25,7 @@
 
 # Bumped in the same commit that stamps the version in CHANGELOG.md; CI checks
 # that this, the .sh and the CHANGELOG agree.
-$CCSL_VERSION = '1.2.0'
+$CCSL_VERSION = '1.3.0'
 
 $ErrorActionPreference = 'SilentlyContinue'
 # The bars are block characters: without UTF-8 the terminal prints garbage
