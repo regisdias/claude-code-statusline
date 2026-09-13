@@ -21,20 +21,48 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Lint every shell script
-        run: shellcheck --severity=warning statusline-command.sh install.sh scripts/testar.sh
+        run: shellcheck --severity=warning statusline-command.sh install.sh scripts/testar.sh hooks/ccsl-update-check.sh
 
   powershell:
     name: PSScriptAnalyzer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Analyse statusline-command.ps1
+      - name: Analyse the PowerShell files
         shell: pwsh
         run: |
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
-          $achados = Invoke-ScriptAnalyzer -Path statusline-command.ps1 -Severity Error,Warning
+          # -Path takes one path, not a list: loop instead of passing an array
+          $achados = @('statusline-command.ps1', 'hooks/ccsl-update-check.ps1') | ForEach-Object {
+              Invoke-ScriptAnalyzer -Path $_ -Severity Error,Warning
+          }
           if ($achados) { $achados | Format-Table -AutoSize | Out-String | Write-Host; exit 1 }
           Write-Host 'sem achados'
+
+  versao:
+    name: Versions agree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # CCSL_VERSION is what the update check compares against. If the two
+      # implementations drift, or the release stamp forgets one of them, the
+      # notice lies about what is installed.
+      - name: CCSL_VERSION matches across both scripts and the CHANGELOG
+        run: |
+          # The .ps1 is checked out with CRLF (see .gitattributes), so the CR has to
+          # go before sed anchors with $, not after.
+          sh=$(tr -d '\r' < statusline-command.sh | sed -n 's/^CCSL_VERSION="\(.*\)"$/\1/p')
+          ps=$(tr -d '\r' < statusline-command.ps1 | sed -n "s/^\$CCSL_VERSION = '\(.*\)'$/\1/p")
+          log=$(sed -n 's/^## \[\([0-9][0-9.]*\)\].*/\1/p' CHANGELOG.md | head -n1)
+
+          echo "statusline-command.sh  $sh"
+          echo "statusline-command.ps1 $ps"
+          echo "CHANGELOG.md           $log"
+
+          [ -n "$sh" ] && [ -n "$ps" ] && [ -n "$log" ] || { echo "faltou extrair alguma"; exit 1; }
+          [ "$sh" = "$ps" ] || { echo "as duas implementações discordam"; exit 1; }
+          [ "$sh" = "$log" ] || { echo "os scripts não batem com a última versão do CHANGELOG"; exit 1; }
+          echo ok
 
   bom:
     name: UTF-8 BOM
@@ -43,11 +71,13 @@ jobs:
       - uses: actions/checkout@v5
       # Without the BOM, Windows PowerShell 5.1 reads the file as ANSI and the
       # block characters break the parser before the script ever runs.
-      - name: statusline-command.ps1 must keep its BOM
+      - name: every .ps1 must keep its BOM
         run: |
-          bom=$(head -c3 statusline-command.ps1 | od -An -tx1 | tr -d ' \n')
-          [ "$bom" = "efbbbf" ] || { echo "BOM ausente: $bom"; exit 1; }
-          echo "ok"
+          for f in statusline-command.ps1 hooks/ccsl-update-check.ps1; do
+            bom=$(head -c3 "$f" | od -An -tx1 | tr -d ' \n')
+            [ "$bom" = "efbbbf" ] || { echo "BOM ausente em $f: $bom"; exit 1; }
+            echo "ok $f"
+          done
 
   paridade:
     name: Same bytes (${{ matrix.os }})

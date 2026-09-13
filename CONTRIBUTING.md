@@ -53,8 +53,13 @@ the minor, and anything that changes the rendered line in a way people would not
 the `CHANGELOG` under the version it ships in.
 
 Each PR adds its entry under **Unreleased**. The version is stamped on `develop` right before promoting
-— `Unreleased` becomes `[1.2.0] — date` — and the tag is cut from `main` once the promotion lands, so a
-tag never points at a commit that is not in production.
+— `Unreleased` becomes `[1.2.0] — date`, and `CCSL_VERSION` is bumped in **both** implementations in the
+same commit — and the tag is cut from `main` once the promotion lands, so a tag never points at a commit
+that is not in production. A promotion that carries no user-facing change ships without a tag.
+
+CI fails if the two `CCSL_VERSION` values disagree with each other or with the newest version in the
+changelog. The update notice compares against that constant, so drift would make it lie about what is
+installed.
 
 ## Getting set up
 

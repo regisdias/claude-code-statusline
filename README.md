@@ -64,16 +64,17 @@ The bar shows up on the next render. No restart needed.
 ## What you get
 
 ```
-main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
+⎇ main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
 ```
 
 | Segment | What it means |
 |---|---|
-| `main` | Current git branch, read live from `.git/HEAD`. Absent outside a git repository. |
+| `⎇ main` | Current git branch, read live from `.git/HEAD`. Absent outside a git repository. |
 | `ctx` | Context window of the current conversation. Local to the session, unrelated to your plan quota. |
 | `5h` | 5-hour block of your plan, and the time it resets. |
 | `week` | Weekly plan limit, and when it resets. |
 | `session` | Cost of this conversation, in USD. |
+| `↑1.3.0` | A newer release exists. Only ever shown if you [turned the check on](#update-notice-optional). |
 
 Bars turn **green** up to 60%, **yellow** up to 85% and **red** above that.
 
@@ -110,6 +111,43 @@ of a stack trace in your terminal.
 <div align="center">
 <img src="assets/demo-fallback.svg" alt="Statusline falling back gracefully: plan without rate limits shows only the context bar, and an empty payload shows 'waiting...'." width="100%">
 </div>
+
+## Update notice (optional)
+
+Off by default, and deliberately so: the status line makes no network call and writes nothing, and that
+is a property worth keeping. Turn it on and you get told when a release is out, the way `oh-my-zsh`
+does — minus the interactive prompt, which a status line cannot have.
+
+```bash
+bash ~/.claude/install.sh --enable-update-check     # or re-run the one-liner with the flag
+```
+
+At the start of a session:
+
+```
+claude-code-statusline 1.3.0 is available (you have 1.2.0)
+  curl -fsSL https://raw.githubusercontent.com/regisdias/claude-code-statusline/main/install.sh | bash
+```
+
+and a segment on the bar until you update:
+
+```
+⎇ main  │  Opus 5  ctx [███░░░░░░░] 33%  │  …  │  session $12.35  │  ↑1.3.0
+```
+
+The work is split so the bar keeps its promise:
+
+| | Status line | Update hook |
+|---|---|---|
+| Network | never | one request, at most once per 24 h |
+| Writes | never | one cache file |
+| Runs | every render | once per session |
+
+To stop it completely — marker, cache and hook all removed:
+
+```bash
+bash ~/.claude/install.sh --disable-update-check
+```
 
 ## Requirements
 
@@ -171,6 +209,7 @@ bash scripts/testar.sh
 | Only the `ctx` bar shows | Claude Code older than 2.1.251, or a plan with no rate limits (API key billing). |
 | `waiting...` | The payload arrived empty, or `jq` is missing (shell version). |
 | Blocks show as `?` on Windows | The terminal is not in UTF-8. Windows Terminal handles it; the old console host may not. |
+| The `⎇` before the branch shows as `?` | Your font has no glyph for U+2387. Display only — the branch name itself is fine. |
 | PowerShell parser error | The `.ps1` lost its UTF-8 BOM. Re-download it. |
 | No colors | Your terminal is stripping ANSI codes. |
 | Reset time looks wrong | Your machine's timezone — the script formats the epoch with the local clock. |

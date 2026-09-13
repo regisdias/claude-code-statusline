@@ -16,12 +16,16 @@
 #   3. The bar shows up on the next render. No restart needed.
 #
 # HOW TO READ IT
-#   <branch> → current git branch, when the session is inside a repository
+#   ⎇ <branch> → current git branch, when the session is inside a repository
 #   ctx      → how much of this conversation's context window is used (not a plan quota)
 #   5h       → 5-hour block of your plan, with the time it resets
 #   week     → weekly plan limit
 #   session  → cost of this conversation, in USD
 #   Colors: green up to 60%, yellow up to 85%, red above that.
+
+# Bumped in the same commit that stamps the version in CHANGELOG.md; CI checks
+# that this, the .sh and the CHANGELOG agree.
+$CCSL_VERSION = '1.3.0'
 
 $ErrorActionPreference = 'SilentlyContinue'
 # The bars are block characters: without UTF-8 the terminal prints garbage
@@ -177,12 +181,50 @@ if ($dados -and $dados.cost -and $dados.cost.total_cost_usd -gt 0) {
     $partes += ('session $' + ([Math]::Round([double]$dados.cost.total_cost_usd, 2)).ToString('0.00', $INV))
 }
 
+# Update notice — opt-in, and read-only.
+#
+# The bar never opens a network connection and never writes to disk. The
+# SessionStart hook does both, only when the user turned the check on, and drops
+# the result in a cache file. This reads that file and nothing else.
+#
+# Must stay byte-identical to aviso_update() in the .sh: same marker, same cache
+# format, same validation, same comparison.
+function Get-NovaVersao($instalada) {
+    $base = $env:CLAUDE_CONFIG_DIR
+    if (-not $base) { $base = [System.IO.Path]::Combine($HOME, '.claude') }
+
+    if (-not [System.IO.File]::Exists([System.IO.Path]::Combine($base, '.ccsl-update-check'))) { return '' }
+    $cache = [System.IO.Path]::Combine($base, '.ccsl-update-cache')
+    if (-not [System.IO.File]::Exists($cache)) { return '' }
+
+    $linha = Read-PrimeiraLinha $cache
+    if (-not $linha) { return '' }
+    # Cache format: "<epoch> <version>". The epoch is the hook's business.
+    $campos = $linha.Split(' ', [StringSplitOptions]::RemoveEmptyEntries)
+    if ($campos.Count -lt 2) { return '' }
+    $ultima = $campos[1]
+    if ($ultima -notmatch '^\d+\.\d+\.\d+$') { return '' }
+
+    try {
+        if ([version]$ultima -gt [version]$instalada) { return $ultima }
+    } catch {
+        return ''
+    }
+    return ''
+}
+
 $dirAtual = ''
 if ($dados) {
     if ($dados.workspace -and $dados.workspace.current_dir) { $dirAtual = $dados.workspace.current_dir }
     elseif ($dados.cwd) { $dirAtual = $dados.cwd }
 }
 $branch = Get-Branch $dirAtual
-if ($branch) { $partes = ,$branch + $partes }
+# U+2387 marks the segment as a branch; it is one column wide, unlike an emoji
+# [char] and not "\u{2387}": the \u escape is PowerShell 7+, and this file
+# has to parse on Windows PowerShell 5.1
+if ($branch) { $partes = ,([string][char]0x2387 + " " + $branch) + $partes }
+
+$nova = Get-NovaVersao $CCSL_VERSION
+if ($nova) { $partes += ([string][char]0x2191 + $nova) }
 
 [Console]::Out.Write(($partes -join '  │  '))
