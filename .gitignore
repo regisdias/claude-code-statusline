@@ -1,8 +1,8 @@
-# Configuração local do Obsidian, de cada pessoa
+# Each person's local Obsidian configuration
 claude-code-statusline-vault/.obsidian/
 
-# Saídas de teste
+# Test output
 /tmp-saida-*.txt
 
-# Backups do instalador ao mexer no settings.json
+# Installer backups of settings.json
 *.bak

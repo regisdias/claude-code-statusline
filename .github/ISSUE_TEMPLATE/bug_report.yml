@@ -64,7 +64,7 @@ body:
     id: teste
     attributes:
       label: Output of the test script
-      description: "`bash scripts/testar.sh` from a clone of the repo, if you can run it."
+      description: "`bash scripts/test.sh` from a clone of the repo, if you can run it."
       render: shell
 
   - type: checkboxes

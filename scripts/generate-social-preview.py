@@ -2,11 +2,11 @@
 """Build assets/social-preview.png — the card GitHub shows when the repo is shared.
 
 1280x640 is what GitHub asks for. The bars and percentages come from the real
-payload in scripts/payloads/verde.json, laid out large enough to survive the
+payload in scripts/payloads/green.json, laid out large enough to survive the
 ~600px the card is usually displayed at; this is a poster, not a screenshot of
 the line (that one is assets/demo.svg).
 
-    python3 scripts/gerar-social-preview.py
+    python3 scripts/generate-social-preview.py
 
 Needs `npx` — it shells out to sharp-cli to rasterise. GitHub only takes
 PNG/JPG/GIF here, and it is a Settings → General upload: there is no API for it.
@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-PAYLOAD = RAIZ / "scripts" / "payloads" / "verde.json"
+PAYLOAD = RAIZ / "scripts" / "payloads" / "green.json"
 SVG = RAIZ / "assets" / "social-preview.svg"
 PNG = RAIZ / "assets" / "social-preview.png"
 
@@ -37,12 +37,12 @@ MONO = "'DejaVu Sans Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
 SANS = "'DejaVu Sans', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
 
 
-def barra(pct: float, largura: int = 10) -> str:
+def bar(pct: float, width: int = 10) -> str:
     """The bar as two spans: the ░ half is dimmed so it does not read as noise."""
-    cheios = max(0, min(largura, int(pct / 100 * largura + 0.5)))
+    filled = max(0, min(width, int(pct / 100 * width + 0.5)))
     return (
-        f'<tspan fill="{VERDE}">[{"█" * cheios}</tspan>'
-        f'<tspan fill="{VERDE_VAZIO}">{"░" * (largura - cheios)}</tspan>'
+        f'<tspan fill="{VERDE}">[{"█" * filled}</tspan>'
+        f'<tspan fill="{VERDE_VAZIO}">{"░" * (width - filled)}</tspan>'
         f'<tspan fill="{VERDE}">]</tspan>'
     )
 
@@ -52,20 +52,20 @@ def main() -> int:
     ctx = dados["context_window"]
     limites = dados["rate_limits"]
 
-    linhas = [
+    rows = [
         ("ctx", ctx["used_percentage"], "330k/1000k"),
         ("5h", limites["five_hour"]["used_percentage"], "resets 06:20"),
         ("week", limites["seven_day"]["used_percentage"], "18/09 05:00"),
     ]
 
-    corpo = []
+    body = []
     y = 356
-    for rotulo, pct, nota in linhas:
-        corpo.append(
-            f'<text x="150" y="{y}" font-family="{MONO}" font-size="30" fill="{SUAVE}">{rotulo}</text>'
-            f'<text x="330" y="{y}" font-family="{MONO}" font-size="30">{barra(pct)}</text>'
+    for label, pct, note in rows:
+        body.append(
+            f'<text x="150" y="{y}" font-family="{MONO}" font-size="30" fill="{SUAVE}">{label}</text>'
+            f'<text x="330" y="{y}" font-family="{MONO}" font-size="30">{bar(pct)}</text>'
             f'<text x="700" y="{y}" font-family="{MONO}" font-size="30" fill="{TEXTO}" text-anchor="end">{pct:.0f}%</text>'
-            f'<text x="750" y="{y}" font-family="{MONO}" font-size="26" fill="{SUAVE}">{html.escape(nota)}</text>'
+            f'<text x="750" y="{y}" font-family="{MONO}" font-size="26" fill="{SUAVE}">{html.escape(note)}</text>'
         )
         y += 56
 
@@ -83,7 +83,7 @@ def main() -> int:
   <text x="150" y="300" font-family="{SANS}" font-size="20" fill="{SUAVE}">
     the same numbers as /usage — no estimation
   </text>
-  {"".join(corpo)}
+  {"".join(body)}
 
   <text x="{L//2}" y="562" text-anchor="middle" font-family="{SANS}" font-size="22" fill="{SUAVE}">
     bash + PowerShell · Linux · WSL · macOS · Windows · MIT
@@ -101,14 +101,14 @@ def main() -> int:
             timeout=300,
         )
     except FileNotFoundError:
-        print("npx não encontrado — o PNG não foi gerado", file=sys.stderr)
+        print("npx not found — the PNG was not generated", file=sys.stderr)
         return 1
     except subprocess.CalledProcessError as e:
         print(e.stderr.decode(errors="replace"), file=sys.stderr)
         return 1
 
     print(f"assets/{PNG.name}  ({PNG.stat().st_size // 1024} KB)")
-    print("\nGitHub não tem API para isso: suba em")
+    print("\nGitHub has no API for this: upload it under")
     print("  Settings → General → Social preview → Upload an image")
     return 0
 
