@@ -1,6 +1,6 @@
 ---
 tipo: home
-atualizado: 2026-09-12
+atualizado: 2026-09-13
 ---
 
 # claude-code-statusline
@@ -30,11 +30,12 @@ Repositório público, licença MIT. A instalação e o uso ficam no README ([in
 | **Validar num Mac** (fecha a CCS-1) | [[guias/validar-no-macos]] |
 | Armadilhas do PowerShell que já custaram caro | [[bugs-fixes/2026-09-12-powershell-bom-e-colisao-de-variavel]] |
 | Por que a barra cheia saía torta no macOS | [[bugs-fixes/2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]] |
+| Por que o custo saía `$12,00` num Mac em português | [[bugs-fixes/2026-09-13-locale-com-virgula-quebrava-os-numeros]] |
 
 ## Pendências
 
-- [[pendentes/2026-09-12-confirmar-no-macos|Confirmar no macOS]] — `fazendo`: o CI achou e corrigiu o
-  bug do `seq`; falta um terminal de Mac de verdade
+- [[pendentes/2026-09-12-confirmar-no-macos|Confirmar no macOS]] — `fazendo`: rodada num Mac de verdade, achou
+  o bug do locale (#27); falta alguém olhar os glifos na tela
 
 Resolvidas ficam em `pendentes/arquivo/` — a mais recente é
 [[pendentes/arquivo/2026-09-12-rotulos-da-barra-em-portugues|a tradução dos rótulos da barra]].
