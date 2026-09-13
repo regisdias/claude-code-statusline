@@ -232,7 +232,50 @@ ordem_caso "sem-ccsl"   '{"statusLine":{"type":"command"}}'             "model,c
 rm -f "$config/settings.json"
 
 # ---------------------------------------------------------------------------
-# 6. Quebra na largura do terminal
+# 6. Locale com vírgula decimal
+# ---------------------------------------------------------------------------
+# JSON numbers use a dot. Under pt_BR, awk read 12.3456 as 12 and bash's printf
+# rejected 84.7, so the bar showed "$12,00" and "0%" (issue #27). Fractional
+# percentages on purpose: the reference payloads are all integers, which is why
+# this went unnoticed. The C render is the reference.
+fracionado="$temporario/payload-fracionado.json"
+jq '.context_window.used_percentage = 64.6
+    | .rate_limits.five_hour.used_percentage = 84.7
+    | .rate_limits.seven_day.used_percentage = 59.6
+    | .cost.total_cost_usd = 12.3456' "$payloads/verde.json" > "$fracionado"
+
+referencia=$(LC_ALL=C bash "$shell" < "$fracionado" 2>&1)
+case $referencia in
+    *'session $12.35'*) ;;
+    *) echo "FALHA  locale/C — esperava 'session \$12.35', veio: $referencia" >&2
+       falhas=$((falhas + 1)) ;;
+esac
+
+testados=0
+for loc in pt_BR.UTF-8 de_DE.UTF-8; do
+    # A locale that is not installed silently falls back to C and would pass
+    # without testing anything: only count it when it really uses a comma.
+    # Fresh bash with a clean env: bash 3.2 ignores a temporary LC_ALL on a
+    # builtin, and an inherited LANG would mask a missing locale.
+    [ "$(env -i LC_ALL="$loc" bash -c 'printf "%.1f" 1' 2>/dev/null)" = "1,0" ] || continue
+    testados=$((testados + 1))
+    for via in LC_ALL LANG; do
+        # stderr included: a "printf: invalid number" is a failure even if
+        # the bar still came out
+        obtido=$(env -u LC_ALL -u LC_NUMERIC "$via=$loc" bash "$shell" < "$fracionado" 2>&1)
+        if [ "$obtido" = "$referencia" ]; then
+            echo "ok     locale/$loc via $via — igual ao C"
+        else
+            echo "FALHA  locale/$loc via $via — diverge do C:" >&2
+            printf '  C  : %q\n  %s: %q\n' "$referencia" "$loc" "$obtido" >&2
+            falhas=$((falhas + 1))
+        fi
+    done
+done
+[ "$testados" -gt 0 ] || echo "aviso  locale — nenhum locale com vírgula decimal instalado, caso pulado"
+
+# ---------------------------------------------------------------------------
+# 7. Quebra na largura do terminal
 # ---------------------------------------------------------------------------
 # Visible width, measured the way statusline-command.sh measures it.
 #

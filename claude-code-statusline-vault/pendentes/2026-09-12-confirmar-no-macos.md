@@ -2,7 +2,7 @@
 tipo: pendente
 status: fazendo
 data: 2026-09-12
-atualizado: 2026-09-12
+atualizado: 2026-09-13
 codigo: CCS-1
 ---
 
@@ -24,7 +24,14 @@ cheia para 12 blocos. Corrigido, com a história em
 [[../bugs-fixes/2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]]. O `date -r` passa limpo em
 todos os casos.
 
-**Falta ainda** o que runner nenhum resolve: alguém olhando um terminal de Mac.
+**2026-09-13 — o guia rodou num Mac de verdade** (macOS 15.6, Terminal.app, bash 3.2.57, `date` BSD,
+fuso −03, `LANG=pt_BR.UTF-8`). Passou: os dois bash iguais, barra cheia com 10 blocos, reset certo no
+fuso local (`resets` +2h, semana +3 dias), ordem configurada, bytes do `⎇` = `e2 8e 87`. **Não passou:
+o custo saiu `$12,00`** — o locale com vírgula decimal, que runner nenhum tinha. Virou a issue #27 e
+[[../bugs-fixes/2026-09-13-locale-com-virgula-quebrava-os-numeros]].
+
+**Falta ainda** o que só um olho resolve: ver na tela se o `⎇`, os blocos e o `│` desenham no
+Terminal.app e no iTerm2. Os bytes estão certos; a fonte é o que falta confirmar.
 
 ## Como confirmar na mão
 

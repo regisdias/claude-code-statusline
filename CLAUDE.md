@@ -86,6 +86,9 @@ sharp-cli para rasterizar). O GitHub não tem API para ele: sobe à mão em Sett
   `CHANGELOG.md`. O CI reprova se os três discordarem.
 - **`seq` não entra no caminho de desenho:** o do BSD infere direção e `seq 1 0` imprime `1 0`, o que já
   alargou a barra cheia no macOS. Preencher com `printf` e substituir não tem caso de borda.
+- **Número sai no locale C (`export LC_ALL=C` no topo do `.sh`).** O `awk` e o `printf` do bash formatam
+  por `LC_NUMERIC`: em `pt_BR` o custo virava `$12,00` e percentual fracionado virava `0%` (#27). O
+  `.ps1` faz o mesmo com `InvariantCulture`. Não formate número fora dessas duas garantias.
 - O lint do CI é `shellcheck --severity=warning`. Supressão só com comentário explicando o porquê.
 
 ## Vault do projeto
