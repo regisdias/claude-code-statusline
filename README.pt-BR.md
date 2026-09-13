@@ -113,6 +113,27 @@ vez de despejar um stack trace no seu terminal.
 <img src="assets/demo-fallback.svg" alt="Statusline degradando com elegância: plano sem limites de cota mostra só a barra de contexto, e payload vazio mostra 'waiting...'." width="100%">
 </div>
 
+## Ela se ajusta ao seu terminal
+
+A barra se distribui na largura da sua janela, quebrando **entre** trechos, nunca no meio de um. Não há
+o que configurar: em terminal largo continua uma linha só, igual a antes.
+
+```
+170 colunas:
+⎇ main  │  Opus 5 (1M context)  │  ctx [███░░░░░░░] 33%  │  5h […] 41%  │  week […] 11%  │  session $12.35
+
+80 colunas:
+⎇ feat/28-wrap-to-terminal-width  │  Opus 5 (1M context)
+ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20
+week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
+```
+
+O Claude Code define o `COLUMNS` antes de rodar o comando — é assim que o script sabe. Se vier ausente
+ou não numérico, sai uma linha só, o comportamento antigo.
+
+Trecho maior que o terminal inteiro ganha uma linha só para ele e transborda: quebrar dentro de um
+trecho esconderia justamente o que você quer ler.
+
 ## Escolher os trechos, e a ordem deles
 
 Uma lista só resolve as duas coisas: **a ordem é a configuração.** Trecho que você deixar de fora não

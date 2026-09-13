@@ -20,6 +20,7 @@ midnight.
 import datetime
 import html
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -94,8 +95,15 @@ def rodar(payload: Path, branch: bool = True) -> str:
     else:
         entrada = payload.read_bytes()
 
+    # COLUMNS pinned, and high: the bar wraps itself to the terminal width, so
+    # without this the picture would depend on the window of whoever generated it.
+    ambiente = {**os.environ, "COLUMNS": "999"}
     p = subprocess.run(
-        ["bash", str(SHELL)], input=entrada, capture_output=True, check=True
+        ["bash", str(SHELL)],
+        input=entrada,
+        capture_output=True,
+        check=True,
+        env=ambiente,
     )
     return p.stdout.decode("utf-8")
 

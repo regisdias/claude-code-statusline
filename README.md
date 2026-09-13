@@ -112,6 +112,27 @@ of a stack trace in your terminal.
 <img src="assets/demo-fallback.svg" alt="Statusline falling back gracefully: plan without rate limits shows only the context bar, and an empty payload shows 'waiting...'." width="100%">
 </div>
 
+## It fits your terminal
+
+The bar lays itself out to the width of your window, breaking **between** segments so nothing is ever
+cut. Nothing to configure — on a wide terminal it is one line, exactly as before.
+
+```
+170 columns:
+⎇ main  │  Opus 5 (1M context)  │  ctx [███░░░░░░░] 33%  │  5h […] 41%  │  week […] 11%  │  session $12.35
+
+80 columns:
+⎇ feat/28-wrap-to-terminal-width  │  Opus 5 (1M context)
+ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20
+week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
+```
+
+Claude Code sets `COLUMNS` before running the command, which is how the script knows. If it is missing
+or not a number, you get one line — the old behaviour.
+
+A segment wider than the whole terminal gets a line to itself and overflows: splitting inside a segment
+would hide the very thing you are trying to read.
+
 ## Choosing the segments, and their order
 
 One list does both jobs: **the order is the configuration.** A segment you leave out does not render.
