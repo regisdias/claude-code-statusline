@@ -34,7 +34,7 @@
 
 # Bumped in the same commit that stamps the version in CHANGELOG.md; CI checks
 # that this, the .ps1 and the CHANGELOG agree.
-CCSL_VERSION="1.4.0"
+CCSL_VERSION="1.4.1"
 
 # Numbers in the payload always use a dot. awk and bash's builtin printf read and
 # write them by LC_NUMERIC, so under pt_BR or de_DE awk took 12.3456 for 12 and

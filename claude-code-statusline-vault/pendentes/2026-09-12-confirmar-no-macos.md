@@ -30,8 +30,10 @@ fuso local (`resets` +2h, semana +3 dias), ordem configurada, bytes do `⎇` = `
 o custo saiu `$12,00`** — o locale com vírgula decimal, que runner nenhum tinha. Virou a issue #27 e
 [[../bugs-fixes/2026-09-13-locale-com-virgula-quebrava-os-numeros]].
 
-**Falta ainda** o que só um olho resolve: ver na tela se o `⎇`, os blocos e o `│` desenham no
-Terminal.app e no iTerm2. Os bytes estão certos; a fonte é o que falta confirmar.
+**Olhado na tela, no Terminal.app:** o `⎇` desenha, mas parece o símbolo da tecla Option, não uma
+branch — no WSL ele parece uma setinha. É o caso "só o `⎇` sai errado" do guia, então esta nota **não**
+fecha: a escolha do glifo virou [[2026-09-13-glifo-da-branch-no-macos|CCS-4]]. O iTerm2 não foi
+conferido.
 
 ## Como confirmar na mão
 

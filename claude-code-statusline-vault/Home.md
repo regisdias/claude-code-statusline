@@ -36,7 +36,9 @@ Repositório público, licença MIT. A instalação e o uso ficam no README ([in
 ## Pendências
 
 - [[pendentes/2026-09-12-confirmar-no-macos|Confirmar no macOS]] — `fazendo`: rodada num Mac de verdade, achou
-  o bug do locale (#27); falta alguém olhar os glifos na tela
+  o bug do locale (#27); espera a CCS-4
+- [[pendentes/2026-09-13-glifo-da-branch-no-macos|O `⎇` não lê como git no macOS]] — `aberto`: parece a
+  tecla Option; escolher outro glifo ou um rótulo
 
 Resolvidas ficam em `pendentes/arquivo/` — a mais recente é
 [[pendentes/arquivo/2026-09-12-rotulos-da-barra-em-portugues|a tradução dos rótulos da barra]].

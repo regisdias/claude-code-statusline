@@ -6,7 +6,6 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-<<<<<<< HEAD
 ### Added
 
 - **The bar wraps to the terminal width**
@@ -23,7 +22,9 @@ All notable changes to this project are documented here. The format follows
   status line often runs with no `LANG`. The same line measures 31 under `C.UTF-8` and 55 under `C`,
   because `█` is three bytes. Folding each glyph to one ASCII character before counting gets the right
   answer either way, with no subprocess.
-=======
+
+## [1.4.1] — 2026-09-13
+
 ### Fixed
 
 - **Session cost and plan limits came out wrong under a comma-decimal locale**
@@ -32,7 +33,6 @@ All notable changes to this project are documented here. The format follows
   `session $12,00` and a `0%` plan limit whenever the percentage was fractional. The shell script now
   formats numbers in the C locale, and `testar.sh` renders under `pt_BR` and `de_DE` and compares with
   the C output. The PowerShell side already used `InvariantCulture` and was never affected.
->>>>>>> origin/develop
 
 ## [1.4.0] — 2026-09-13
 
@@ -169,7 +169,8 @@ like a fix was a fix to what people could already `curl`.
 - `statusline-command.ps1` no longer trips `PSAvoidUsingEmptyCatchBlock`. The `catch` around the
   console encoding is still deliberate: a terminal that refuses UTF-8 is no reason to stop drawing.
 
-[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.1.0...v1.2.0
