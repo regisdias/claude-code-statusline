@@ -234,6 +234,20 @@ rm -f "$config/settings.json"
 # ---------------------------------------------------------------------------
 # 6. Quebra na largura do terminal
 # ---------------------------------------------------------------------------
+# Visible width, measured the way statusline-command.sh measures it.
+#
+# Not awk: `length()` counts bytes in the awk macOS ships, and characters in
+# gawk — a 57-column line reports 60 there and the assertion below lied on every
+# Mac. Folding the glyphs to ASCII is byte-safe in either.
+shopt -s extglob
+LV=0
+largura_visivel() {
+    local s=${1//$'\033'\[*([0-9;])m/}
+    s=${s//█/#}; s=${s//░/#}; s=${s//│/#}
+    s=${s//⎇/#}; s=${s//↑/#}; s=${s//·/#}
+    LV=${#s}
+}
+
 largura_caso() {
     local nome=$1 cols=$2
     # Same trap as branch_caso: inside one `local`, bash creates every name
@@ -249,11 +263,17 @@ largura_caso() {
     # No line may exceed the width — unless it holds a single segment, which
     # cannot be split without cutting content. A segment wider than the terminal
     # gets its own line and overflows, on purpose.
-    maior=$(printf '%s' "$saida_sh" | sed 's/\x1b\[[0-9]*m//g' \
-        | awk -v cols="$cols" '
-            cols > 0 && length($0) > cols && index($0, "  │  ") == 0 { next }
-            { if (length($0) > m) m = length($0) }
-            END { print m+0 }')
+    maior=0
+    local l
+    while IFS= read -r l; do
+        case $l in
+            *"  │  "*) ;;            # more than one segment: must fit
+            *) continue ;;           # a lone segment is allowed to overflow
+        esac
+        largura_visivel "$l"
+        [ "$LV" -gt "$maior" ] && maior=$LV
+    done <<< "$saida_sh"
+
     if [ "$cols" -gt 0 ] && [ "$maior" -gt "$cols" ]; then
         echo "FALHA  largura/$nome — linha de $maior colunas, com mais de um trecho, em COLUMNS=$cols" >&2
         falhas=$((falhas + 1))

@@ -56,6 +56,18 @@ na contagem e as duas implementações quebravam em pontos diferentes. Usar `[ch
 É a mesma família do `"\u{2387}"` que já tinha mordido antes. **Sintaxe nova de PowerShell é sempre
 suspeita neste projeto**, porque o alvo é o 5.1 que vem no Windows.
 
+## E a terceira: o `awk` do macOS conta bytes
+
+O teste media a largura das linhas com `awk '{ ... length($0) ... }'`. O `gawk` do Linux, em locale
+UTF-8, conta caracteres; **o `awk` que o macOS traz conta bytes, sempre**. Uma linha de 76 colunas era
+reportada como 124, e a suíte acusava estouro em todo Mac.
+
+Nem era bug de implementação: o CI do `macos-latest` reprovou o **teste**, não o código. A medição
+passou a ser feita em bash, com a mesma dobra de glifos que a implementação usa — assim o teste não tem
+como divergir do que ele testa.
+
+É o segundo bug que o job do macOS pega sozinho, depois do `seq` do BSD.
+
 ## Trecho maior que o terminal
 
 Fica sozinho na linha e transborda. Quebrar dentro de um trecho esconderia justamente o que se quer ler.
