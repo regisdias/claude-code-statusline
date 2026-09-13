@@ -28,6 +28,9 @@ todos os casos.
 
 ## Como confirmar na mão
 
+**O passo a passo completo, numa colada só, está em [[../guias/validar-no-macos]].** O resto desta nota
+é o contexto de por que isso importa.
+
 ```bash
 bash statusline-command.sh < scripts/payloads/verde.json
 ```
