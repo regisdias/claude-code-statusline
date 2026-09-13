@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Lint every shell script
-        run: shellcheck --severity=warning statusline-command.sh install.sh scripts/testar.sh hooks/ccsl-update-check.sh
+        run: shellcheck --severity=warning statusline-command.sh install.sh scripts/testar.sh scripts/testar-instalador.sh hooks/ccsl-update-check.sh
 
   powershell:
     name: PSScriptAnalyzer
@@ -121,6 +121,20 @@ jobs:
               }
               Write-Host "ok $($_.Name): $saida"
           }
+
+  instalador:
+    name: Installer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install jq
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq jq
+      # Points the installer at the branch under test, so a fix to it is
+      # exercised before it merges rather than after.
+      - name: Run the installer suite against this branch
+        env:
+          CCSL_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: bash scripts/testar-instalador.sh
 
   imagens:
     name: README images are current

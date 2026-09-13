@@ -6,7 +6,21 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- **The installer called your own status line a stranger's**
+  ([#36](https://github.com/regisdias/claude-code-statusline/issues/36)). It compared the configured
+  command against the literal string `bash ~/.claude/statusline-command.sh`, so a `settings.json`
+  holding the absolute path — which is what you get writing it by hand — was reported as somebody
+  else's. Worse than the scare: that path ends in `exit 0`, so every update silently skipped the Claude
+  Code version check and the preview. It now compares the resolved path.
+
+### Added
+
+- `scripts/testar-instalador.sh`, and a CI job for it. The installer had no tests and this was its
+  second bug, after `~/.claude/install.sh` being documented at a path it never created. Nine cases:
+  each spelling of our own path, a genuinely foreign status line, invalid JSON, and the update check
+  going on and off without duplicating hooks or dropping your `env`.
 
 ## [1.5.0] — 2026-09-13
 
