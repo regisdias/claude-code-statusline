@@ -112,6 +112,29 @@ of a stack trace in your terminal.
 <img src="assets/demo-fallback.svg" alt="Statusline falling back gracefully: plan without rate limits shows only the context bar, and an empty payload shows 'waiting...'." width="100%">
 </div>
 
+## It tells you when you are burning too fast
+
+`5h [████░░░░░░] 41% · resets 06:20` reads the same at 03:00 and at 06:00, and those are opposite
+situations. So when the current pace would exhaust a window before it resets, the bar says when:
+
+```
+5h [███████░░░] 74% · full 04:10 · resets 06:20
+```
+
+You run out at 04:10 and are blocked until 06:20. The gap between the two is how long you would be
+stuck, which is the number that decides whether to slow down.
+
+It needs no history and no configuration — the window length is in the field name, and `resets_at` says
+when it closes.
+
+**It stays quiet the rest of the time**, which is the point:
+
+| Situation | Shown |
+|---|---|
+| The pace gets you to the reset | nothing |
+| Less than 10% of the window elapsed | nothing — one large request at the start projects nonsense |
+| Nothing used yet, or no `resets_at` | nothing |
+
 ## It fits your terminal
 
 The bar lays itself out to the width of your window, breaking **between** segments so nothing is ever

@@ -8,6 +8,23 @@ All notable changes to this project are documented here. The format follows
 
 Nothing yet.
 
+## [1.7.0] — 2026-09-13
+
+### Added
+
+- **A warning when the current pace would exhaust a window early**
+  ([#45](https://github.com/regisdias/claude-code-statusline/issues/45)). `5h [███████░░░] 74% · full
+  04:10 · resets 06:20` — you run out at 04:10 and are blocked until 06:20. The bar used to read the
+  same at the start and the end of a window, which are opposite situations.
+
+  No history and no configuration: the window length is in the field name, `resets_at` says when it
+  closes, so `elapsed = window - (resets_at - now)` and the rest is arithmetic.
+
+  It stays silent when the pace gets there in time, when less than 10% of the window has elapsed — one
+  large request at the start projects nonsense — when nothing has been used, and at 100%, where there is
+  nothing left to project and the full red bar already says so. A bar that warns constantly is a bar
+  nobody reads.
+
 ## [1.6.0] — 2026-09-13
 
 ### Changed
@@ -206,7 +223,8 @@ like a fix was a fix to what people could already `curl`.
 - `statusline-command.ps1` no longer trips `PSAvoidUsingEmptyCatchBlock`. The `catch` around the
   console encoding is still deliberate: a terminal that refuses UTF-8 is no reason to stop drawing.
 
-[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.0...v1.4.1

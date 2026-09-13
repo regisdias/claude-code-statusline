@@ -31,6 +31,24 @@ export CLAUDE_CONFIG_DIR="$tmpdir/config"
 # line. The wrapping section below sets it per case.
 export COLUMNS=999
 
+# Like compare(), but blind to the projected clock time.
+compare_pace() {
+    local name=$1 payload=$2 a b
+    if [ "$has_pwsh" = 0 ]; then
+        echo "ok     $name — shell only (PowerShell skipped, pwsh missing)"
+        return
+    fi
+    a=$(bash "$shell" < "$payload" 2>/dev/null | sed 's/· full [0-9][0-9]:[0-9][0-9]/· full HH:MM/')
+    b=$(pwsh -NoProfile -File "$ps1" < "$payload" 2>/dev/null | sed 's/· full [0-9][0-9]:[0-9][0-9]/· full HH:MM/')
+    if [ "$a" = "$b" ]; then
+        echo "ok     $name — both implementations agree"
+    else
+        echo "FAIL  $name — outputs differ:" >&2
+        printf '  sh : %q\n  ps1: %q\n' "$a" "$b" >&2
+        failures=$((failures + 1))
+    fi
+}
+
 # Compare both implementations on one payload file.
 compare() {
     local name=$1 payload=$2 out_sh out_ps
@@ -435,6 +453,45 @@ limite_caso "width-pua"   '{"ccsl":{"order":["branch","model"],"branch_icon":"\u
 # 2 + 5 + 5 + 19 = 31 columns
 limite_caso "width-emoji" '{"ccsl":{"order":["branch","model"],"branch_icon":"\ud83c\udf3f"}}' 31
 rm -f "$config/settings.json"
+
+# ---------------------------------------------------------------------------
+# 9. The pace projection
+# ---------------------------------------------------------------------------
+# What matters here is the silence as much as the warning: a bar that warns
+# constantly is a bar nobody reads. `expected` is "full" or "-".
+pace_case() {
+    local name=$1 pct=$2 offset=$3 expected=$4
+    local payload="$tmpdir/payload-pace-$name.json" got
+    jq --argjson p "$pct" --argjson r "$(( $(date +%s) + offset ))" \
+        '.rate_limits.five_hour.used_percentage = $p | .rate_limits.five_hour.resets_at = $r' \
+        "$payloads/green.json" > "$payload"
+
+    if bash "$shell" < "$payload" 2>/dev/null | sed 's/\x1b\[[0-9]*m//g' | grep -q ' · full '; then
+        got=full
+    else
+        got="-"
+    fi
+    if [ "$got" != "$expected" ]; then
+        echo "FAIL  pace/$name — expected '$expected', got '$got'" >&2
+        failures=$((failures + 1))
+        return
+    fi
+
+    # The projected time is `now` plus a computed offset, and the two
+    # implementations run seconds apart — close to a minute boundary they
+    # legitimately differ by a minute. Compare everything else byte for byte, and
+    # the projection by whether it is there and in the right shape.
+    compare_pace "pace/$name" "$payload"
+}
+
+#          name              used%  reset in   warns?
+pace_case "burning-late"       95     1800      full     # 5% left, 10% of window: runs out first
+pace_case "burning-midway"     60    10800      full     # 40% elapsed, 60% spent
+pace_case "on-pace"            74     3600      -        # 80% elapsed, 74% spent: makes it
+pace_case "window-just-opened" 10    17100      -        # 5% elapsed: too early to project
+pace_case "nothing-used"        0     3600      -
+pace_case "stale-payload"      50     -600      -        # reset already in the past
+pace_case "exactly-at-limit"  100     3600      -        # already out: nothing to project
 
 if [ "$failures" -gt 0 ]; then
     echo "$failures failure(s)" >&2
