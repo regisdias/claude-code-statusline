@@ -10,8 +10,15 @@
 # OPTIONAL UPDATE CHECK — off by default, because the status line makes no
 # network call and writes nothing, and that is a property worth keeping:
 #
-#   bash install.sh --enable-update-check    # installs a SessionStart hook
-#   bash install.sh --disable-update-check   # removes it, and stops all checks
+#   bash ~/.claude/ccsl-install.sh --enable-update-check
+#   bash ~/.claude/ccsl-install.sh --disable-update-check
+#
+# WHICH SEGMENTS, AND IN WHAT ORDER
+#
+#   bash ~/.claude/ccsl-install.sh --configure
+#
+# A normal install keeps a copy of this script at ~/.claude/ccsl-install.sh, so
+# those flags are one command away afterwards.
 set -euo pipefail
 
 REPO="regisdias/claude-code-statusline"
@@ -30,9 +37,13 @@ MODO="instalar"
 case ${1:-} in
     --enable-update-check)  MODO="ligar-update" ;;
     --disable-update-check) MODO="desligar-update" ;;
+    --configure)            MODO="configurar" ;;
     "")                     ;;
     *) printf 'unknown option: %s\n' "$1" >&2; exit 2 ;;
 esac
+
+EU_MESMO="$DESTINO/ccsl-install.sh"
+SEGMENTOS="branch model ctx 5h week session update"
 
 MARCADOR="$DESTINO/.ccsl-update-check"
 CACHE="$DESTINO/.ccsl-update-cache"
@@ -83,6 +94,101 @@ mexer_hook() {   # $1 = adicionar|remover
     mv "$SETTINGS.novo" "$SETTINGS"
 }
 
+# ---------------------------------------------------------------------------
+# --configure: which segments, and in what order
+# ---------------------------------------------------------------------------
+# The menu and the preview are rendered by the installed status line itself, not
+# by strings kept in here — so what you approve is what you will get.
+configurar() {
+    local script="$SCRIPT"
+    [ -x "$script" ] || erro "install the status line first: no $script"
+
+    # Global, not local: the EXIT trap runs after this function has returned
+    OFICINA=$(mktemp -d) || erro "could not create a temp dir"
+    trap 'rm -rf "$OFICINA"' EXIT
+
+    local repo cfg payload
+    repo="$OFICINA/repo"; cfg="$OFICINA/cfg"
+    mkdir -p "$repo/.git" "$cfg"
+    printf 'ref: refs/heads/main\n' > "$repo/.git/HEAD"
+    # So the `update` segment has something to show in the menu
+    : > "$cfg/.ccsl-update-check"
+    printf '0 9.9.9\n' > "$cfg/.ccsl-update-cache"
+
+    payload=$(printf '{"model":{"display_name":"Opus 5 (1M context)"},
+      "cost":{"total_cost_usd":12.3456},
+      "workspace":{"current_dir":"%s"},
+      "context_window":{"used_percentage":33,"context_window_size":1000000,
+                        "current_usage":{"input_tokens":330000}},
+      "rate_limits":{"five_hour":{"used_percentage":41,"resets_at":%s},
+                     "seven_day":{"used_percentage":11,"resets_at":%s}}}' \
+        "$repo" "$(( $(date +%s) + 7200 ))" "$(( $(date +%s) + 259200 ))")
+
+    desenhar() {   # $1 = comma-separated order
+        printf '{"ccsl":{"order":[%s]}}\n' \
+            "$(printf '%s' "$1" | awk -F, '{for(i=1;i<=NF;i++) printf "%s\"%s\"", (i>1?",":""), $i}')" \
+            > "$cfg/settings.json"
+        printf '%s' "$payload" | CLAUDE_CONFIG_DIR="$cfg" bash "$script"
+    }
+
+    local atual
+    atual=$(jq -r '(.ccsl.order // []) | join(",")' "$SETTINGS" 2>/dev/null)
+    [ -n "$atual" ] || atual=$(printf '%s' "$SEGMENTOS" | tr ' ' ',')
+
+    printf '\nSegments, as your status line renders them:\n\n'
+    local i=1 nome
+    for nome in $SEGMENTOS; do
+        printf '  %d  %-8s %s\n' "$i" "$nome" "$(desenhar "$nome")"
+        i=$((i + 1))
+    done
+
+    printf '\nCurrent order: %s\n' "$atual"
+    printf '\nType the numbers you want, in the order you want them.\n'
+    printf 'Leave any out to hide it. Empty line keeps what you have.\n> '
+
+    # Read from the terminal when there is one, so this works even when the
+    # installer arrived through `curl | bash` and stdin is the script itself.
+    # Falls back to stdin, which also makes the whole thing scriptable.
+    local entrada=0
+    # Braces on purpose: without them the shell prints its own error before
+    # the redirection to /dev/null takes effect.
+    if { exec 3</dev/tty; } 2>/dev/null; then entrada=3; fi
+
+    local resposta
+    read -r resposta <&$entrada || resposta=""
+    [ -n "$resposta" ] || { ok "nothing changed"; return 0; }
+
+    local nova="" n
+    for n in $resposta; do
+        case $n in
+            ''|*[!0-9]*) erro "not a number: $n" ;;
+        esac
+        nome=$(printf '%s' "$SEGMENTOS" | cut -d' ' -f"$n")
+        [ -n "$nome" ] || erro "there is no segment $n"
+        nova="${nova:+$nova,}$nome"
+    done
+
+    printf '\nIt would look like this:\n\n  %s\n\n' "$(desenhar "$nova")"
+    printf 'Save? [Y/n] '
+    read -r resposta <&$entrada || resposta=""
+    case $resposta in
+        [Nn]*) ok "left alone"; return 0 ;;
+    esac
+
+    [ -f "$SETTINGS" ] || printf '{}\n' > "$SETTINGS"
+    jq empty "$SETTINGS" >/dev/null 2>&1 || erro "$SETTINGS is not valid JSON"
+    cp "$SETTINGS" "$SETTINGS.bak"
+    jq --arg o "$nova" '.ccsl.order = ($o | split(","))' "$SETTINGS" > "$SETTINGS.novo" \
+        && mv "$SETTINGS.novo" "$SETTINGS"
+    ok "saved to $SETTINGS (backup at $SETTINGS.bak)"
+    printf '  the bar picks it up on the next render, no restart needed\n'
+}
+
+if [ "$MODO" = "configurar" ]; then
+    configurar
+    exit $?
+fi
+
 if [ "$MODO" = "ligar-update" ]; then
     curl -fsSL "https://raw.githubusercontent.com/$REPO/$RAMO/hooks/ccsl-update-check.sh" \
         -o "$HOOK_SH" || erro "could not download the hook"
@@ -117,6 +223,12 @@ mv "$temporario" "$SCRIPT"
 chmod +x "$SCRIPT"
 trap - EXIT
 ok "statusline installed at $SCRIPT"
+
+# Keep a copy of this installer, so --configure and the update flags are one
+# command away later instead of another curl
+curl -fsSL "https://raw.githubusercontent.com/$REPO/$RAMO/install.sh" -o "$EU_MESMO" 2>/dev/null \
+    && chmod +x "$EU_MESMO" \
+    && ok "installer kept at $EU_MESMO (--configure, --enable-update-check)"
 
 # ---------------------------------------------------------------------------
 # 2. settings.json

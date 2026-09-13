@@ -16,6 +16,12 @@
 #   3. The bar shows up on the next render. No restart needed.
 #
 # HOW TO READ IT
+#   Which segments appear, and in what order, comes from settings.json:
+#
+#        "ccsl": { "order": ["branch", "model", "ctx", "5h", "week", "session", "update"] }
+#
+#   Leave a name out and it does not render. `install.sh --configure` edits this.
+#
 #   ⎇ <branch> → current git branch, when the session is inside a repository
 #   ctx      → how much of this conversation's context window is used (not a plan quota)
 #   5h       → 5-hour block of your plan, with the time it resets
@@ -128,6 +134,26 @@ function Get-Reset($epoch) {
     return $quando.ToString('dd/MM HH:mm', $INV)
 }
 
+$ORDEM_PADRAO = 'branch,model,ctx,5h,week,session,update'
+
+# Which segments to draw, and in what order. Anything unreadable or malformed
+# falls back to the default rather than taking the bar down.
+function Get-Ordem {
+    $base = $env:CLAUDE_CONFIG_DIR
+    if (-not $base) { $base = [System.IO.Path]::Combine($HOME, '.claude') }
+    $arquivo = [System.IO.Path]::Combine($base, 'settings.json')
+    if (-not [System.IO.File]::Exists($arquivo)) { return $ORDEM_PADRAO }
+    try {
+        $cfg = [System.IO.File]::ReadAllText($arquivo) | ConvertFrom-Json
+    } catch {
+        return $ORDEM_PADRAO
+    }
+    if (-not $cfg -or -not $cfg.ccsl -or -not $cfg.ccsl.order) { return $ORDEM_PADRAO }
+    $nomes = @($cfg.ccsl.order | Where-Object { $_ -is [string] })
+    if ($nomes.Count -eq 0) { return $ORDEM_PADRAO }
+    return ($nomes -join ',')
+}
+
 $bruto = [Console]::In.ReadToEnd()
 $dados = $null
 if ($bruto) { $dados = $bruto | ConvertFrom-Json }
@@ -141,8 +167,12 @@ if ($dados -and $dados.model -and $dados.model.display_name) { $modelo = $dados.
 $ctxPct = $null
 if ($dados -and $dados.context_window) { $ctxPct = $dados.context_window.used_percentage }
 
+$modelPart = $modelo
+$ctxPart = ''
+
 if ($null -eq $ctxPct) {
-    $partes = @("$modelo  waiting...")
+    # Nothing to draw yet: say so where the model name goes, and skip the rest
+    $modelPart = "$modelo  waiting..."
 } else {
     $tamanho = $dados.context_window.context_window_size
     $usados = $null
@@ -152,12 +182,16 @@ if ($null -eq $ctxPct) {
     } else {
         $tokens = '{0}%' -f (Get-Inteiro $ctxPct)
     }
-    $partes = @('{0}  ctx {1}[{2}]{3} {4} {5}%' -f $modelo, (Get-Color $ctxPct), (Get-Bar $ctxPct), $RESET, $tokens, (Get-Inteiro $ctxPct))
+    $ctxPart = 'ctx {0}[{1}]{2} {3} {4}%' -f (Get-Color $ctxPct), (Get-Bar $ctxPct), $RESET, $tokens, (Get-Inteiro $ctxPct)
 }
 
 # ---------------------------------------------------------------------------
 # Plan limits: 5-hour block and week
 # ---------------------------------------------------------------------------
+$blocoPart = ''
+$semanaPart = ''
+$custoPart = ''
+
 $limites = $null
 if ($dados) { $limites = $dados.rate_limits }
 
@@ -166,7 +200,7 @@ if ($limites -and $null -ne $limites.five_hour.used_percentage) {
     $quandoReseta = Get-Reset $limites.five_hour.resets_at
     $texto = '5h {0}[{1}]{2} {3}%' -f (Get-Color $pct), (Get-Bar $pct), $RESET, (Get-Inteiro $pct)
     if ($quandoReseta) { $texto += " · resets $quandoReseta" }
-    $partes += $texto
+    $blocoPart = $texto
 }
 
 if ($limites -and $null -ne $limites.seven_day.used_percentage) {
@@ -174,11 +208,11 @@ if ($limites -and $null -ne $limites.seven_day.used_percentage) {
     $quandoReseta = Get-Reset $limites.seven_day.resets_at
     $texto = 'week {0}[{1}]{2} {3}%' -f (Get-Color $pct), (Get-Bar $pct), $RESET, (Get-Inteiro $pct)
     if ($quandoReseta) { $texto += " · $quandoReseta" }
-    $partes += $texto
+    $semanaPart = $texto
 }
 
 if ($dados -and $dados.cost -and $dados.cost.total_cost_usd -gt 0) {
-    $partes += ('session $' + ([Math]::Round([double]$dados.cost.total_cost_usd, 2)).ToString('0.00', $INV))
+    $custoPart = 'session $' + ([Math]::Round([double]$dados.cost.total_cost_usd, 2)).ToString('0.00', $INV)
 }
 
 # Update notice — opt-in, and read-only.
@@ -222,9 +256,26 @@ $branch = Get-Branch $dirAtual
 # U+2387 marks the segment as a branch; it is one column wide, unlike an emoji
 # [char] and not "\u{2387}": the \u escape is PowerShell 7+, and this file
 # has to parse on Windows PowerShell 5.1
-if ($branch) { $partes = ,([string][char]0x2387 + " " + $branch) + $partes }
+$branchPart = ''
+if ($branch) { $branchPart = [string][char]0x2387 + " " + $branch }
 
 $nova = Get-NovaVersao $CCSL_VERSION
-if ($nova) { $partes += ([string][char]0x2191 + $nova) }
+$updatePart = ''
+if ($nova) { $updatePart = [string][char]0x2191 + $nova }
+
+$partes = @()
+foreach ($nome in (Get-Ordem).Split(',')) {
+    $parte = switch ($nome) {
+        'branch'  { $branchPart }
+        'model'   { $modelPart }
+        'ctx'     { $ctxPart }
+        '5h'      { $blocoPart }
+        'week'    { $semanaPart }
+        'session' { $custoPart }
+        'update'  { $updatePart }
+        default   { '' }   # a name nobody recognises simply does not render
+    }
+    if ($parte) { $partes += $parte }
+}
 
 [Console]::Out.Write(($partes -join '  │  '))

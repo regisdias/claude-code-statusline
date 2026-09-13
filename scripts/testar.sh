@@ -187,6 +187,46 @@ update_caso "quatro-partes" "1789204800 1.2.3.4" "—"
 update_caso "vazio"       ""                   "—"
 rm -f "$marcador" "$cache"
 
+# ---------------------------------------------------------------------------
+# 5. A ordem dos trechos, lida do settings.json
+# ---------------------------------------------------------------------------
+ordem_caso() {
+    local nome=$1 conteudo=$2 esperado=$3
+    local payload="$temporario/payload-ord-$nome.json" obtido
+    cp "$payloads/verde.json" "$payload"
+
+    rm -f "$config/settings.json"
+    [ -n "$conteudo" ] && printf '%s\n' "$conteudo" > "$config/settings.json"
+
+    # Which segments rendered, by name, in order
+    obtido=$(bash "$shell" < "$payload" 2>/dev/null | sed 's/\x1b\[[0-9]*m//g' \
+        | awk -F'  │  ' '{for (i=1; i<=NF; i++) {
+              if ($i ~ /^ctx /)          printf "%sctx", (i>1?",":"");
+              else if ($i ~ /^5h /)      printf "%s5h", (i>1?",":"");
+              else if ($i ~ /^week /)    printf "%sweek", (i>1?",":"");
+              else if ($i ~ /^session /) printf "%ssession", (i>1?",":"");
+              else                       printf "%smodel", (i>1?",":"");
+          }}')
+    if [ "$obtido" != "$esperado" ]; then
+        echo "FALHA  ordem/$nome — esperava '$esperado', veio '$obtido'" >&2
+        falhas=$((falhas + 1))
+        return
+    fi
+    comparar "ordem/$nome" "$payload"
+}
+
+# verde.json has no workspace, so `branch` never renders here; `update` is off.
+ordem_caso "padrao"     ""                                              "model,ctx,5h,week,session"
+ordem_caso "reordenado" '{"ccsl":{"order":["session","ctx","model"]}}'  "session,ctx,model"
+ordem_caso "sem-week"   '{"ccsl":{"order":["model","ctx","5h","session"]}}' "model,ctx,5h,session"
+ordem_caso "so-ctx"     '{"ccsl":{"order":["ctx"]}}'                    "ctx"
+ordem_caso "nome-torto" '{"ccsl":{"order":["ctx","banana","5h"]}}'      "ctx,5h"
+ordem_caso "lista-vazia" '{"ccsl":{"order":[]}}'                        "model,ctx,5h,week,session"
+ordem_caso "nao-string" '{"ccsl":{"order":[1,true,"ctx"]}}'             "ctx"
+ordem_caso "json-torto" '{ isso nao e json'                             "model,ctx,5h,week,session"
+ordem_caso "sem-ccsl"   '{"statusLine":{"type":"command"}}'             "model,ctx,5h,week,session"
+rm -f "$config/settings.json"
+
 if [ "$falhas" -gt 0 ]; then
     echo "$falhas falha(s)" >&2
     exit 1
