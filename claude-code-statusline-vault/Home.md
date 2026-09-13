@@ -27,6 +27,7 @@ Repositório público, licença MIT. A instalação e o uso ficam no README ([in
 | Como a ordem dos trechos é configurada | [[decisoes/ordem-dos-trechos-configuravel]] |
 | Testar sem abrir o Claude Code | [[guias/testar-local]] |
 | Regerar as imagens do README | [[guias/regenerar-imagens-do-readme]] |
+| **Validar num Mac** (fecha a CCS-1) | [[guias/validar-no-macos]] |
 | Armadilhas do PowerShell que já custaram caro | [[bugs-fixes/2026-09-12-powershell-bom-e-colisao-de-variavel]] |
 | Por que a barra cheia saía torta no macOS | [[bugs-fixes/2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]] |
 
