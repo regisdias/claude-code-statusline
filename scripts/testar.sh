@@ -27,6 +27,10 @@ trap 'rm -rf "$temporario"' EXIT
 mkdir -p "$temporario/config"
 export CLAUDE_CONFIG_DIR="$temporario/config"
 
+# Wide and pinned: the bar wraps to COLUMNS, and the existing cases assume one
+# line. The wrapping section below sets it per case.
+export COLUMNS=999
+
 # Compare both implementations on one payload file.
 comparar() {
     local nome=$1 payload=$2 saida_sh saida_ps
@@ -269,6 +273,91 @@ for loc in pt_BR.UTF-8 de_DE.UTF-8; do
     done
 done
 [ "$testados" -gt 0 ] || echo "aviso  locale — nenhum locale com vírgula decimal instalado, caso pulado"
+
+# ---------------------------------------------------------------------------
+# 7. Quebra na largura do terminal
+# ---------------------------------------------------------------------------
+# Visible width, measured the way statusline-command.sh measures it.
+#
+# Not awk: `length()` counts bytes in the awk macOS ships, and characters in
+# gawk — a 57-column line reports 60 there and the assertion below lied on every
+# Mac. Folding the glyphs to ASCII is byte-safe in either.
+shopt -s extglob
+LV=0
+largura_visivel() {
+    local s=${1//$'\033'\[*([0-9;])m/}
+    s=${s//█/#}; s=${s//░/#}; s=${s//│/#}
+    s=${s//⎇/#}; s=${s//↑/#}; s=${s//·/#}
+    LV=${#s}
+}
+
+largura_caso() {
+    local nome=$1 cols=$2
+    # Same trap as branch_caso: inside one `local`, bash creates every name
+    # before running the assignments, so "$nome" would still be unset here.
+    local payload="$temporario/payload-larg-$nome.json"
+    local saida_sh saida_ps maior linhas
+    jq --arg d "$temporario/comum" '. + {workspace: {current_dir: $d}}' \
+        "$payloads/verde.json" > "$payload"
+
+    saida_sh=$(COLUMNS=$cols bash "$shell" < "$payload" 2>/dev/null)
+    linhas=$(printf '%s' "$saida_sh" | grep -c '')
+
+    # No line may exceed the width — unless it holds a single segment, which
+    # cannot be split without cutting content. A segment wider than the terminal
+    # gets its own line and overflows, on purpose.
+    maior=0
+    local l
+    while IFS= read -r l; do
+        case $l in
+            *"  │  "*) ;;            # more than one segment: must fit
+            *) continue ;;           # a lone segment is allowed to overflow
+        esac
+        largura_visivel "$l"
+        [ "$LV" -gt "$maior" ] && maior=$LV
+    done <<< "$saida_sh"
+
+    if [ "$cols" -gt 0 ] && [ "$maior" -gt "$cols" ]; then
+        echo "FALHA  largura/$nome — linha de $maior colunas, com mais de um trecho, em COLUMNS=$cols" >&2
+        falhas=$((falhas + 1))
+        return
+    fi
+    if ! printf '%s' "$saida_sh" | grep -q 'session \$'; then
+        echo "FALHA  largura/$nome — o trecho session sumiu na quebra" >&2
+        falhas=$((falhas + 1))
+        return
+    fi
+
+    if [ "$tem_pwsh" = 0 ]; then
+        echo "ok     largura/$nome — $linhas linha(s), nada estourou (PowerShell pulado)"
+        return
+    fi
+    saida_ps=$(COLUMNS=$cols pwsh -NoProfile -File "$ps1" < "$payload" 2>/dev/null)
+    if [ "$saida_sh" = "$saida_ps" ]; then
+        echo "ok     largura/$nome — $linhas linha(s), as duas implementações batem"
+    else
+        echo "FALHA  largura/$nome — saídas diferentes com COLUMNS=$cols" >&2
+        printf '  sh : %q\n  ps1: %q\n' "$saida_sh" "$saida_ps" >&2
+        falhas=$((falhas + 1))
+    fi
+}
+
+largura_caso "sem-columns" 0
+largura_caso "30"          30
+largura_caso "60"          60
+largura_caso "80"          80
+largura_caso "120"         120
+largura_caso "999"         999
+
+# COLUMNS com lixo não pode quebrar nada
+lixo="$temporario/payload-larg-lixo.json"
+cp "$payloads/verde.json" "$lixo"
+if [ "$(COLUMNS=abc bash "$shell" < "$lixo" 2>/dev/null | grep -c '')" = "1" ]; then
+    echo "ok     largura/columns-invalido — uma linha, sem quebra"
+else
+    echo "FALHA  largura/columns-invalido — COLUMNS não numérico mudou a saída" >&2
+    falhas=$((falhas + 1))
+fi
 
 if [ "$falhas" -gt 0 ]; then
     echo "$falhas falha(s)" >&2
