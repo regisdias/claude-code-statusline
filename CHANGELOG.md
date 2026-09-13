@@ -6,7 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- **Session cost and plan limits came out wrong under a comma-decimal locale**
+  ([#27](https://github.com/regisdias/claude-code-statusline/issues/27)). With `LANG=pt_BR.UTF-8` or
+  `de_DE.UTF-8`, `awk` read `12.3456` as `12` and bash's `printf` rejected `84.7`, so the bar showed
+  `session $12,00` and a `0%` plan limit whenever the percentage was fractional. The shell script now
+  formats numbers in the C locale, and `testar.sh` renders under `pt_BR` and `de_DE` and compares with
+  the C output. The PowerShell side already used `InvariantCulture` and was never affected.
 
 ## [1.4.0] — 2026-09-13
 
