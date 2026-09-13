@@ -100,6 +100,7 @@ branch_caso() {
 
     obtido=$(bash "$shell" < "$payload" 2>/dev/null | sed 's/\x1b\[[0-9]*m//g')
     obtido=${obtido%%  │  *}
+    obtido=${obtido#⎇ }   # the segment carries the U+2387 marker
     if [ "$obtido" != "$esperado" ]; then
         echo "FALHA  branch/$nome — esperava '$esperado', veio '$obtido'" >&2
         falhas=$((falhas + 1))

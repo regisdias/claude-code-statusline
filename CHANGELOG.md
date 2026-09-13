@@ -6,7 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-Nothing yet.
+### Changed
+
+- **The branch segment is marked with `⎇`** ([#11](https://github.com/regisdias/claude-code-statusline/issues/11)).
+  Bare, `main` could be read as a model, a profile or a session name. U+2387 is one column wide, so it
+  does not disturb the alignment an emoji would. Fonts without the glyph render it as `?` — display
+  only, and now in the troubleshooting table.
 
 ## [1.2.0] — 2026-09-12
 

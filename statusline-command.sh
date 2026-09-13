@@ -19,7 +19,7 @@
 #   5. The bar shows up on the next render. No restart needed.
 #
 # HOW TO READ IT
-#   <branch> → current git branch, when the session is inside a repository
+#   ⎇ <branch> → current git branch, when the session is inside a repository
 #   ctx      → how much of this conversation's context window is used (not a plan quota)
 #   5h       → 5-hour block of your plan, with the time it resets
 #   week     → weekly plan limit
@@ -196,5 +196,6 @@ saida="$ctx_part"
 for parte in "$bloco_part" "$semana_part" "$custo_part"; do
     [ -n "$parte" ] && saida="$saida  │  $parte"
 done
-[ -n "$BRANCH" ] && saida="$BRANCH  │  $saida"
+# U+2387 marks the segment as a branch; it is one column wide, unlike an emoji
+[ -n "$BRANCH" ] && saida="⎇ $BRANCH  │  $saida"
 printf "%b" "$saida"
