@@ -28,6 +28,7 @@ BOM do `.ps1`. Sem `pwsh` instalado, testa só o lado shell e avisa. É o mesmo 
 | `scripts/testar.sh` (branch/*) | Fixtures de `.git/HEAD` criadas na hora — git não versiona caminho com `.git` |
 | `assets/` | **Gerado.** Não editar à mão — veja abaixo |
 | `README.md` / `README.pt-BR.md` | Inglês é a porta de entrada; conteúdo entra nos dois |
+| `hooks/ccsl-update-check.{sh,ps1}` | Aviso de atualização — **opt-in**, o único componente que usa rede |
 | `.github/` | CI, templates de issue e de PR |
 
 ## Documentação em dois lugares diferentes
@@ -67,6 +68,11 @@ sharp-cli para rasterizar). O GitHub não tem API para ele: sobe à mão em Sett
   `worktree.branch` (só em sessão de worktree). A branch sai da leitura direta do `.git/HEAD` — `git
   branch --show-current` seria um exec por desenho. As duas implementações têm de tratar igual: `.git`
   como diretório e como arquivo (`gitdir:`), HEAD solto (sha curto), CR no fim da linha e walk-up.
+- **A barra não faz rede nem escreve em disco, e isso é promessa escrita no `SECURITY.md`.** Quem faz
+  as duas coisas é o hook de update, que é opt-in e roda uma vez por sessão; a barra só **lê** o cache.
+  Não mova essa fronteira.
+- **`CCSL_VERSION` existe nas duas implementações** e é bumpado no mesmo commit que carimba a versão no
+  `CHANGELOG.md`. O CI reprova se os três discordarem.
 - **`seq` não entra no caminho de desenho:** o do BSD infere direção e `seq 1 0` imprime `1 0`, o que já
   alargou a barra cheia no macOS. Preencher com `printf` e substituir não tem caso de borda.
 - O lint do CI é `shellcheck --severity=warning`. Supressão só com comentário explicando o porquê.

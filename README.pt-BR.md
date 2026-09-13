@@ -74,6 +74,7 @@ A barra aparece no próximo desenho, sem reiniciar nada.
 | `5h` | Bloco de 5 horas do plano, e a hora em que zera. |
 | `week` | Limite semanal do plano, e quando zera. |
 | `session` | Custo desta conversa, em dólar. |
+| `↑1.3.0` | Existe versão mais nova. Só aparece se você [ligou a checagem](#aviso-de-atualização-opcional). |
 
 As barras ficam **verdes** até 60%, **amarelas** até 85% e **vermelhas** acima disso.
 
@@ -111,6 +112,43 @@ vez de despejar um stack trace no seu terminal.
 <div align="center">
 <img src="assets/demo-fallback.svg" alt="Statusline degradando com elegância: plano sem limites de cota mostra só a barra de contexto, e payload vazio mostra 'waiting...'." width="100%">
 </div>
+
+## Aviso de atualização (opcional)
+
+Desligado por padrão, e de propósito: a statusline não faz chamada de rede nem escreve em disco, e isso
+é uma propriedade que vale manter. Ligando, você é avisado quando sai versão nova — como o `oh-my-zsh`
+faz, sem a parte interativa, que statusline não tem como ter.
+
+```bash
+bash ~/.claude/install.sh --enable-update-check     # ou rode o one-liner com a flag
+```
+
+No começo da sessão:
+
+```
+claude-code-statusline 1.3.0 is available (you have 1.2.0)
+  curl -fsSL https://raw.githubusercontent.com/regisdias/claude-code-statusline/main/install.sh | bash
+```
+
+e um trecho na barra até você atualizar:
+
+```
+⎇ main  │  Opus 5  ctx [███░░░░░░░] 33%  │  …  │  session $12.35  │  ↑1.3.0
+```
+
+A divisão existe para a barra manter a promessa:
+
+| | Statusline | Hook de update |
+|---|---|---|
+| Rede | nunca | uma requisição, no máximo 1x por dia |
+| Escrita | nunca | um arquivo de cache |
+| Roda | a cada desenho | uma vez por sessão |
+
+Para parar de vez — marcador, cache e hook, tudo removido:
+
+```bash
+bash ~/.claude/install.sh --disable-update-check
+```
 
 ## Requisitos
 

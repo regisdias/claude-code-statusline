@@ -9,12 +9,32 @@ version.** Fixes land there, and the install commands in the README pull from it
 
 Worth stating plainly, because it bounds the risk:
 
-- They read **stdin only** — the JSON payload Claude Code hands to the statusline.
+- They read **stdin only** — the JSON payload Claude Code hands to the statusline — plus `.git/HEAD`
+  under the directory Claude Code reports, to name the branch.
 - They write **stdout only** — one line of text.
-- They never open a network connection, never write to disk, and never read your transcripts,
-  credentials or `settings.json`.
-- The shell version shells out to `jq`, `awk`, `date` and `seq`. The PowerShell version uses
+- They **never open a network connection and never write to disk**, and they never read your
+  transcripts, credentials or `settings.json`.
+- The shell version shells out to `jq`, `awk` and `date`. The PowerShell version uses
   `ConvertFrom-Json` and nothing else.
+
+### The optional update check
+
+`hooks/ccsl-update-check` is the one component that reaches the network, and it exists so the status
+line does not have to. It is **off unless you turn it on** with `install.sh --enable-update-check`.
+
+| | Status line | Update hook |
+|---|---|---|
+| Network | never | one request to `api.github.com`, at most once per 24 h |
+| Writes | never | one cache file, `~/.claude/.ccsl-update-cache` |
+| Runs | every render | once per session, at session start |
+
+The request is an unauthenticated `GET` of the repository's latest release. It sends no identifier of
+yours beyond what any HTTP request carries — your IP and a `User-Agent` of `claude-code-statusline`.
+The status line only ever *reads* the cache file, so the row above stays true whether or not the check
+is enabled.
+
+`install.sh --disable-update-check` removes the marker, the cache and the hook, and no request is ever
+made again.
 
 `install.sh` is the one exception: it downloads `statusline-command.sh` over HTTPS and edits
 `~/.claude/settings.json`, backing it up first. If piping a script to `bash` isn't for you, the
