@@ -6,7 +6,26 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-Nothing yet.
+### Changed
+
+- **The branch segment reads `git main` instead of `⎇ main`**
+  ([#35](https://github.com/regisdias/claude-code-statusline/issues/35)). On macOS, U+2387 is drawn as
+  the Option key symbol, not as a branch — it is literally *ALTERNATIVE KEY SYMBOL*. There is no standard
+  Unicode glyph for git, and the real icons need a Nerd Font, so the default is now a word, like every
+  other segment.
+
+### Added
+
+- **`ccsl.branch_icon`** replaces the `git` label: `"\ue0a0"` for the Powerline icon with a Nerd Font,
+  `"⎇"` for the old look, `""` for the bare branch name. Read in the same `jq` call as `ccsl.order`.
+  The wrap counts the icon in columns — one per code point, two outside the BMP — so the shell, which
+  counts bytes, and PowerShell break at the same place. Control characters and backslashes are dropped.
+  `--configure` previews with your own icon.
+
+### Fixed
+
+- `ccsl-install.sh --configure` exited silently when `settings.json` was missing: under `set -e`, a
+  failing `jq` inside an assignment ended the script before the menu.
 
 ## [1.5.0] — 2026-09-13
 

@@ -124,15 +124,23 @@ configurar() {
                      "seven_day":{"used_percentage":11,"resets_at":%s}}}' \
         "$repo" "$(( $(date +%s) + 7200 ))" "$(( $(date +%s) + 259200 ))")
 
+    # The person's own branch icon, if they set one, so the preview shows their
+    # branch segment and not the default `git` label
+    local extra
+    extra=$(jq -c '.ccsl | if type == "object" and has("branch_icon")
+                           then {branch_icon} else {} end' "$SETTINGS" 2>/dev/null) || true
+    [ -n "$extra" ] || extra='{}'
+
     desenhar() {   # $1 = comma-separated order
-        printf '{"ccsl":{"order":[%s]}}\n' \
-            "$(printf '%s' "$1" | awk -F, '{for(i=1;i<=NF;i++) printf "%s\"%s\"", (i>1?",":""), $i}')" \
-            > "$cfg/settings.json"
+        jq -nc --arg o "$1" --argjson extra "$extra" \
+            '{ccsl: ({order: ($o | split(","))} + $extra)}' > "$cfg/settings.json"
         printf '%s' "$payload" | CLAUDE_CONFIG_DIR="$cfg" bash "$script"
     }
 
     local atual
-    atual=$(jq -r '(.ccsl.order // []) | join(",")' "$SETTINGS" 2>/dev/null)
+    # `|| true`: under set -e a missing or broken settings.json would end the
+    # script right here, silently, instead of falling back to the default order
+    atual=$(jq -r '(.ccsl.order // []) | join(",")' "$SETTINGS" 2>/dev/null) || true
     [ -n "$atual" ] || atual=$(printf '%s' "$SEGMENTOS" | tr ' ' ',')
 
     printf '\nSegments, as your status line renders them:\n\n'
