@@ -8,6 +8,17 @@ All notable changes to this project are documented here. The format follows
 
 Nothing yet.
 
+## [1.4.1] — 2026-09-13
+
+### Fixed
+
+- **Session cost and plan limits came out wrong under a comma-decimal locale**
+  ([#27](https://github.com/regisdias/claude-code-statusline/issues/27)). With `LANG=pt_BR.UTF-8` or
+  `de_DE.UTF-8`, `awk` read `12.3456` as `12` and bash's `printf` rejected `84.7`, so the bar showed
+  `session $12,00` and a `0%` plan limit whenever the percentage was fractional. The shell script now
+  formats numbers in the C locale, and `testar.sh` renders under `pt_BR` and `de_DE` and compares with
+  the C output. The PowerShell side already used `InvariantCulture` and was never affected.
+
 ## [1.4.0] — 2026-09-13
 
 ### Added
@@ -143,7 +154,8 @@ like a fix was a fix to what people could already `curl`.
 - `statusline-command.ps1` no longer trips `PSAvoidUsingEmptyCatchBlock`. The `catch` around the
   console encoding is still deliberate: a terminal that refuses UTF-8 is no reason to stop drawing.
 
-[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.1.0...v1.2.0
