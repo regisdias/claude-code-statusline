@@ -16,7 +16,7 @@
 #   3. The bar shows up on the next render. No restart needed.
 #
 # HOW TO READ IT
-#   <branch> → current git branch, when the session is inside a repository
+#   ⎇ <branch> → current git branch, when the session is inside a repository
 #   ctx      → how much of this conversation's context window is used (not a plan quota)
 #   5h       → 5-hour block of your plan, with the time it resets
 #   week     → weekly plan limit
@@ -183,6 +183,9 @@ if ($dados) {
     elseif ($dados.cwd) { $dirAtual = $dados.cwd }
 }
 $branch = Get-Branch $dirAtual
-if ($branch) { $partes = ,$branch + $partes }
+# U+2387 marks the segment as a branch; it is one column wide, unlike an emoji
+# [char] and not "\u{2387}": the \u escape is PowerShell 7+, and this file
+# has to parse on Windows PowerShell 5.1
+if ($branch) { $partes = ,([string][char]0x2387 + " " + $branch) + $partes }
 
 [Console]::Out.Write(($partes -join '  │  '))

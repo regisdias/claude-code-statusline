@@ -64,12 +64,12 @@ A barra aparece no próximo desenho, sem reiniciar nada.
 ## O que aparece
 
 ```
-main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
+⎇ main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
 ```
 
 | Trecho | O que é |
 |---|---|
-| `main` | Branch do git no momento, lida direto do `.git/HEAD`. Some fora de um repositório. |
+| `⎇ main` | Branch do git no momento, lida direto do `.git/HEAD`. Some fora de um repositório. |
 | `ctx` | Janela de contexto da conversa atual. É local: não tem relação com a cota do plano. |
 | `5h` | Bloco de 5 horas do plano, e a hora em que zera. |
 | `week` | Limite semanal do plano, e quando zera. |
@@ -172,6 +172,7 @@ bash scripts/testar.sh
 | Só a barra `ctx` aparece | Claude Code anterior ao 2.1.251, ou plano sem limite de cota (cobrança por API key). |
 | `waiting...` | O payload veio vazio, ou falta o `jq` (versão shell). |
 | Os blocos viram `?` no Windows | O terminal não está em UTF-8. O Windows Terminal resolve; o console antigo pode não. |
+| O `⎇` antes da branch vira `?` | Sua fonte não tem o glifo U+2387. É só exibição — o nome da branch continua certo. |
 | Erro de parser no PowerShell | O `.ps1` perdeu o BOM UTF-8. Baixe de novo. |
 | Sem cores | O terminal está removendo os códigos ANSI. |
 | Hora do reset errada | Fuso do seu computador: o script formata o epoch com o relógio local. |
