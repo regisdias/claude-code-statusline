@@ -246,6 +246,7 @@ projection() {
         BEGIN {
             elapsed = win - (resets - now)
             if (elapsed <= 0 || used <= 0) exit
+            if (used >= 100) exit               # already out; the 100% bar says so
             if (elapsed / win < 0.10) exit      # too early to project
             rate = used / elapsed
             full = now + (100 - used) / rate

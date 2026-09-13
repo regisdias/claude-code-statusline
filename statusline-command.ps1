@@ -143,6 +143,7 @@ function Get-Projection($used, $resets, $window) {
 
     $elapsed = $window - ($r - $now)
     if ($elapsed -le 0 -or $u -le 0) { return '' }
+    if ($u -ge 100) { return '' }                      # already out; the 100% bar says so
     if (($elapsed / $window) -lt 0.10) { return '' }   # too early to project
     $rate = $u / $elapsed
     $full = $now + (100 - $u) / $rate

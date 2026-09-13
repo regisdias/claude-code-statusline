@@ -58,8 +58,24 @@ A bar that warns constantly stops being read. Three cases print nothing:
 | The pace reaches the reset | There is nothing to do |
 | Under 10% of the window elapsed | One large request in the first minutes projects catastrophically and means nothing |
 | Nothing used, no `resets_at`, or a stale payload | No basis to project from |
+| Already at 100% | There is nothing left to project, and the red full bar already says it |
+
+The last one was not in the original design. It came out of CI: at 100% the arithmetic gives
+`full_at = now`, and the two implementations compute `now` seconds apart, so near a minute boundary they
+printed times one minute apart and the parity check failed. The flake pointed at a real hole — the
+warning is about running out *before* the reset, and at 100% you already have.
 
 The 10% floor is 30 minutes on the 5-hour block and about 17 hours on the week.
+
+## The projection is not byte-stable across two runs
+
+`full_at` is `now` plus a computed offset, so two renders a second apart can legitimately print times a
+minute apart. That is correct behaviour and a problem only for a test that demands byte equality between
+two separate processes.
+
+`compare_pace()` normalises the clock — `· full HH:MM` — and compares everything else byte for byte,
+while the case itself still asserts that both sides agree on *whether* the warning appears. The parity
+guarantee for this segment is "same decision, same format", not "same second".
 
 ## Where it lives
 

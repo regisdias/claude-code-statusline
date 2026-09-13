@@ -21,8 +21,9 @@ Nothing yet.
   closes, so `elapsed = window - (resets_at - now)` and the rest is arithmetic.
 
   It stays silent when the pace gets there in time, when less than 10% of the window has elapsed — one
-  large request at the start projects nonsense — and when nothing has been used. A bar that warns
-  constantly is a bar nobody reads.
+  large request at the start projects nonsense — when nothing has been used, and at 100%, where there is
+  nothing left to project and the full red bar already says so. A bar that warns constantly is a bar
+  nobody reads.
 
 ## [1.6.0] — 2026-09-13
 
