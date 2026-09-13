@@ -8,6 +8,25 @@ All notable changes to this project are documented here. The format follows
 
 Nothing yet.
 
+## [1.5.0] — 2026-09-13
+
+### Added
+
+- **The bar wraps to the terminal width**
+  ([#28](https://github.com/regisdias/claude-code-statusline/issues/28)). A long branch name used to
+  push the tail of the line off screen; now the segments are packed into as many rows as the window
+  needs, breaking only *between* them so nothing is cut. Nothing to configure, and a wide terminal still
+  gets one line.
+
+  Claude Code sets `COLUMNS` before running the command, which is where the width comes from. Missing or
+  non-numeric means one line, as before. A segment wider than the whole terminal takes a row of its own
+  and overflows — splitting inside one would hide what you are trying to read.
+
+  The measurement had to be locale-proof: `${#s}` counts *bytes* when the locale is not UTF-8, and the
+  status line often runs with no `LANG`. The same line measures 31 under `C.UTF-8` and 55 under `C`,
+  because `█` is three bytes. Folding each glyph to one ASCII character before counting gets the right
+  answer either way, with no subprocess.
+
 ## [1.4.1] — 2026-09-13
 
 ### Fixed
@@ -154,7 +173,8 @@ like a fix was a fix to what people could already `curl`.
 - `statusline-command.ps1` no longer trips `PSAvoidUsingEmptyCatchBlock`. The `catch` around the
   console encoding is still deliberate: a terminal that refuses UTF-8 is no reason to stop drawing.
 
-[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/regisdias/claude-code-statusline/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.2.0...v1.3.0

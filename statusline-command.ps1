@@ -31,7 +31,7 @@
 
 # Bumped in the same commit that stamps the version in CHANGELOG.md; CI checks
 # that this, the .sh and the CHANGELOG agree.
-$CCSL_VERSION = '1.4.1'
+$CCSL_VERSION = '1.5.0'
 
 $ErrorActionPreference = 'SilentlyContinue'
 # The bars are block characters: without UTF-8 the terminal prints garbage
@@ -263,7 +263,30 @@ $nova = Get-NovaVersao $CCSL_VERSION
 $updatePart = ''
 if ($nova) { $updatePart = [string][char]0x2191 + $nova }
 
-$partes = @()
+# Visible width in columns: strip the ANSI codes and count. PowerShell has no
+# locale trap here — .Length counts UTF-16 units, one per glyph we emit — but it
+# must land on the same number the .sh computes.
+function Get-Largura($s) {
+    # [char]27 and not `e: the `e escape is PowerShell 6+, and on 5.1 it would
+    # silently fail to match, leaving the ANSI codes in the count and wrapping
+    # at the wrong place.
+    return ($s -replace ([string][char]27 + '\[[0-9;]*m'), '').Length
+}
+
+# Claude Code sets COLUMNS to the terminal width before running this. Anything
+# missing or not a number means no wrapping, which is the old behaviour.
+$colunas = 0
+if ($env:COLUMNS -match '^[0-9]+$') { $colunas = [int]$env:COLUMNS }
+
+$SEP = '  ' + [string][char]0x2502 + '  '
+$sepLargura = $SEP.Length
+
+# Segments are packed greedily into rows of at most $colunas, breaking only
+# *between* them, so a segment is never cut in half.
+$linhas = @()
+$linha = ''
+$linhaLargura = 0
+
 foreach ($nome in (Get-Ordem).Split(',')) {
     $parte = switch ($nome) {
         'branch'  { $branchPart }
@@ -275,7 +298,21 @@ foreach ($nome in (Get-Ordem).Split(',')) {
         'update'  { $updatePart }
         default   { '' }   # a name nobody recognises simply does not render
     }
-    if ($parte) { $partes += $parte }
-}
+    if (-not $parte) { continue }
 
-[Console]::Out.Write(($partes -join '  │  '))
+    $parteLargura = Get-Largura $parte
+    if (-not $linha) {
+        $linha = $parte
+        $linhaLargura = $parteLargura
+    } elseif ($colunas -gt 0 -and ($linhaLargura + $sepLargura + $parteLargura) -gt $colunas) {
+        $linhas += $linha
+        $linha = $parte
+        $linhaLargura = $parteLargura
+    } else {
+        $linha = $linha + $SEP + $parte
+        $linhaLargura = $linhaLargura + $sepLargura + $parteLargura
+    }
+}
+if ($linha) { $linhas += $linha }
+
+[Console]::Out.Write(($linhas -join "`n"))
