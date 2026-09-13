@@ -94,9 +94,9 @@ function Get-Branch($dir) {
         if ([System.IO.Directory]::Exists($marker)) {
             $head = [System.IO.Path]::Combine($marker, 'HEAD')
         } elseif ([System.IO.File]::Exists($marker)) {
-            # Worktree or submodule: ".git" is a file holding "gitDir: <path>"
+            # Worktree or submodule: ".git" is a file holding "gitdir: <path>"
             $gitDir = Read-FirstLine $marker
-            if (-not $gitDir.StartsWith('gitDir: ')) { return '' }
+            if (-not $gitDir.StartsWith('gitdir: ')) { return '' }
             $gitDir = $gitDir.Substring(8)
             if (-not [System.IO.Path]::IsPathRooted($gitDir)) {
                 $gitDir = [System.IO.Path]::Combine($current, $gitDir)
