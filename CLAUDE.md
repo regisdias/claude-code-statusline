@@ -86,6 +86,10 @@ sharp-cli). GitHub has no API for it: upload it by hand under Settings → Gener
 - **The branch carries the word `git`, not a glyph.** `⎇` (U+2387) is drawn as the Option key on macOS,
   and real git icons require a Nerd Font. Anyone who wants an icon sets `ccsl.branch_icon`. Do not put a
   glyph back in the default — the reasoning is in `decisions/branch-label-as-text.md`.
+- **The pace projection is silent by default.** It only prints when the current rate would exhaust a
+  window before it resets, and never below 10% elapsed. Do not make it warn more: a bar that warns
+  constantly stops being read. The window lengths (18000s, 604800s) come from the field names, not the
+  payload.
 - **The separator is uniform (`│`).** Do not reintroduce a spacing exception between segments: that is
   exactly what made reordering impossible.
 - **`case`, not an associative array**, in the assembly: macOS still ships bash 3.2.

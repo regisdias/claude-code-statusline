@@ -220,21 +220,61 @@ else
         "$(make_bar "$ctx_pct" 10)" "$tokens" "$ctx_int")
 fi
 
+# When the current pace would take a window to 100% before it resets.
+#
+# Prints nothing unless that is true: a bar that warns constantly is a bar nobody
+# reads. The window length is not in the payload — it is in the field name, so
+# `five_hour` is 18000 seconds and `seven_day` is 604800.
+#
+#   elapsed = window - (resets_at - now)
+#   rate    = used% / elapsed          percent per second
+#   full_at = now + (100 - used%) / rate
+#
+# Silent below 10% elapsed: one large request in the first minutes of a window
+# projects catastrophically and means nothing yet.
+NOW=$(date +%s 2>/dev/null || echo 0)
+EXHAUSTS=""
+projection() {
+    EXHAUSTS=""
+    local used=$1 resets=$2 window=$3 full_at
+    case $used:$resets in
+        -:*|*:-|:*|*:) return ;;
+    esac
+    [ "$NOW" -gt 0 ] 2>/dev/null || return
+
+    full_at=$(awk -v used="$used" -v resets="$resets" -v win="$window" -v now="$NOW" '
+        BEGIN {
+            elapsed = win - (resets - now)
+            if (elapsed <= 0 || used <= 0) exit
+            if (elapsed / win < 0.10) exit      # too early to project
+            rate = used / elapsed
+            full = now + (100 - used) / rate
+            if (full >= resets) exit            # the pace gets there in time
+            printf "%d", full
+        }' 2>/dev/null)
+    [ -n "$full_at" ] || return
+    EXHAUSTS=$(reset_time "$full_at")
+}
+
 # ---------------------------------------------------------------------------
 # Plan limits: 5-hour block and week
 # ---------------------------------------------------------------------------
 block_part=""
 if [ "$block_pct" != "-" ] && [ -n "$block_pct" ]; then
     reset=$(reset_time "$block_reset")
-    block_part=$(printf "5h $(pick_color "$block_pct")[%s]${RESET} %.0f%%%s" \
-        "$(make_bar "$block_pct" 10)" "$block_pct" "${reset:+ · resets $reset}")
+    projection "$block_pct" "$block_reset" 18000
+    block_part=$(printf "5h $(pick_color "$block_pct")[%s]${RESET} %.0f%%%s%s" \
+        "$(make_bar "$block_pct" 10)" "$block_pct" \
+        "${EXHAUSTS:+ · ${RED}full $EXHAUSTS${RESET}}" "${reset:+ · resets $reset}")
 fi
 
 week_part=""
 if [ "$week_pct" != "-" ] && [ -n "$week_pct" ]; then
     reset=$(reset_time "$week_reset")
-    week_part=$(printf "week $(pick_color "$week_pct")[%s]${RESET} %.0f%%%s" \
-        "$(make_bar "$week_pct" 10)" "$week_pct" "${reset:+ · $reset}")
+    projection "$week_pct" "$week_reset" 604800
+    week_part=$(printf "week $(pick_color "$week_pct")[%s]${RESET} %.0f%%%s%s" \
+        "$(make_bar "$week_pct" 10)" "$week_pct" \
+        "${EXHAUSTS:+ · ${RED}full $EXHAUSTS${RESET}}" "${reset:+ · $reset}")
 fi
 
 cost_part=""

@@ -113,6 +113,29 @@ vez de despejar um stack trace no seu terminal.
 <img src="assets/demo-fallback.svg" alt="Statusline degradando com elegância: plano sem limites de cota mostra só a barra de contexto, e payload vazio mostra 'waiting...'." width="100%">
 </div>
 
+## Ela avisa quando você está queimando rápido demais
+
+`5h [████░░░░░░] 41% · resets 06:20` diz a mesma coisa às 03:00 e às 06:00, e são situações opostas.
+Então, quando o ritmo atual esgotaria a janela antes de ela virar, a barra diz quando:
+
+```
+5h [███████░░░] 74% · full 04:10 · resets 06:20
+```
+
+Você acaba a cota às 04:10 e fica travado até as 06:20. A distância entre as duas é quanto tempo você
+passaria parado — que é o número que decide se vale desacelerar.
+
+Não precisa de histórico nem de configuração: a duração da janela está no nome do campo, e o
+`resets_at` diz quando ela fecha.
+
+**No resto do tempo ela fica calada**, e isso é o ponto:
+
+| Situação | Aparece |
+|---|---|
+| O ritmo chega no reset | nada |
+| Menos de 10% da janela decorrido | nada — uma requisição grande no início projeta bobagem |
+| Nada consumido ainda, ou sem `resets_at` | nada |
+
 ## Ela se ajusta ao seu terminal
 
 A barra se distribui na largura da sua janela, quebrando **entre** trechos, nunca no meio de um. Não há
