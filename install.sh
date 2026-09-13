@@ -49,13 +49,33 @@ MARCADOR="$DESTINO/.ccsl-update-check"
 CACHE="$DESTINO/.ccsl-update-cache"
 HOOK_SH="$DESTINO/ccsl-update-check.sh"
 HOOK_CMD="bash ~/.claude/ccsl-update-check.sh"
-COMANDO='bash ~/.claude/statusline-command.sh'
 TRECHO='{
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
   }
 }'
+
+# Does this command already point at the status line we just installed?
+#
+# Compare the resolved path, not the string. settings.json written by hand — or
+# copied from the manual-install section and then expanded — spells the path
+# absolutely, while the command we write uses `~`. They are the same file, and
+# treating them as different told people their own status line was a stranger's,
+# then exited early and skipped the version check and the preview.
+nosso_script() {
+    local cmd=$1 token
+    for token in $cmd; do
+        case $token in
+            *statusline-command.sh|*statusline-command.ps1)
+                token=${token/#\~\//$HOME/}
+                token=${token//\$HOME/$HOME}
+                [ "$token" = "$SCRIPT" ] && return 0
+                ;;
+        esac
+    done
+    return 1
+}
 
 command -v jq   >/dev/null 2>&1 || erro "jq not found. Linux: apt install jq · macOS: brew install jq"
 command -v curl >/dev/null 2>&1 || erro "curl not found."
@@ -246,7 +266,7 @@ else
     fi
 
     atual=$(jq -r '.statusLine.command // ""' "$SETTINGS")
-    if [ "$atual" = "$COMANDO" ]; then
+    if nosso_script "$atual"; then
         ok "settings.json already pointed at the statusline"
     elif [ -n "$atual" ]; then
         aviso "a statusLine is already configured:"

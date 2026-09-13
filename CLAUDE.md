@@ -23,6 +23,7 @@ BOM do `.ps1`. Sem `pwsh` instalado, testa só o lado shell e avisa. É o mesmo 
 | `install.sh` | Instalador de uma linha citado no README (Linux, WSL, macOS, Git Bash) |
 | `scripts/payloads/` | Payloads de teste: verde, amarelo, vermelho, sem limites, vazio, inválido |
 | `scripts/testar.sh` | Comparação das duas implementações + guarda do BOM |
+| `scripts/testar-instalador.sh` | Suíte do instalador; precisa de rede, pula sozinha sem ela |
 | `scripts/gerar-svg.py` | Gera as imagens do README a partir da saída real |
 | `scripts/gerar-social-preview.py` | Gera o card 1280x640 de compartilhamento (upload manual no GitHub) |
 | `scripts/testar.sh` (branch/*) | Fixtures de `.git/HEAD` criadas na hora — git não versiona caminho com `.git` |

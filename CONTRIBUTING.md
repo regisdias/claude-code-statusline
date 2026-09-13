@@ -15,7 +15,18 @@ bash scripts/testar.sh
 ```
 
 It feeds every payload in `scripts/payloads/` to both implementations, diffs the bytes, and verifies the
-`.ps1` still carries its UTF-8 BOM. Without `pwsh` installed it checks the shell side only and says so —
+`.ps1` still carries its UTF-8 BOM.
+
+The installer has its own suite, kept apart because it needs the network:
+
+```bash
+CCSL_BRANCH=your-branch bash scripts/testar-instalador.sh
+```
+
+It installs into a throwaway `HOME` and checks the outcomes that matter — recognising its own script
+however the path is spelled, leaving a stranger's alone, refusing to touch invalid JSON, and enabling
+and disabling the update check without duplicating hooks or losing your `env`. It skips itself when
+there is no network. Without `pwsh` installed it checks the shell side only and says so —
 CI runs the full comparison on every PR.
 
 ## Branching model
