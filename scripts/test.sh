@@ -436,6 +436,40 @@ limite_caso "width-pua"   '{"ccsl":{"order":["branch","model"],"branch_icon":"\u
 limite_caso "width-emoji" '{"ccsl":{"order":["branch","model"],"branch_icon":"\ud83c\udf3f"}}' 31
 rm -f "$config/settings.json"
 
+# ---------------------------------------------------------------------------
+# 9. The pace projection
+# ---------------------------------------------------------------------------
+# What matters here is the silence as much as the warning: a bar that warns
+# constantly is a bar nobody reads. `expected` is "full" or "-".
+pace_case() {
+    local name=$1 pct=$2 offset=$3 expected=$4
+    local payload="$tmpdir/payload-pace-$name.json" got
+    jq --argjson p "$pct" --argjson r "$(( $(date +%s) + offset ))" \
+        '.rate_limits.five_hour.used_percentage = $p | .rate_limits.five_hour.resets_at = $r' \
+        "$payloads/green.json" > "$payload"
+
+    if bash "$shell" < "$payload" 2>/dev/null | sed 's/\x1b\[[0-9]*m//g' | grep -q ' · full '; then
+        got=full
+    else
+        got="-"
+    fi
+    if [ "$got" != "$expected" ]; then
+        echo "FAIL  pace/$name — expected '$expected', got '$got'" >&2
+        failures=$((failures + 1))
+        return
+    fi
+    compare "pace/$name" "$payload"
+}
+
+#          name              used%  reset in   warns?
+pace_case "burning-late"       95     1800      full     # 5% left, 10% of window: runs out first
+pace_case "burning-midway"     60    10800      full     # 40% elapsed, 60% spent
+pace_case "on-pace"            74     3600      -        # 80% elapsed, 74% spent: makes it
+pace_case "window-just-opened" 10    17100      -        # 5% elapsed: too early to project
+pace_case "nothing-used"        0     3600      -
+pace_case "stale-payload"      50     -600      -        # reset already in the past
+pace_case "exactly-at-limit"  100     3600      full
+
 if [ "$failures" -gt 0 ]; then
     echo "$failures failure(s)" >&2
     exit 1
