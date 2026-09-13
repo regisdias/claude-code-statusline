@@ -95,6 +95,11 @@ jobs:
           else
             sudo apt-get update -qq && sudo apt-get install -y -qq jq
           fi
+      # The runner image ships no comma-decimal locale, and testar.sh skips the
+      # locale case without one (#27). macOS has them out of the box.
+      - name: Generate comma-decimal locales
+        if: runner.os == 'Linux'
+        run: sudo locale-gen pt_BR.UTF-8 de_DE.UTF-8
       - name: shell vs PowerShell, byte for byte
         run: bash scripts/testar.sh
 
