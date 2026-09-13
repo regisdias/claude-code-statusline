@@ -28,20 +28,19 @@ Repositório público, licença MIT. A instalação e o uso ficam no README ([in
 | Por que a barra se quebra sozinha | [[decisoes/quebra-na-largura-do-terminal]] |
 | Testar sem abrir o Claude Code | [[guias/testar-local]] |
 | Regerar as imagens do README | [[guias/regenerar-imagens-do-readme]] |
-| **Validar num Mac** (fecha a CCS-1) | [[guias/validar-no-macos]] |
+| Validar num Mac | [[guias/validar-no-macos]] |
 | Armadilhas do PowerShell que já custaram caro | [[bugs-fixes/2026-09-12-powershell-bom-e-colisao-de-variavel]] |
 | Por que a barra cheia saía torta no macOS | [[bugs-fixes/2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]] |
+| Por que a branch diz `git`, e não um glifo | [[decisoes/rotulo-da-branch-em-texto]] |
 | Por que o custo saía `$12,00` num Mac em português | [[bugs-fixes/2026-09-13-locale-com-virgula-quebrava-os-numeros]] |
 
 ## Pendências
 
-- [[pendentes/2026-09-12-confirmar-no-macos|Confirmar no macOS]] — `fazendo`: rodada num Mac de verdade, achou
-  o bug do locale (#27); espera a CCS-4
-- [[pendentes/2026-09-13-glifo-da-branch-no-macos|O `⎇` não lê como git no macOS]] — `aberto`: parece a
-  tecla Option; escolher outro glifo ou um rótulo
+Nenhuma aberta.
 
 Resolvidas ficam em `pendentes/arquivo/` — a mais recente é
-[[pendentes/arquivo/2026-09-12-rotulos-da-barra-em-portugues|a tradução dos rótulos da barra]].
+[[pendentes/arquivo/2026-09-13-glifo-da-branch-no-macos|a troca do `⎇` por `git`]] (CCS-4), que fechou junto a
+[[pendentes/arquivo/2026-09-12-confirmar-no-macos|validação no macOS]] (CCS-1).
 
 ## O que é gerado, e não escrito à mão
 

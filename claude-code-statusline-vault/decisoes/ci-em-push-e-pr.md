@@ -36,7 +36,7 @@ O projeto também é de uma pessoa só: não há o problema de fila de workflow 
 | `imagens` | As imagens do README ainda batem com a saída atual |
 
 O job `paridade` no macOS é o que fecha a pendência
-[[../pendentes/2026-09-12-confirmar-no-macos]] parcialmente: cobre o `date -r`, mas não um terminal de
+[[../pendentes/arquivo/2026-09-12-confirmar-no-macos]] parcialmente: cobre o `date -r`, mas não um terminal de
 Mac de verdade desenhando os blocos.
 
 ## Consequência

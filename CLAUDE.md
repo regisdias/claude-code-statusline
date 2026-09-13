@@ -71,12 +71,16 @@ sharp-cli para rasterizar). O GitHub não tem API para ele: sobe à mão em Sett
   como diretório e como arquivo (`gitdir:`), HEAD solto (sha curto), CR no fim da linha e walk-up.
 - **A barra se quebra sozinha no `$COLUMNS`**, que o Claude Code define antes de rodar o comando. Quebra
   só **entre** trechos. `${#s}` conta **bytes** fora de locale UTF-8 e a statusline costuma rodar sem
-  `LANG` — por isso a largura é medida dobrando cada glifo conhecido (`█ ░ │ ⎇ ↑ ·`) para um caractere
-  ASCII antes de contar. Não troque por `${#s}` direto.
+  `LANG` — por isso a largura é medida dobrando cada glifo conhecido (`█ ░ │ ↑ ·`) para um caractere
+  ASCII antes de contar, e o ícone da branch para a largura que o `jq` calculou. Não troque por `${#s}`
+  direto.
 - **O `gerar-svg.py` fixa `COLUMNS=999`**, senão a imagem do README sairia diferente em cada máquina.
 - **A ordem dos trechos vem do `ccsl.order` no `settings.json`**, lido na **mesma** chamada do `jq` via
   `--slurpfile` — nada de segundo processo por desenho. Config ausente, vazia, com nome desconhecido ou
   com JSON quebrado cai na ordem padrão; a barra nunca fica em branco por causa de config.
+- **A branch leva a palavra `git`, não um glifo.** O `⎇` (U+2387) é desenhado como a tecla Option no
+  macOS, e os ícones de git de verdade exigem Nerd Font. Quem quer ícone usa `ccsl.branch_icon`. Não
+  volte a pôr glifo no padrão — o porquê está em `decisoes/rotulo-da-branch-em-texto.md`.
 - **O separador é uniforme (`│`).** Não recrie exceção de espaçamento entre trechos: foi exatamente o
   que impedia reordenar.
 - **`case`, não array associativo**, na montagem: o macOS ainda traz bash 3.2.

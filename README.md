@@ -64,12 +64,12 @@ The bar shows up on the next render. No restart needed.
 ## What you get
 
 ```
-⎇ main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
+git main  │  Opus 5 (1M context)  │  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
 ```
 
 | Segment | What it means |
 |---|---|
-| `⎇ main` | Current git branch, read live from `.git/HEAD`. Absent outside a git repository. |
+| `git main` | Current git branch, read live from `.git/HEAD`. Absent outside a git repository. The label [can be an icon](#the-branch-icon). |
 | `ctx` | Context window of the current conversation. Local to the session, unrelated to your plan quota. |
 | `5h` | 5-hour block of your plan, and the time it resets. |
 | `week` | Weekly plan limit, and when it resets. |
@@ -119,10 +119,10 @@ cut. Nothing to configure — on a wide terminal it is one line, exactly as befo
 
 ```
 170 columns:
-⎇ main  │  Opus 5 (1M context)  │  ctx [███░░░░░░░] 33%  │  5h […] 41%  │  week […] 11%  │  session $12.35
+git main  │  Opus 5 (1M context)  │  ctx [███░░░░░░░] 33%  │  5h […] 41%  │  week […] 11%  │  session $12.35
 
 80 columns:
-⎇ feat/28-wrap-to-terminal-width  │  Opus 5 (1M context)
+git feat/28-wrap-to-terminal-width  │  Opus 5 (1M context)
 ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20
 week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
 ```
@@ -145,7 +145,7 @@ It lists the segments as *your* status line draws them, takes the numbers you wa
 want them, shows the resulting bar, and saves on confirmation:
 
 ```
-  1  branch   ⎇ main
+  1  branch   git main
   2  model    Opus 5 (1M context)
   3  ctx      ctx [███░░░░░░░] 330k/1000k 33%
   4  5h       5h [████░░░░░░] 41% · resets 06:20
@@ -157,7 +157,7 @@ want them, shows the resulting bar, and saves on confirmation:
 
 It would look like this:
 
-  ⎇ main  │  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  session $12.35
+  git main  │  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  session $12.35
 ```
 
 It lands in Claude Code's own `settings.json`, so you can edit it there directly too:
@@ -171,6 +171,26 @@ It lands in Claude Code's own `settings.json`, so you can edit it there directly
 
 No `ccsl` key, an empty list, a name nobody recognises, or a `settings.json` broken by hand — any of
 those falls back to the full default order rather than leaving you with a blank bar.
+
+### The branch icon
+
+The branch is labelled `git` by default, because it reads the same in every terminal. If you use a
+[Nerd Font](https://www.nerdfonts.com/) or a Powerline font, swap the word for the icon:
+
+```json
+{ "ccsl": { "branch_icon": "\ue0a0" } }
+```
+
+| `branch_icon` | Renders |
+|---|---|
+| not set | `git main` |
+| `"\ue0a0"` | the Powerline branch icon, then `main` |
+| `"⎇"` | `⎇ main` — the look before 1.6.0 |
+| `""` | `main` |
+
+Why not a glyph by default: there is no standard Unicode character for git. The real icons live in the
+Private Use Area and show as a box without a patched font, and U+2387 `⎇` — the usual fallback — is
+drawn as the Option key symbol on macOS. Control characters and backslashes in the value are dropped.
 
 ## Update notice (optional)
 
@@ -192,7 +212,7 @@ claude-code-statusline 1.3.0 is available (you have 1.2.0)
 and a segment on the bar until you update:
 
 ```
-⎇ main  │  Opus 5  ctx [███░░░░░░░] 33%  │  …  │  session $12.35  │  ↑1.3.0
+git main  │  Opus 5  │  ctx [███░░░░░░░] 33%  │  …  │  session $12.35  │  ↑1.3.0
 ```
 
 The work is split so the bar keeps its promise:
@@ -269,7 +289,7 @@ bash scripts/testar.sh
 | Only the `ctx` bar shows | Claude Code older than 2.1.251, or a plan with no rate limits (API key billing). |
 | `waiting...` | The payload arrived empty, or `jq` is missing (shell version). |
 | Blocks show as `?` on Windows | The terminal is not in UTF-8. Windows Terminal handles it; the old console host may not. |
-| The `⎇` before the branch shows as `?` | Your font has no glyph for U+2387. Display only — the branch name itself is fine. |
+| The branch icon shows as a box or `?` | Your terminal font has no glyph for the `branch_icon` you set — a Nerd Font icon needs a Nerd Font. Display only; the branch name itself is fine. |
 | PowerShell parser error | The `.ps1` lost its UTF-8 BOM. Re-download it. |
 | No colors | Your terminal is stripping ANSI codes. |
 | Reset time looks wrong | Your machine's timezone — the script formats the epoch with the local clock. |

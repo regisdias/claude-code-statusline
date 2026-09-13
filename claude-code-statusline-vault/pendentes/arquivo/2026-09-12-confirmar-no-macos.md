@@ -1,12 +1,18 @@
 ---
 tipo: pendente
-status: fazendo
+status: resolvido
 data: 2026-09-12
 atualizado: 2026-09-13
 codigo: CCS-1
 ---
 
 # Confirmar a versão shell no macOS
+
+**Resolvida em 2026-09-13.** O [[../../guias/validar-no-macos]] rodou num Mac de verdade (macOS 15.6,
+Terminal.app, bash 3.2.57, `date` BSD, fuso −03): passou em tudo, menos no custo — o locale `pt_BR`,
+corrigido na v1.4.1 (#27). O `⎇` foi olhado na tela e lia como a tecla Option, o que virou a
+[[2026-09-13-glifo-da-branch-no-macos|CCS-4]] e trocou o glifo por `git` (#35). O iTerm2 não foi
+conferido.
 
 O `statusline-command.sh` formata o horário de reset com `date`, e as duas famílias divergem: `date -d`
 é GNU (Linux, WSL, Git Bash) e `date -r` é BSD (macOS). A função `fmt_epoch` tenta o GNU e cai no BSD
@@ -17,18 +23,18 @@ runner do GitHub.
 
 O job `paridade` do CI roda o `scripts/testar.sh` em `macos-latest` a cada push. Hoje são **22 casos**
 lá, não só os payloads originais: todo o caminho da branch (`.git` como arquivo, HEAD solto, CRLF, sem
-newline final, walk-up) e todo o do aviso de atualização. Veja [[../decisoes/ci-em-push-e-pr]].
+newline final, walk-up) e todo o do aviso de atualização. Veja [[../../decisoes/ci-em-push-e-pr]].
 
 **E achou um bug de verdade logo no primeiro push** — mas não no `date`: o `seq` do BSD alargava a barra
 cheia para 12 blocos. Corrigido, com a história em
-[[../bugs-fixes/2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]]. O `date -r` passa limpo em
+[[../../bugs-fixes/2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]]. O `date -r` passa limpo em
 todos os casos.
 
 **2026-09-13 — o guia rodou num Mac de verdade** (macOS 15.6, Terminal.app, bash 3.2.57, `date` BSD,
 fuso −03, `LANG=pt_BR.UTF-8`). Passou: os dois bash iguais, barra cheia com 10 blocos, reset certo no
 fuso local (`resets` +2h, semana +3 dias), ordem configurada, bytes do `⎇` = `e2 8e 87`. **Não passou:
 o custo saiu `$12,00`** — o locale com vírgula decimal, que runner nenhum tinha. Virou a issue #27 e
-[[../bugs-fixes/2026-09-13-locale-com-virgula-quebrava-os-numeros]].
+[[../../bugs-fixes/2026-09-13-locale-com-virgula-quebrava-os-numeros]].
 
 **Olhado na tela, no Terminal.app:** o `⎇` desenha, mas parece o símbolo da tecla Option, não uma
 branch — no WSL ele parece uma setinha. É o caso "só o `⎇` sai errado" do guia, então esta nota **não**
@@ -37,7 +43,7 @@ conferido.
 
 ## Como confirmar na mão
 
-**O passo a passo completo, numa colada só, está em [[../guias/validar-no-macos]].** O resto desta nota
+**O passo a passo completo, numa colada só, está em [[../../guias/validar-no-macos]].** O resto desta nota
 é o contexto de por que isso importa.
 
 ```bash
@@ -80,7 +86,7 @@ costuma ser o mais pobre em fallback.
 
 - **Fuso fora do UTC.** O runner do GitHub roda em UTC, então o `fmt_epoch`/`Get-Reset` nunca foi visto
   convertendo epoch num Mac com fuso local. É o mesmo tipo de bug que o
-  [[../bugs-fixes/2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]] era: diferença de
+  [[../../bugs-fixes/2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]] era: diferença de
   implementação que só aparece na plataforma certa.
 - **`jq` instalado via Homebrew** (`brew install jq`) e terminal em UTF-8 — sem isso os blocos saem como
   interrogação e o diagnóstico vira falso positivo de bug.

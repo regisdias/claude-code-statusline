@@ -1,13 +1,17 @@
 ---
 tipo: pendente
-status: aberto
+status: resolvido
 data: 2026-09-13
 codigo: CCS-4
 ---
 
 # O `⎇` não lê como git no macOS
 
-Saiu da [[2026-09-12-confirmar-no-macos|CCS-1]], pelo caminho que o [[../guias/validar-no-macos]] prevê:
+**Resolvida em 2026-09-13: rótulo em texto com ícone configurável** (#35). A barra mostra `git main`, e
+`ccsl.branch_icon` troca a palavra por um ícone. O porquê está em
+[[../../decisoes/rotulo-da-branch-em-texto]].
+
+Saiu da [[2026-09-12-confirmar-no-macos|CCS-1]], pelo caminho que o [[../../guias/validar-no-macos]] prevê:
 "só o `⎇` sai errado".
 
 ## O que foi visto
@@ -39,3 +43,5 @@ prefixo `⎇ ` na seção 3) e o menu do `--configure`.
 
 Decidir a opção, registrar em `decisoes/`, e só então implementar. Enquanto estiver aberta, a CCS-1
 também fica.
+
+Escolhida a combinação das linhas 2 e 5: rótulo `git` por padrão, ícone configurável.

@@ -109,7 +109,7 @@ branch_caso() {
 
     obtido=$(bash "$shell" < "$payload" 2>/dev/null | sed 's/\x1b\[[0-9]*m//g')
     obtido=${obtido%%  │  *}
-    obtido=${obtido#⎇ }   # the segment carries the U+2387 marker
+    obtido=${obtido#git }   # the segment carries the `git` label by default
     if [ "$obtido" != "$esperado" ]; then
         echo "FALHA  branch/$nome — esperava '$esperado', veio '$obtido'" >&2
         falhas=$((falhas + 1))
@@ -287,7 +287,7 @@ LV=0
 largura_visivel() {
     local s=${1//$'\033'\[*([0-9;])m/}
     s=${s//█/#}; s=${s//░/#}; s=${s//│/#}
-    s=${s//⎇/#}; s=${s//↑/#}; s=${s//·/#}
+    s=${s//↑/#}; s=${s//·/#}
     LV=${#s}
 }
 
@@ -358,6 +358,83 @@ else
     echo "FALHA  largura/columns-invalido — COLUMNS não numérico mudou a saída" >&2
     falhas=$((falhas + 1))
 fi
+
+# ---------------------------------------------------------------------------
+# 8. O ícone da branch, lido do settings.json
+# ---------------------------------------------------------------------------
+# `git` by default; `ccsl.branch_icon` replaces it (issue #35). The icons are
+# built with printf because bash 3.2 has no \u in $'...'.
+PUA=$(printf '\356\202\240')          # U+E0A0, the Powerline branch glyph
+EMOJI=$(printf '\360\237\214\277')   # U+1F33F, outside the BMP: two columns
+
+com_branch="$temporario/payload-icone.json"
+jq --arg d "$temporario/comum" '. + {workspace: {current_dir: $d}}' "$payloads/verde.json" > "$com_branch"
+
+icone_caso() {
+    local nome=$1 conteudo=$2 esperado=$3 obtido
+    rm -f "$config/settings.json"
+    [ -n "$conteudo" ] && printf '%s\n' "$conteudo" > "$config/settings.json"
+
+    obtido=$(bash "$shell" < "$com_branch" 2>/dev/null | sed 's/\x1b\[[0-9]*m//g')
+    obtido=${obtido%%  │  *}
+    if [ "$obtido" != "$esperado" ]; then
+        echo "FALHA  icone/$nome — esperava '$esperado', veio '$obtido'" >&2
+        falhas=$((falhas + 1))
+        return
+    fi
+    comparar "icone/$nome" "$com_branch"
+}
+
+icone_caso "padrao"     ""                                          "git main"
+icone_caso "sem-chave"  '{"ccsl":{"order":["branch","ctx"]}}'       "git main"
+icone_caso "nerd-font"  '{"ccsl":{"branch_icon":"\ue0a0"}}'         "$PUA main"
+icone_caso "antigo"     '{"ccsl":{"branch_icon":"\u2387"}}'         "$(printf '\342\216\207') main"
+icone_caso "emoji"      '{"ccsl":{"branch_icon":"\ud83c\udf3f"}}'   "$EMOJI main"
+icone_caso "vazio"      '{"ccsl":{"branch_icon":""}}'               "main"
+icone_caso "numero"     '{"ccsl":{"branch_icon":42}}'               "git main"
+icone_caso "null"       '{"ccsl":{"branch_icon":null}}'             "git main"
+icone_caso "com-barra"  '{"ccsl":{"branch_icon":"a/b*"}}'           "a/b* main"
+# Control characters and backslashes are dropped: no escape can reach the bar
+icone_caso "controle"   '{"ccsl":{"branch_icon":"\u001b[31mX\\n\t"}}' "[31mXn main"
+icone_caso "json-torto" '{ isso nao e json'                         "git main"
+
+# The wrap must count the icon in columns, not bytes. branch + model alone:
+# "<icon> main" + "  │  " + "Opus 5 (1M context)". Exactly at the limit it is
+# one line; counting the icon's bytes would push it to two.
+limite_caso() {
+    local nome=$1 conteudo=$2 cols=$3 linhas saida_sh saida_ps
+    printf '%s\n' "$conteudo" > "$config/settings.json"
+    saida_sh=$(COLUMNS=$cols bash "$shell" < "$com_branch" 2>/dev/null)
+    linhas=$(printf '%s' "$saida_sh" | grep -c '')
+    if [ "$linhas" != 1 ]; then
+        echo "FALHA  icone/$nome — $linhas linhas em COLUMNS=$cols, cabia em uma" >&2
+        falhas=$((falhas + 1))
+        return
+    fi
+    if [ "$(COLUMNS=$((cols - 1)) bash "$shell" < "$com_branch" 2>/dev/null | grep -c '')" != 2 ]; then
+        echo "FALHA  icone/$nome — em COLUMNS=$((cols - 1)) devia quebrar" >&2
+        falhas=$((falhas + 1))
+        return
+    fi
+    if [ "$tem_pwsh" = 0 ]; then
+        echo "ok     icone/$nome — quebra no limite certo (PowerShell pulado)"
+        return
+    fi
+    saida_ps=$(COLUMNS=$cols pwsh -NoProfile -File "$ps1" < "$com_branch" 2>/dev/null)
+    if [ "$saida_sh" = "$saida_ps" ]; then
+        echo "ok     icone/$nome — quebra no limite certo, as duas implementações batem"
+    else
+        echo "FALHA  icone/$nome — saídas diferentes com COLUMNS=$cols" >&2
+        printf '  sh : %q\n  ps1: %q\n' "$saida_sh" "$saida_ps" >&2
+        falhas=$((falhas + 1))
+    fi
+}
+
+# 1 + 5 + 5 + 19 = 30 columns (9 bytes more would be 32)
+limite_caso "largura-pua"   '{"ccsl":{"order":["branch","model"],"branch_icon":"\ue0a0"}}'       30
+# 2 + 5 + 5 + 19 = 31 columns
+limite_caso "largura-emoji" '{"ccsl":{"order":["branch","model"],"branch_icon":"\ud83c\udf3f"}}' 31
+rm -f "$config/settings.json"
 
 if [ "$falhas" -gt 0 ]; then
     echo "$falhas falha(s)" >&2

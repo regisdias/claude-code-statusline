@@ -24,8 +24,10 @@
 #        "ccsl": { "order": ["branch", "model", "ctx", "5h", "week", "session", "update"] }
 #
 #   Leave a name out and it does not render. `install.sh --configure` edits this.
+#   "branch_icon" in the same object replaces the `git` label — "\ue0a0" with a
+#   Nerd Font, "" for the bare branch name.
 #
-#   ⎇ <branch> → current git branch, when the session is inside a repository
+#   git <branch> → current git branch, when the session is inside a repository
 #   ctx      → how much of this conversation's context window is used (not a plan quota)
 #   5h       → 5-hour block of your plan, with the time it resets
 #   week     → weekly plan limit
@@ -157,6 +159,12 @@ ORDEM_PADRAO="branch,model,ctx,5h,week,session,update"
 # The default lives inside the query: `read` with IFS=tab treats tab as
 # whitespace, so an empty leading field would collapse and shift every other
 # field left. This one can never be empty.
+#
+# The branch icon comes last, as "<width>:<icon>", which is never empty either —
+# "" is a valid icon. Its width is computed here because the shell counts bytes
+# under LC_ALL=C: one column per code point, two outside the BMP, which is what
+# PowerShell's .Length gives. Control characters and backslashes are dropped: the
+# bar is printed with %b, and a config value must not be able to inject escapes.
 CONSULTA='[
     ($cfg[0].ccsl.order // [] | map(select(type == "string")) | join(",")
         | if . == "" then "branch,model,ctx,5h,week,session,update" else . end),
@@ -169,7 +177,10 @@ CONSULTA='[
     (.rate_limits.seven_day.used_percentage // "-"),
     (.rate_limits.seven_day.resets_at // "-"),
     (.cost.total_cost_usd // "-"),
-    (.workspace.current_dir // .cwd // "-")
+    (.workspace.current_dir // .cwd // "-"),
+    ($cfg[0].ccsl.branch_icon
+        | if type == "string" then explode | map(select(. > 31 and . != 127 and . != 92)) else "git" | explode end
+        | "\(map(if . > 65535 then 2 else 1 end) | add // 0):\(implode)")
 ] | @tsv'
 
 settings_json="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
@@ -180,10 +191,14 @@ lido=$(printf '%s' "$input" | jq -r --slurpfile cfg "$settings_json" "$CONSULTA"
 # retry without the file, which yields the default order.
 [ -n "$lido" ] || lido=$(printf '%s' "$input" | jq -r --slurpfile cfg /dev/null "$CONSULTA" 2>/dev/null)
 
-IFS=$'\t' read -r ordem modelo ctx_pct ctx_size ctx_usados bloco_pct bloco_reset semana_pct semana_reset custo dir_atual <<EOF
+IFS=$'\t' read -r ordem modelo ctx_pct ctx_size ctx_usados bloco_pct bloco_reset semana_pct semana_reset custo dir_atual icone <<EOF
 $lido
 EOF
 [ -n "${ordem:-}" ] || ordem=$ORDEM_PADRAO
+case ${icone:-} in
+    *:*) icone_largura=${icone%%:*}; icone=${icone#*:} ;;
+    *)   icone_largura=3; icone=git ;;
+esac
 
 # ---------------------------------------------------------------------------
 # Context window
@@ -274,14 +289,19 @@ versao_num() {
 # with no LANG set: the same line measures 31 under C.UTF-8 and 55 under C,
 # because █ is three bytes. Substitution matches the same bytes either way, so
 # folding each glyph we emit to one ASCII character makes the count right in
-# both. A non-ASCII branch or model name still over-counts, which only wraps a
-# little early — it never loses anything.
+# both. The branch icon is whatever the user configured, so it folds to the
+# width jq computed for it. A non-ASCII branch or model name still over-counts,
+# which only wraps a little early — it never loses anything.
 shopt -s extglob
+icone_dobrado=$(printf "%${icone_largura}s" "")
+icone_dobrado=${icone_dobrado// /#}
 LARGURA=0
 largura() {
     local s=${1//$'\033'\[*([0-9;])m/}
     s=${s//█/#}; s=${s//░/#}; s=${s//│/#}
-    s=${s//⎇/#}; s=${s//↑/#}; s=${s//·/#}
+    s=${s//↑/#}; s=${s//·/#}
+    # Quoted: the icon is a literal, not a pattern. An ASCII icon folds to itself.
+    [ -n "$icone" ] && s=${s//"$icone"/$icone_dobrado}
     LARGURA=${#s}
 }
 
@@ -289,9 +309,10 @@ largura() {
 # Emit the configured segments, separated by │
 # ---------------------------------------------------------------------------
 achar_branch "$dir_atual"
-# U+2387 marks the segment as a branch; it is one column wide, unlike an emoji
+# A word, not a glyph: U+2387 read as the Option key on macOS, and the real git
+# icons need a Nerd Font. `branch_icon` is there for people who have one.
 branch_part=""
-[ -n "$BRANCH" ] && branch_part="⎇ $BRANCH"
+[ -n "$BRANCH" ] && branch_part="${icone:+$icone }$BRANCH"
 
 aviso_update
 update_part=""
