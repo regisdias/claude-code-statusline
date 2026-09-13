@@ -3,63 +3,70 @@ tipo: decisao
 data: 2026-09-12
 ---
 
-# main → stg → develop → branch de tarefa
+# main → stg → develop → task branch
 
-## Decisão
+## Decision
 
-Nada entra direto na `main`. O trabalho sobe de baixo para cima:
+Nothing goes straight into `main`. Work moves upward:
 
 ```
 feat/1-git-branch-in-bar  →  develop  →  stg  →  main
 ```
 
-| Branch | Papel |
+| Branch | Role |
 |---|---|
-| `main` | Produção. O README instala com `curl .../main/install.sh`. Protegida: exige PR e CI verde. |
-| `stg` | Homologação: candidata a release antes de subir. Protegida igual. |
-| `develop` | Integração. O pronto acumula aqui entre releases. |
-| `<tipo>/<issue>-<descrição>` | Uma tarefa cada, saindo da `develop`. |
+| `main` | Production. The README installs with `curl .../main/install.sh`. Protected: pull request and green CI required. |
+| `stg` | Staging: the release candidate before promotion. Protected the same way. |
+| `develop` | Integration. Finished work accumulates here between releases. |
+| `<type>/<issue>-<description>` | One task each, branched off `develop`. |
 
-Nome da branch de tarefa: `<tipo>/<número da issue>-<descrição-curta-em-inglês>`, com o `<tipo>` igual
-ao do Conventional Commits que o trabalho vai usar — `feat/1-git-branch-in-bar` gera `feat: …` e bump
-minor. A issue vem antes; o número é o que amarra os dois.
+Task branch name: `<type>/<issue number>-<short-description>`, with `<type>` matching the Conventional
+Commits type the work will use — `feat/1-git-branch-in-bar` produces `feat: …` and a minor bump. The
+issue comes first; the number is what ties the two together.
 
-## Por quê
+## Why
 
-Até a v1.1.0 tudo foi commitado direto na `main`. Funcionava por ser projeto de uma pessoa, mas o
-repositório é público: quem olha o histórico vê como o projeto é tocado, e commit direto na branch de
-produção não passa a impressão certa — nem dá chance de o CI barrar antes.
+Up to v1.1.0 everything was committed straight to `main`. It worked because this is a one-person
+project, but the repository is public: whoever looks at the history sees how the project is run, and
+committing directly to the production branch does not give the right impression — nor does it give CI a
+chance to stop anything first.
 
-O que a separação compra, na prática:
+What the separation buys, in practice:
 
-- **`main` protegida** significa que a `main` não quebra por descuido. Como não há artefato entre o
-  commit e quem instala, push quebrado é instalação quebrada na hora.
-- **`stg` existir** dá um lugar para a release candidata ficar sem travar a `develop`.
-- **Branch por tarefa** deixa o PR ser a unidade de revisão, com o CI rodando no diff isolado.
+- **A protected `main`** means `main` does not break by accident. Since there is no artefact between the
+  commit and whoever installs, a broken push is a broken install immediately.
+- **`stg` existing** gives the release candidate somewhere to sit without blocking `develop`.
+- **A branch per task** makes the pull request the unit of review, with CI running on the isolated diff.
 
-## Consequências
+## Consequences
 
-- O CI passou a rodar em `push` para `main`, `stg` e `develop`, e em `pull_request` para as três.
-- Proteção ligada em `main` e `stg`: PR obrigatório e checks verdes. A `develop` ficou livre, senão
-  cada ajuste de trabalho viraria PR.
-- **Zero aprovações obrigatórias**, porque o GitHub não deixa ninguém aprovar o próprio PR e o projeto
-  é de uma pessoa. É o ponto fraco honesto deste arranjo: o PR documenta e o CI barra, mas revisão de
-  outra pessoa só acontece quando aparecer outra pessoa.
-- Tag sai só da `main`, e o `CHANGELOG` é atualizado em `Unreleased` no mesmo PR da mudança.
+- CI runs on `push` to `main`, `stg` and `develop`, and on `pull_request` for all three.
+- Protection enabled on `main` and `stg`: pull request required, checks green. `develop` was left open,
+  otherwise every working adjustment would become a pull request.
+- **Zero required approvals**, because GitHub does not let anyone approve their own pull request and
+  this is a one-person project. That is the honest weak point of the arrangement: the pull request
+  documents and CI blocks, but review by another person only happens when another person shows up.
+- Tags are cut from `main` only, and the `CHANGELOG` is updated under `Unreleased` in the same pull
+  request as the change.
 
-## Histórico linear fica **desligado** na main e na stg
+## Linear history stays **off** on main and stg
 
-Parece contraintuitivo num repositório que quer parecer caprichado, mas `required_linear_history`
-proíbe merge commit — e numa cadeia de promoção isso quebra tudo.
+It looks counterintuitive in a repository trying to look well kept, but `required_linear_history`
+forbids merge commits — and in a promotion chain that breaks everything.
 
-Com histórico linear obrigatório, `develop → stg` teria de ser *squash* ou *rebase*. Os dois reescrevem
-SHA: a `stg` receberia commits novos, diferentes dos da `develop`, e as duas divergiriam para sempre. A
-promoção seguinte traria o histórico inteiro da `develop` de novo, como se fosse novidade.
+With linear history required, `develop → stg` would have to be a *squash* or a *rebase*. Both rewrite
+SHAs: `stg` would receive new commits, different from `develop`'s, and the two would diverge forever.
+The next promotion would bring `develop`'s entire history again, as if it were new.
 
-Merge commit é justamente o que mantém `develop`, `stg` e `main` na mesma linhagem: cada promoção é um
-merge limpo, porque o topo de uma é sempre ancestral da outra.
+A merge commit is precisely what keeps `develop`, `stg` and `main` on one lineage: each promotion is a
+clean merge, because the tip of one is always an ancestor of the other.
 
-O histórico linear continua valendo para a **branch de tarefa**, que entra na `develop` com squash — aí
-sim, um commit por tarefa, e a `develop` não é protegida.
+Linear history still applies to the **task branch**, which enters `develop` squashed — one commit per
+task, and `develop` is not protected.
 
-Veja também [[ci-em-push-e-pr]].
+**`strict` is off too**, for the same family of reason. "Require branches to be up to date before
+merging" means `develop` is permanently behind `stg` by exactly the promotion merge commits, so every
+cycle would demand a back-merge just to satisfy the checker. Verified before switching it off that the
+divergence was topology and not content: `git diff develop...stg` came back empty.
+
+See also [[ci-em-push-e-pr]].

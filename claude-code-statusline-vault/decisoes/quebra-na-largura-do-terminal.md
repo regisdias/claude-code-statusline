@@ -3,81 +3,84 @@ tipo: decisao
 data: 2026-09-13
 ---
 
-# A barra se quebra sozinha, na largura do terminal
+# The bar wraps itself, to the terminal's width
 
-## Decisão
+## Decision
 
-A barra distribui os trechos em quantas linhas o terminal precisar, cortando **só entre trechos**. Sem
-configuração: em janela larga continua uma linha.
+The bar spreads its segments across as many rows as the terminal needs, breaking **only between
+segments**. No configuration: on a wide window it stays one line.
 
-A largura vem do `COLUMNS`, que o Claude Code define antes de rodar o comando — está na documentação:
+The width comes from `COLUMNS`, which Claude Code sets before running the command — it is in the
+documentation:
 
 > Claude Code captures your script's output instead of connecting it directly to the terminal, so
 > `tput cols` and language-level width detection cannot read the terminal size from inside the script.
 > Read the `COLUMNS` and `LINES` environment variables instead.
 
-Cada `\n` na saída vira uma linha na tela. `COLUMNS` ausente ou não numérico: uma linha só, o
-comportamento antigo.
+Each `\n` in the output becomes a row on screen. `COLUMNS` missing or non-numeric: one line, the old
+behaviour.
 
-## Por que não foi configuração manual
+## Why not manual configuration
 
-A alternativa era estender o `ccsl.order` com listas aninhadas, uma por linha. Foi descartada: quem
-configura não sabe a largura da janela de quem lê — nem da própria janela dez minutos depois. Layout
-fixo continua quebrando feio em terminal estreito, que era o problema original.
+The alternative was extending `ccsl.order` with nested lists, one per row. It was dropped: whoever
+configures them does not know the width of the window reading them — nor of their own window ten minutes
+later. A fixed layout still wraps badly in a narrow terminal, which was the original problem.
 
-Truncar o nome da branch também foi descartado. O gatilho do pedido foi justamente branch comprida:
-esconder o fim do nome resolveria a estética e destruiria a informação.
+Truncating the branch name was dropped too. The request was triggered by a long branch name in the first
+place: hiding the end of it would fix the look and destroy the information.
 
-## A armadilha que custou caro: `${#s}` conta bytes
+## The expensive trap: `${#s}` counts bytes
 
-Fora de locale UTF-8, `${#s}` no bash conta **bytes**, e a statusline roda sem `LANG` com frequência.
-Medido:
+Outside a UTF-8 locale, bash's `${#s}` counts **bytes**, and the status line frequently runs with no
+`LANG`. Measured:
 
-| Locale | `${#s}` da mesma linha |
+| Locale | `${#s}` of the same line |
 |---|---|
 | `C.UTF-8` | 31 |
-| `C` ou sem `LANG` | **55** |
+| `C`, or no `LANG` | **55** |
 
-`█` tem 3 bytes. Quebrar por esse número erraria toda a conta.
+`█` is 3 bytes. Wrapping on that number would get the whole calculation wrong.
 
-A saída foi dobrar cada glifo que a barra emite (`█ ░ │ ↑ ·`) para um caractere ASCII antes de contar.
-O ícone da branch, que é configurável, dobra para a largura que o `jq` calcula — veja
-[[rotulo-da-branch-em-texto]].
-Substituição casa os mesmos bytes nos dois locales, então a conta fica certa em qualquer um — e sem
-subprocesso. Nome de branch ou de modelo com acento ainda superestima, o que só quebra um pouco cedo
-demais; nunca esconde nada.
+The way out was folding every glyph the bar emits (`█ ░ │ ↑ ·`) to one ASCII character before counting.
+The branch icon, which is configurable, folds to the width `jq` computes — see
+[[rotulo-da-branch-em-texto]]. Substitution matches the same bytes in either locale, so the count is
+right in both — and with no subprocess. A branch or model name with an accent still over-counts, which
+only wraps slightly early; it never hides anything.
 
-O PowerShell não tem esse problema: `.Length` conta unidades UTF-16, uma por glifo.
+PowerShell does not have this problem: `.Length` counts UTF-16 units, one per glyph.
 
-## A outra armadilha: `` `e `` é PowerShell 6+
+## The other trap: `` `e `` is PowerShell 6+
 
-Para medir, é preciso tirar os códigos ANSI. O regex `` "`e\[[0-9;]*m" `` **não casa nada no PowerShell
-5.1** — o escape `` `e `` só existe do 6 em diante, e falha em silêncio. Resultado: os códigos entravam
-na contagem e as duas implementações quebravam em pontos diferentes. Usar `[char]27` resolve.
+Measuring means stripping the ANSI codes first. The regex `` "`e\[[0-9;]*m" `` **matches nothing on
+PowerShell 5.1** — the `` `e `` escape only exists from 6 onwards, and it fails silently. The result:
+the codes stayed in the count and the two implementations wrapped at different points. `[char]27` fixes
+it.
 
-É a mesma família do `"\u{2387}"` que já tinha mordido antes. **Sintaxe nova de PowerShell é sempre
-suspeita neste projeto**, porque o alvo é o 5.1 que vem no Windows.
+Same family as the `"\u{2387}"` bug that had already bitten. **New PowerShell syntax is always suspect
+in this project**, because the target is the 5.1 that ships with Windows.
 
-## E a terceira: o `awk` do macOS conta bytes
+## And a third: macOS `awk` counts bytes
 
-O teste media a largura das linhas com `awk '{ ... length($0) ... }'`. O `gawk` do Linux, em locale
-UTF-8, conta caracteres; **o `awk` que o macOS traz conta bytes, sempre**. Uma linha de 76 colunas era
-reportada como 124, e a suíte acusava estouro em todo Mac.
+The test measured line width with `awk '{ ... length($0) ... }'`. Linux's `gawk`, in a UTF-8 locale,
+counts characters; **the `awk` macOS ships counts bytes, always**. A 76-column line was reported as 124,
+and the suite claimed an overflow on every Mac.
 
-Nem era bug de implementação: o CI do `macos-latest` reprovou o **teste**, não o código. A medição
-passou a ser feita em bash, com a mesma dobra de glifos que a implementação usa — assim o teste não tem
-como divergir do que ele testa.
+It was not even an implementation bug: the `macos-latest` CI job failed the **test**, not the code. The
+measurement moved into bash, using the same glyph folding the implementation uses — so the test cannot
+drift from what it tests.
 
-É o segundo bug que o job do macOS pega sozinho, depois do `seq` do BSD.
+It is the second bug the macOS job caught on its own, after BSD `seq`.
 
-## Trecho maior que o terminal
+## A segment wider than the terminal
 
-Fica sozinho na linha e transborda. Quebrar dentro de um trecho esconderia justamente o que se quer ler.
-O teste cobre isso explicitamente: linha pode passar da largura **se** tiver um trecho só.
+It gets a row to itself and overflows. Breaking inside a segment would hide precisely what someone is
+trying to read. The test covers this explicitly: a line may exceed the width **if** it holds a single
+segment.
 
-## Consequência para as imagens do README
+## Consequence for the README images
 
-O `scripts/gerar-svg.py` fixa `COLUMNS=999`. Sem isso a imagem sairia diferente conforme a janela de
-quem gerou, e o job `README images are current` acusaria diferença a cada máquina.
+`scripts/gerar-svg.py` pins `COLUMNS=999`. Without it the image would come out differently depending on
+the window of whoever generated it, and the `README images are current` job would report a difference on
+every machine.
 
-Veja também [[ordem-dos-trechos-configuravel]].
+See also [[ordem-dos-trechos-configuravel]].

@@ -17,7 +17,7 @@ falhas=0
 tem_pwsh=0
 command -v pwsh >/dev/null 2>&1 && tem_pwsh=1
 
-command -v jq >/dev/null 2>&1 || { echo "jq não encontrado" >&2; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo "jq not found" >&2; exit 1; }
 
 temporario=$(mktemp -d)
 trap 'rm -rf "$temporario"' EXIT
@@ -37,47 +37,47 @@ comparar() {
 
     saida_sh=$(bash "$shell" < "$payload" 2>/dev/null)
     if [ -z "$saida_sh" ]; then
-        echo "FALHA  $nome — a versão shell não imprimiu nada" >&2
+        echo "FALHA  $nome — the shell version printed nothing" >&2
         falhas=$((falhas + 1))
         return
     fi
 
     if [ "$tem_pwsh" = 0 ]; then
-        echo "ok     $nome — shell (PowerShell pulado, pwsh ausente)"
+        echo "ok     $nome — shell only (PowerShell skipped, pwsh missing)"
         return
     fi
 
     saida_ps=$(pwsh -NoProfile -File "$ps1" < "$payload" 2>/dev/null)
     if [ "$saida_sh" = "$saida_ps" ]; then
-        echo "ok     $nome — as duas implementações batem"
+        echo "ok     $nome — both implementations agree"
     else
-        echo "FALHA  $nome — saídas diferentes:" >&2
+        echo "FALHA  $nome — outputs differ:" >&2
         printf '  sh : %q\n  ps1: %q\n' "$saida_sh" "$saida_ps" >&2
         falhas=$((falhas + 1))
     fi
 }
 
 # ---------------------------------------------------------------------------
-# 1. O .ps1 tem de manter o BOM
+# 1. The .ps1 must keep its BOM
 # ---------------------------------------------------------------------------
 # Without it, Windows PowerShell 5.1 reads the file as ANSI and the block
 # characters break the parser before the script ever runs.
 if [ "$(head -c3 "$ps1" | od -An -tx1 | tr -d ' \n')" != "efbbbf" ]; then
-    echo "FALHA  statusline-command.ps1 perdeu o BOM UTF-8" >&2
+    echo "FALHA  statusline-command.ps1 lost its UTF-8 BOM" >&2
     falhas=$((falhas + 1))
 else
-    echo "ok     statusline-command.ps1 está em UTF-8 com BOM"
+    echo "ok     statusline-command.ps1 is UTF-8 with BOM"
 fi
 
 # ---------------------------------------------------------------------------
-# 2. Os payloads de referência
+# 2. The reference payloads
 # ---------------------------------------------------------------------------
 for payload in "$payloads"/*.json; do
     comparar "$(basename "$payload")" "$payload"
 done
 
 # ---------------------------------------------------------------------------
-# 3. A branch do git, lida do .git/HEAD
+# 3. The git branch, read from .git/HEAD
 # ---------------------------------------------------------------------------
 # These fixtures are built here instead of living in scripts/payloads/ for two
 # reasons: git refuses to track a path containing ".git", and the payload needs
@@ -89,11 +89,11 @@ fixture() {
 }
 
 fixture "comum/.git/HEAD"      $'ref: refs/heads/main\n'
-fixture "com-barra/.git/HEAD"  $'ref: refs/heads/docs/assunto\n'
+fixture "with-slash/.git/HEAD"  $'ref: refs/heads/docs/subject\n'
 fixture "solto/.git/HEAD"      $'3b230b4a9f8e7d6c5b4a3928176554433221100f\n'
 fixture "crlf/.git/HEAD"       $'ref: refs/heads/feature/x\r\n'
-# Sem newline final: `read` devolve não-zero mas preenche a variável
-fixture "sem-nl/.git/HEAD"     'ref: refs/heads/sem-newline'
+# No trailing newline: `read` returns non-zero but still fills the variable
+fixture "no-newline/.git/HEAD"     'ref: refs/heads/no-newline'
 mkdir -p "$temporario/fundo/a/b/c"
 fixture "fundo/.git/HEAD"      $'ref: refs/heads/main\n'
 # Worktree/submodule: ".git" is a file pointing at the real git dir
@@ -111,35 +111,35 @@ branch_caso() {
     obtido=${obtido%%  │  *}
     obtido=${obtido#git }   # the segment carries the `git` label by default
     if [ "$obtido" != "$esperado" ]; then
-        echo "FALHA  branch/$nome — esperava '$esperado', veio '$obtido'" >&2
+        echo "FALHA  branch/$nome — expected '$esperado', got '$obtido'" >&2
         falhas=$((falhas + 1))
         return
     fi
     comparar "branch/$nome" "$payload"
 }
 
-branch_caso "simples"   "$temporario/comum"      "main"
-branch_caso "com-barra" "$temporario/com-barra"  "docs/assunto"
+branch_caso "simple"   "$temporario/comum"      "main"
+branch_caso "with-slash" "$temporario/with-slash"  "docs/subject"
 branch_caso "detached"  "$temporario/solto"      "3b230b4"
 branch_caso "crlf"      "$temporario/crlf"       "feature/x"
-branch_caso "sem-nl"    "$temporario/sem-nl"     "sem-newline"
+branch_caso "no-newline"    "$temporario/no-newline"     "no-newline"
 branch_caso "walk-up"   "$temporario/fundo/a/b/c" "main"
 branch_caso "worktree"  "$temporario/arvore"     "wt-branch"
 
 # Fora de repositório: o trecho some, o resto continua
-mkdir -p "$temporario/sem-repo"
-sem_repo="$temporario/payload-sem-repo.json"
-jq --arg d "$temporario/sem-repo" '. + {workspace: {current_dir: $d}}' "$payloads/verde.json" > "$sem_repo"
+mkdir -p "$temporario/no-repo"
+sem_repo="$temporario/payload-no-repo.json"
+jq --arg d "$temporario/no-repo" '. + {workspace: {current_dir: $d}}' "$payloads/verde.json" > "$sem_repo"
 if bash "$shell" < "$sem_repo" | sed 's/\x1b\[[0-9]*m//g' | grep -q '^Opus 5'; then
-    echo "ok     branch/fora-de-repo — trecho ausente, barra intacta"
+    echo "ok     branch/fora-de-repo — segment absent, rest of the bar intact"
     comparar "branch/fora-de-repo" "$sem_repo"
 else
-    echo "FALHA  branch/fora-de-repo — a barra não deveria mudar fora de um repo" >&2
+    echo "FALHA  branch/fora-de-repo — the bar should not change outside a repository" >&2
     falhas=$((falhas + 1))
 fi
 
 # ---------------------------------------------------------------------------
-# 4. O aviso de atualização, lido do cache
+# 4. The update notice, read from the cache
 # ---------------------------------------------------------------------------
 # The bar only ever reads the cache; the hook is what writes it. These cases feed
 # the bar a cache directly, which is exactly what it sees in real use.
@@ -161,7 +161,7 @@ update_caso() {
         *)          obtido="—" ;;
     esac
     if [ "$obtido" != "$esperado" ]; then
-        echo "FALHA  update/$nome — esperava '$esperado', veio '$obtido'" >&2
+        echo "FALHA  update/$nome — expected '$esperado', got '$obtido'" >&2
         falhas=$((falhas + 1))
         return
     fi
@@ -173,26 +173,26 @@ printf '0 9.9.9\n' > "$cache"
 sem_marcador="$temporario/payload-upd-off.json"
 cp "$payloads/verde.json" "$sem_marcador"
 if bash "$shell" < "$sem_marcador" | grep -q '↑'; then
-    echo "FALHA  update/desligado — segmento apareceu sem o marcador" >&2
+    echo "FALHA  update/desligado — segment appeared without the marker" >&2
     falhas=$((falhas + 1))
 else
-    echo "ok     update/desligado — opt-in respeitado"
+    echo "ok     update/desligado — opt-in respected"
     comparar "update/desligado" "$sem_marcador"
 fi
 
 : > "$marcador"
-update_caso "nova"        "1789204800 9.9.9"   "↑9.9.9"
+update_caso "newer"        "1789204800 9.9.9"   "↑9.9.9"
 instalada=$(sed -n 's/^CCSL_VERSION="\(.*\)"$/\1/p' "$shell")
-update_caso "mesma"       "1789204800 $instalada"   "—"
-update_caso "mais-velha"  "1789204800 0.0.1"   "—"
-update_caso "corrompido"  "lixo aqui"          "—"
-update_caso "so-epoch"    "1789204800"         "—"
-update_caso "quatro-partes" "1789204800 1.2.3.4" "—"
-update_caso "vazio"       ""                   "—"
+update_caso "same"       "1789204800 $instalada"   "—"
+update_caso "older"  "1789204800 0.0.1"   "—"
+update_caso "corrupt"  "garbage here"          "—"
+update_caso "epoch-only"    "1789204800"         "—"
+update_caso "four-parts" "1789204800 1.2.3.4" "—"
+update_caso "empty"       ""                   "—"
 rm -f "$marcador" "$cache"
 
 # ---------------------------------------------------------------------------
-# 5. A ordem dos trechos, lida do settings.json
+# 5. Segment order, read from settings.json
 # ---------------------------------------------------------------------------
 ordem_caso() {
     local nome=$1 conteudo=$2 esperado=$3
@@ -212,7 +212,7 @@ ordem_caso() {
               else                       printf "%smodel", (i>1?",":"");
           }}')
     if [ "$obtido" != "$esperado" ]; then
-        echo "FALHA  ordem/$nome — esperava '$esperado', veio '$obtido'" >&2
+        echo "FALHA  ordem/$nome — expected '$esperado', got '$obtido'" >&2
         falhas=$((falhas + 1))
         return
     fi
@@ -220,19 +220,19 @@ ordem_caso() {
 }
 
 # verde.json has no workspace, so `branch` never renders here; `update` is off.
-ordem_caso "padrao"     ""                                              "model,ctx,5h,week,session"
-ordem_caso "reordenado" '{"ccsl":{"order":["session","ctx","model"]}}'  "session,ctx,model"
-ordem_caso "sem-week"   '{"ccsl":{"order":["model","ctx","5h","session"]}}' "model,ctx,5h,session"
-ordem_caso "so-ctx"     '{"ccsl":{"order":["ctx"]}}'                    "ctx"
-ordem_caso "nome-torto" '{"ccsl":{"order":["ctx","banana","5h"]}}'      "ctx,5h"
-ordem_caso "lista-vazia" '{"ccsl":{"order":[]}}'                        "model,ctx,5h,week,session"
-ordem_caso "nao-string" '{"ccsl":{"order":[1,true,"ctx"]}}'             "ctx"
-ordem_caso "json-torto" '{ isso nao e json'                             "model,ctx,5h,week,session"
-ordem_caso "sem-ccsl"   '{"statusLine":{"type":"command"}}'             "model,ctx,5h,week,session"
+ordem_caso "default"     ""                                              "model,ctx,5h,week,session"
+ordem_caso "reordered" '{"ccsl":{"order":["session","ctx","model"]}}'  "session,ctx,model"
+ordem_caso "no-week"   '{"ccsl":{"order":["model","ctx","5h","session"]}}' "model,ctx,5h,session"
+ordem_caso "ctx-only"     '{"ccsl":{"order":["ctx"]}}'                    "ctx"
+ordem_caso "bad-name" '{"ccsl":{"order":["ctx","banana","5h"]}}'      "ctx,5h"
+ordem_caso "empty-list" '{"ccsl":{"order":[]}}'                        "model,ctx,5h,week,session"
+ordem_caso "not-string" '{"ccsl":{"order":[1,true,"ctx"]}}'             "ctx"
+ordem_caso "bad-json" '{ this is not json'                             "model,ctx,5h,week,session"
+ordem_caso "no-ccsl"   '{"statusLine":{"type":"command"}}'             "model,ctx,5h,week,session"
 rm -f "$config/settings.json"
 
 # ---------------------------------------------------------------------------
-# 6. Locale com vírgula decimal
+# 6. Comma-decimal locale
 # ---------------------------------------------------------------------------
 # JSON numbers use a dot. Under pt_BR, awk read 12.3456 as 12 and bash's printf
 # rejected 84.7, so the bar showed "$12,00" and "0%" (issue #27). Fractional
@@ -247,7 +247,7 @@ jq '.context_window.used_percentage = 64.6
 referencia=$(LC_ALL=C bash "$shell" < "$fracionado" 2>&1)
 case $referencia in
     *'session $12.35'*) ;;
-    *) echo "FALHA  locale/C — esperava 'session \$12.35', veio: $referencia" >&2
+    *) echo "FALHA  locale/C — expected 'session \$12.35', got: $referencia" >&2
        falhas=$((falhas + 1)) ;;
 esac
 
@@ -272,10 +272,10 @@ for loc in pt_BR.UTF-8 de_DE.UTF-8; do
         fi
     done
 done
-[ "$testados" -gt 0 ] || echo "aviso  locale — nenhum locale com vírgula decimal instalado, caso pulado"
+[ "$testados" -gt 0 ] || echo "aviso  locale — no comma-decimal locale installed, case skipped"
 
 # ---------------------------------------------------------------------------
-# 7. Quebra na largura do terminal
+# 7. Wrapping to the terminal width
 # ---------------------------------------------------------------------------
 # Visible width, measured the way statusline-command.sh measures it.
 #
@@ -318,31 +318,31 @@ largura_caso() {
     done <<< "$saida_sh"
 
     if [ "$cols" -gt 0 ] && [ "$maior" -gt "$cols" ]; then
-        echo "FALHA  largura/$nome — linha de $maior colunas, com mais de um trecho, em COLUMNS=$cols" >&2
+        echo "FALHA  largura/$nome — line of $maior columns, with more than one segment, at COLUMNS=$cols" >&2
         falhas=$((falhas + 1))
         return
     fi
     if ! printf '%s' "$saida_sh" | grep -q 'session \$'; then
-        echo "FALHA  largura/$nome — o trecho session sumiu na quebra" >&2
+        echo "FALHA  largura/$nome — the session segment vanished in the wrap" >&2
         falhas=$((falhas + 1))
         return
     fi
 
     if [ "$tem_pwsh" = 0 ]; then
-        echo "ok     largura/$nome — $linhas linha(s), nada estourou (PowerShell pulado)"
+        echo "ok     largura/$nome — $linhas line(s), nothing overflowed (PowerShell skipped)"
         return
     fi
     saida_ps=$(COLUMNS=$cols pwsh -NoProfile -File "$ps1" < "$payload" 2>/dev/null)
     if [ "$saida_sh" = "$saida_ps" ]; then
-        echo "ok     largura/$nome — $linhas linha(s), as duas implementações batem"
+        echo "ok     largura/$nome — $linhas linha(s), both implementations agree"
     else
-        echo "FALHA  largura/$nome — saídas diferentes com COLUMNS=$cols" >&2
+        echo "FALHA  largura/$nome — outputs differ com COLUMNS=$cols" >&2
         printf '  sh : %q\n  ps1: %q\n' "$saida_sh" "$saida_ps" >&2
         falhas=$((falhas + 1))
     fi
 }
 
-largura_caso "sem-columns" 0
+largura_caso "no-columns" 0
 largura_caso "30"          30
 largura_caso "60"          60
 largura_caso "80"          80
@@ -353,14 +353,14 @@ largura_caso "999"         999
 lixo="$temporario/payload-larg-lixo.json"
 cp "$payloads/verde.json" "$lixo"
 if [ "$(COLUMNS=abc bash "$shell" < "$lixo" 2>/dev/null | grep -c '')" = "1" ]; then
-    echo "ok     largura/columns-invalido — uma linha, sem quebra"
+    echo "ok     largura/columns-invalido — one line, no wrapping"
 else
-    echo "FALHA  largura/columns-invalido — COLUMNS não numérico mudou a saída" >&2
+    echo "FALHA  largura/columns-invalido — a non-numeric COLUMNS changed the output" >&2
     falhas=$((falhas + 1))
 fi
 
 # ---------------------------------------------------------------------------
-# 8. O ícone da branch, lido do settings.json
+# 8. The branch icon, lido do settings.json
 # ---------------------------------------------------------------------------
 # `git` by default; `ccsl.branch_icon` replaces it (issue #35). The icons are
 # built with printf because bash 3.2 has no \u in $'...'.
@@ -378,25 +378,25 @@ icone_caso() {
     obtido=$(bash "$shell" < "$com_branch" 2>/dev/null | sed 's/\x1b\[[0-9]*m//g')
     obtido=${obtido%%  │  *}
     if [ "$obtido" != "$esperado" ]; then
-        echo "FALHA  icone/$nome — esperava '$esperado', veio '$obtido'" >&2
+        echo "FALHA  icone/$nome — expected '$esperado', got '$obtido'" >&2
         falhas=$((falhas + 1))
         return
     fi
     comparar "icone/$nome" "$com_branch"
 }
 
-icone_caso "padrao"     ""                                          "git main"
+icone_caso "default"     ""                                          "git main"
 icone_caso "sem-chave"  '{"ccsl":{"order":["branch","ctx"]}}'       "git main"
 icone_caso "nerd-font"  '{"ccsl":{"branch_icon":"\ue0a0"}}'         "$PUA main"
 icone_caso "antigo"     '{"ccsl":{"branch_icon":"\u2387"}}'         "$(printf '\342\216\207') main"
 icone_caso "emoji"      '{"ccsl":{"branch_icon":"\ud83c\udf3f"}}'   "$EMOJI main"
-icone_caso "vazio"      '{"ccsl":{"branch_icon":""}}'               "main"
+icone_caso "empty"      '{"ccsl":{"branch_icon":""}}'               "main"
 icone_caso "numero"     '{"ccsl":{"branch_icon":42}}'               "git main"
 icone_caso "null"       '{"ccsl":{"branch_icon":null}}'             "git main"
-icone_caso "com-barra"  '{"ccsl":{"branch_icon":"a/b*"}}'           "a/b* main"
+icone_caso "with-slash"  '{"ccsl":{"branch_icon":"a/b*"}}'           "a/b* main"
 # Control characters and backslashes are dropped: no escape can reach the bar
 icone_caso "controle"   '{"ccsl":{"branch_icon":"\u001b[31mX\\n\t"}}' "[31mXn main"
-icone_caso "json-torto" '{ isso nao e json'                         "git main"
+icone_caso "bad-json" '{ this is not json'                         "git main"
 
 # The wrap must count the icon in columns, not bytes. branch + model alone:
 # "<icon> main" + "  │  " + "Opus 5 (1M context)". Exactly at the limit it is
@@ -417,14 +417,14 @@ limite_caso() {
         return
     fi
     if [ "$tem_pwsh" = 0 ]; then
-        echo "ok     icone/$nome — quebra no limite certo (PowerShell pulado)"
+        echo "ok     icone/$nome — wraps at the right boundary (PowerShell skipped)"
         return
     fi
     saida_ps=$(COLUMNS=$cols pwsh -NoProfile -File "$ps1" < "$com_branch" 2>/dev/null)
     if [ "$saida_sh" = "$saida_ps" ]; then
-        echo "ok     icone/$nome — quebra no limite certo, as duas implementações batem"
+        echo "ok     icone/$nome — wraps at the right boundary, both implementations agree"
     else
-        echo "FALHA  icone/$nome — saídas diferentes com COLUMNS=$cols" >&2
+        echo "FALHA  icone/$nome — outputs differ com COLUMNS=$cols" >&2
         printf '  sh : %q\n  ps1: %q\n' "$saida_sh" "$saida_ps" >&2
         falhas=$((falhas + 1))
     fi
@@ -437,7 +437,7 @@ limite_caso "largura-emoji" '{"ccsl":{"order":["branch","model"],"branch_icon":"
 rm -f "$config/settings.json"
 
 if [ "$falhas" -gt 0 ]; then
-    echo "$falhas falha(s)" >&2
+    echo "$falhas failure(s)" >&2
     exit 1
 fi
-echo "tudo certo"
+echo "all good"

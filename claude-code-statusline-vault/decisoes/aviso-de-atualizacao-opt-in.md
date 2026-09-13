@@ -3,56 +3,58 @@ tipo: decisao
 data: 2026-09-12
 ---
 
-# O aviso de atualização é opt-in, e mora fora da barra
+# The update notice is opt-in, and lives outside the bar
 
-## Decisão
+## Decision
 
-Existe aviso de versão nova, mas **desligado até a pessoa ligar**, e a checagem vive num hook de
-`SessionStart` — nunca no script da barra.
+There is a notice for new versions, but it is **off until someone turns it on**, and the check lives in
+a `SessionStart` hook — never in the bar's script.
 
-| | Statusline | Hook de update |
+| | Status line | Update hook |
 |---|---|---|
-| Rede | nunca | uma requisição, no máximo 1x por 24h |
-| Escrita em disco | nunca | um arquivo de cache |
-| Roda | a cada desenho | uma vez por sessão |
+| Network | never | one request, at most once per 24 h |
+| Writes to disk | never | one cache file |
+| Runs | every render | once per session |
 
-A barra só **lê** o cache. Quem busca e grava é o hook.
+The bar only ever **reads** the cache. The hook is what fetches and writes.
 
-## Por que não pode ser como o `oh-my-zsh`
+## Why it cannot work like `oh-my-zsh`
 
-O pedido original foi "avisar tipo o ZSH, que você aperta Y e ele atualiza". **Isso não é possível**, e
-por dois motivos diferentes:
+The original request was "tell me like ZSH does, where you press Y and it updates". **That is not
+possible**, for two separate reasons:
 
-1. **Statusline não é interativa.** É um comando cujo stdout é desenhado. Não há entrada de teclado.
-2. **Hook também não é.** Confirmado na documentação do Claude Code: nenhum evento de hook aceita
-   entrada do usuário. O `SessionStart` imprime e pronto.
+1. **A status line is not interactive.** It is a command whose stdout is drawn. There is no keyboard
+   input.
+2. **Neither is a hook.** Confirmed in the Claude Code documentation: no hook event accepts user input.
+   `SessionStart` prints and that is all.
 
-O mais próximo honesto é: avisar e entregar a linha pronta para copiar. Foi o que foi feito.
+The honest nearest thing is to say so and hand over the line to copy. That is what was built.
 
-## Por que opt-in, e não ligado por padrão
+## Why opt-in rather than on by default
 
-O `SECURITY.md` dizia, por escrito, que os scripts **nunca abrem conexão de rede e nunca escrevem em
-disco**. Isso não é detalhe: é o que permite a alguém instalar um script de terceiro no `~/.claude` sem
-auditar muita coisa.
+`SECURITY.md` said, in those words, that the scripts **never open a network connection and never write
+to disk**. That is not a detail: it is what lets someone install a stranger's script into `~/.claude`
+without auditing much.
 
-Ligar a checagem por padrão significaria fazer requisição na máquina de todo mundo que instala, sem
-pedir — e reescrever aquela promessa. Opt-in mantém a frase verdadeira para quem não pediu nada.
+Enabling the check by default would mean making a request on the machine of everyone who installs,
+without asking — and rewriting that promise. Opt-in keeps the sentence true for anyone who asked for
+nothing.
 
-A separação barra/hook é o que faz a promessa continuar verdadeira **mesmo para quem ligou**: a
-statusline em si segue sem rede e sem escrita nos dois casos. O `SECURITY.md` ganhou uma seção
-descrevendo exatamente o que o hook faz.
+The bar/hook split is what keeps the promise true **even for those who did turn it on**: the status line
+itself still makes no request and writes nothing, either way. `SECURITY.md` gained a section describing
+exactly what the hook does.
 
-## Detalhes que custaram tempo
+## Details that cost time
 
-**`Get-Date -UFormat %s` está errado no PowerShell 5.1.** Devolve a hora local como se fosse epoch —
-três horas de diferença aqui. Os dois hooks gravam o mesmo arquivo de cache, e quem usa Claude Code no
-Windows e no WSL compartilha `~/.claude`: os dois discordariam sobre a janela de 24h. Usar
-`[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()` resolve e funciona no 5.1 e no 7.
+**`Get-Date -UFormat %s` is wrong on PowerShell 5.1.** It returns local time as if it were an epoch —
+three hours off here. Both hooks write the same cache file, and anyone running Claude Code on Windows
+*and* in WSL shares `~/.claude`: the two would disagree about the 24-hour window. Using
+`[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()` fixes it and works on both 5.1 and 7.
 
-**Marcador é arquivo, não variável de ambiente.** O ambiente que a statusline recebe não é
-confiavelmente o shell da pessoa. Arquivo é determinístico e funciona igual nas duas implementações.
+**The marker is a file, not an environment variable.** The environment the status line receives is not
+reliably the person's shell. A file is deterministic and behaves identically in both implementations.
 
-**`CCSL_VERSION` nas duas implementações**, bumpado junto com o carimbo do `CHANGELOG`. Um job de CI
-reprova se os três discordarem — senão o aviso mente sobre o que está instalado.
+**`CCSL_VERSION` in both implementations**, bumped together with the `CHANGELOG` stamp. A CI job fails
+if the three disagree — otherwise the notice lies about what is installed.
 
-Veja também [[branch-vem-do-git-head]] e [[duas-implementacoes-shell-e-powershell]].
+See also [[branch-vem-do-git-head]] and [[duas-implementacoes-shell-e-powershell]].

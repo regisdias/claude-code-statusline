@@ -3,50 +3,51 @@ tipo: bug-fix
 data: 2026-09-12
 ---
 
-# PowerShell: arquivo sem BOM e colisão de variável
+# PowerShell: a file without a BOM, and a variable collision
 
-Dois problemas que só apareceram ao rodar a versão `.ps1` no **PowerShell 5.1 de verdade**. Nenhum dos
-dois aparece na leitura do código.
+Two problems that only showed up running the `.ps1` on **real PowerShell 5.1**. Neither is visible when
+reading the code.
 
-## 1. Sem BOM, o PowerShell 5.1 lê o arquivo como ANSI
+## 1. Without a BOM, PowerShell 5.1 reads the file as ANSI
 
-**Sintoma:** erro de parser logo na primeira execução.
+**Symptom:** a parser error on the very first run.
 
 ```
-A cadeia de caracteres não tem o terminador: '
+The string is missing the terminator: '
 TerminatorExpectedAtEndOfString
 ```
 
-**Causa:** o Windows PowerShell 5.1 assume ANSI quando o arquivo não tem BOM. Os bytes UTF-8 do
-separador `│` viram caracteres soltos, um deles quebra a aspa simples e o script inteiro deixa de
-compilar. O PowerShell 7 lê UTF-8 sem BOM e não sofre disso.
+**Cause:** Windows PowerShell 5.1 assumes ANSI when the file has no BOM. The UTF-8 bytes of the `│`
+separator become loose characters, one of which breaks the single quote, and the whole script stops
+compiling. PowerShell 7 reads UTF-8 without a BOM and does not suffer from this.
 
-**Correção:** gravar o `.ps1` em **UTF-8 com BOM**. Com BOM, as duas versões do PowerShell funcionam.
+**Fix:** save the `.ps1` as **UTF-8 with BOM**. With the BOM, both versions of PowerShell work.
 
-**Cuidado permanente:** editor que salve sem BOM quebra o script de novo. O README avisa, e vale conferir
-depois de qualquer edição:
+**Standing hazard:** an editor that saves without a BOM breaks the script again. The README warns about
+it, and it is worth checking after any edit:
 
 ```bash
-head -c3 statusline-command.ps1 | xxd -p   # tem de ser efbbbf
+head -c3 statusline-command.ps1 | xxd -p   # must be efbbbf
 ```
 
-## 2. Variável do PowerShell não distingue maiúscula de minúscula
+## 2. PowerShell variables are case-insensitive
 
-**Sintoma:** a cor não fechava e a hora vazava para o meio da linha:
+**Symptom:** the colour did not close and the time leaked into the middle of the line:
 
 ```
 5h [32m[████░░░░░░]06:20 41% · reseta 06:20
 ```
 
-**Causa:** `$reset` (hora do reset) e `$RESET` (código ANSI que encerra a cor) são **a mesma variável**.
-Atribuir a hora apagou o código ANSI, que então foi impresso como texto no lugar dele.
+**Cause:** `$reset` (the reset time) and `$RESET` (the ANSI code that ends the colour) are **the same
+variable**. Assigning the time erased the ANSI code, which was then printed as text in its place.
 
-**Correção:** renomear a variável local para `$quandoReseta`.
+**Fix:** rename the local to `$quandoReseta`.
 
-**Regra que fica:** em PowerShell, nome de variável que só difere por caixa é o mesmo nome. Constantes em
-maiúscula (`$RESET`, `$GREEN`) precisam de nomes locais visivelmente diferentes, não só em caixa.
+**The rule that stays:** in PowerShell, a variable name differing only by case is the same name.
+Uppercase constants (`$RESET`, `$GREEN`) need locals that look visibly different, not merely different
+in case.
 
-## Como os dois foram pegos
+## How both were caught
 
-Rodando o script pelo `powershell.exe` do Windows a partir do WSL, com quatro payloads diferentes — ver
-[[../guias/testar-local]]. Revisão de código não pegaria nenhum dos dois.
+Running the script through Windows' `powershell.exe` from WSL, with four different payloads — see
+[[../guias/testar-local]]. Code review would have caught neither.

@@ -3,44 +3,48 @@ tipo: guia
 data: 2026-09-12
 ---
 
-# Regenerar as imagens do README
+# Regenerating the README images
 
-As duas imagens do README (`assets/demo.svg` e `assets/demo-fallback.svg`) **não são desenhadas à mão**:
-o `scripts/gerar-svg.py` roda o `statusline-command.sh` com os payloads de `scripts/payloads/`, captura a
-saída ANSI de verdade e converte em SVG. O que aparece no README é o que o script imprime.
+The two README images (`assets/demo.svg` and `assets/demo-fallback.svg`) are **not drawn by hand**:
+`scripts/gerar-svg.py` runs `statusline-command.sh` against the payloads in `scripts/payloads/`,
+captures the real ANSI output and converts it to SVG. What appears in the README is what the script
+prints.
 
 ```bash
 python3 scripts/gerar-svg.py
 ```
 
-Commite os SVGs regerados **no mesmo commit** da mudança de formato.
+Commit the regenerated SVGs **in the same commit** as the format change.
 
-## Por que SVG, e não PNG
+## Why SVG rather than PNG
 
-- Fica nítido em qualquer zoom e em telas retina, sem versão @2x.
-- É texto: o `git diff` mostra o que mudou na barra, não um blob binário.
-- Não depende de tirar print numa máquina específica com um terminal específico.
+- Sharp at any zoom and on retina screens, with no @2x version.
+- It is text: `git diff` shows what changed in the bar, not a binary blob.
+- It does not depend on taking a screenshot on one specific machine with one specific terminal.
 
-Cada glifo recebe a sua própria coordenada `x`. Sem isso, um navegador que caia numa fonte não
-monoespaçada desalinharia os blocos `█░` e a barra ficaria torta.
+Each glyph gets its own `x` coordinate. Without that, a browser falling back to a non-monospaced font
+would misalign the `█░` blocks and the bar would come out crooked.
 
-## O que o CI confere
+Two things are pinned so the picture does not depend on the machine that generated it: `COLUMNS=999`,
+since the bar wraps itself to the terminal width, and the fixtures' reset times, anchored to local
+midnight.
+
+## What CI checks
 
 ```bash
 python3 scripts/gerar-svg.py --verificar
 ```
 
-Renderiza tudo num diretório temporário — nunca escreve em `assets/` — e compara com o que está
-commitado, **ignorando a hora do reset e as coordenadas `x`**. Sem essa normalização o teste falharia
-toda meia-noite, já que o `resets_at` dos payloads é reposicionado para "daqui a 2 horas" e "daqui a 3
-dias" na hora de gerar.
+It renders everything into a temporary directory — never writing to `assets/` — and compares against
+what is committed, **ignoring the reset clock and the `x` coordinates**. Without that normalisation the
+check would fail every midnight.
 
-Falhou? É porque o formato da saída mudou e as imagens ficaram para trás. Rode sem o `--verificar`.
+Failed? That means the output format changed and the images fell behind. Run it without `--verificar`.
 
-## Trocar por print de terminal de verdade
+## Swapping for a real terminal screenshot
 
-Se um dia valer a pena, é só substituir os arquivos em `assets/` e tirar o job `imagens` do
-`.github/workflows/ci.yml`. Enquanto as imagens forem geradas, esse job é o que impede o README de
-anunciar uma barra que o script não desenha mais.
+If it is ever worth it, replace the files in `assets/` and drop the `imagens` job from
+`.github/workflows/ci.yml`. As long as the images are generated, that job is what stops the README from
+advertising a bar the script no longer draws.
 
-Veja também [[testar-local]].
+See also [[testar-local]].

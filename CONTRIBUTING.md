@@ -117,9 +117,12 @@ Commit the regenerated SVGs along with the change.
 - One topic per PR.
 - Say which platforms you tested on (Linux, WSL, macOS, Windows PowerShell 5.1, PowerShell 7).
 - Include a before/after of the rendered line when you touch the output format.
-- Commit messages are **in English**, following [Conventional Commits](https://www.conventionalcommits.org)
-  (`feat: …`, `fix: …`, `docs(vault): …`). Commits older than v1.2.0 are in Portuguese; that history
-  stays as it is.
+- **Everything a visitor reads is in English** — commit messages, pull requests, issues, release notes,
+  the default README, the bar's labels, installer output. Commits follow
+  [Conventional Commits](https://www.conventionalcommits.org) (`feat: …`, `fix: …`, `docs(vault): …`).
+  History older than v1.1.0 is in Portuguese and stays as it is.
+- The project vault and what `scripts/testar.sh` prints stay in Portuguese: maintainer surfaces, not
+  visitor ones.
 - Say *why* in the body, not just *what* — the diff already shows what changed. On a public repository
   the log is where someone goes to find out why a line looks the way it does.
 - Update `CHANGELOG.md` under **Unreleased** in the same PR.

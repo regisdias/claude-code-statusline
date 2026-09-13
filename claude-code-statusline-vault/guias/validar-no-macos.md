@@ -3,41 +3,41 @@ tipo: guia
 data: 2026-09-13
 ---
 
-# Validar no macOS — passo a passo
+# Validating on macOS — step by step
 
-Nasceu para fechar a [[../pendentes/arquivo/2026-09-12-confirmar-no-macos|CCS-1]], já resolvida; continua valendo para validar qualquer mudança num Mac. Feito num Mac de verdade, não
-em runner: o CI já cobre o resto.
+Written to close [[../pendentes/arquivo/2026-09-12-confirmar-no-macos|CCS-1]], now resolved; still the
+way to validate any change on a Mac. Done on a real Mac, not on a runner: CI covers the rest.
 
-**O que só um Mac responde:** se os glifos desenham na tela, e se a hora do reset sai certa num fuso
-que não é UTC. O runner do GitHub não tem tela e roda em UTC.
+**What only a Mac answers:** whether the glyphs draw on screen, and whether the reset time comes out
+right in a timezone that is not UTC. The GitHub runner has no screen and runs in UTC.
 
-## 1. Antes de começar
+## 1. Before starting
 
 ```bash
 brew install jq
 ```
 
-O terminal precisa estar em UTF-8 — no Terminal.app é Settings → Profiles → Advanced → Text encoding.
-Sem isso os blocos saem como interrogação e você diagnostica um bug que não existe.
+The terminal has to be in UTF-8 — in Terminal.app that is Settings → Profiles → Advanced → Text
+encoding. Without it the blocks come out as question marks and you diagnose a bug that does not exist.
 
-> **Atenção ao bash.** O `/bin/bash` do macOS é a versão **3.2**, de 2007, por causa da licença do
-> bash 4. O script tem shebang `#!/usr/bin/env bash`, então pega o primeiro `bash` do PATH — que pode
-> ser o do Homebrew (5.x) em vez do do sistema. **Os dois precisam funcionar**, e o diagnóstico abaixo
-> roda nos dois de propósito.
+> **Mind the bash.** macOS's `/bin/bash` is version **3.2**, from 2007, because of the bash 4 licence.
+> The script's shebang is `#!/usr/bin/env bash`, so it picks the first `bash` on the PATH — which may be
+> Homebrew's (5.x) rather than the system one. **Both have to work**, and the diagnostic below runs both
+> on purpose.
 
-## 2. Instalar como um usuário qualquer
+## 2. Install the way anyone else would
 
-Não rode do clone. O que interessa é o caminho que uma pessoa de fora percorre:
+Do not run it from the clone. What matters is the path an outsider walks:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/regisdias/claude-code-statusline/main/install.sh | bash
 ```
 
-Esperado: as três linhas de `✓`, e uma prévia da barra desenhada.
+Expected: the three `✓` lines, and a preview of the bar.
 
-## 3. O diagnóstico, numa colada só
+## 3. The diagnostic, in one paste
 
-Rode isto **dentro do clone** e mande a saída inteira para o Claude:
+Run this **inside the clone** and send the whole output to Claude:
 
 ```bash
 bash -c '
@@ -50,63 +50,72 @@ P=$(jq -nc --arg d "$R" --argjson t "$(date +%s)" "{
   rate_limits:{five_hour:{used_percentage:41,resets_at:(\$t+7200)},
                seven_day:{used_percentage:11,resets_at:(\$t+259200)}}}")
 
-echo "== AMBIENTE =="
-sw_vers 2>/dev/null | tr "\n" " " || echo "(sw_vers ausente: nao e macOS)"; echo
-echo "bash do PATH : $(bash --version | head -1)"
-echo "bash sistema : $(/bin/bash --version | head -1)"
-if date --version >/dev/null 2>&1; then echo "date         : GNU, $(date --version | head -1)"
-else echo "date         : BSD (sem --version) — e o caminho que a CCS-1 quer ver"; fi
-echo "fuso         : $(date +%Z%z)  |  locale: ${LANG:-nao-definido}"
-echo "jq           : $(jq --version)"
-echo "TERM         : $TERM  |  TERM_PROGRAM: ${TERM_PROGRAM:-?}"
+echo "== ENVIRONMENT =="
+sw_vers 2>/dev/null | tr "\n" " " || echo "(no sw_vers: not macOS)"; echo
+echo "bash on PATH  : $(bash --version | head -1)"
+echo "system bash   : $(/bin/bash --version | head -1)"
+if date --version >/dev/null 2>&1; then echo "date          : GNU, $(date --version | head -1)"
+else echo "date          : BSD (no --version) — the path this guide exists to exercise"; fi
+echo "timezone      : $(date +%Z%z)  |  locale: ${LANG:-unset}"
+echo "jq            : $(jq --version)"
+echo "TERM          : $TERM  |  TERM_PROGRAM: ${TERM_PROGRAM:-?}"
 
-echo; echo "== BARRA, bash do PATH =="
+echo; echo "== BAR, bash on PATH =="
 printf "%s" "$P" | CLAUDE_CONFIG_DIR=$C bash statusline-command.sh; echo
-echo; echo "== BARRA, /bin/bash 3.2 =="
+echo; echo "== BAR, /bin/bash 3.2 =="
 printf "%s" "$P" | CLAUDE_CONFIG_DIR=$C /bin/bash statusline-command.sh; echo
 
-echo; echo "== BARRA CHEIA (o caso do bug do seq) =="
+echo; echo "== FULL BAR (the BSD seq case) =="
 printf "%s" "$P" | jq -c ".rate_limits.five_hour.used_percentage=100" \
   | CLAUDE_CONFIG_DIR=$C bash statusline-command.sh; echo
 
-echo; echo "== ORDEM CONFIGURADA =="
+echo; echo "== CONFIGURED ORDER =="
 printf "{\"ccsl\":{\"order\":[\"ctx\",\"branch\"]}}\n" > "$C/settings.json"
 printf "%s" "$P" | CLAUDE_CONFIG_DIR=$C bash statusline-command.sh; echo
 rm -f "$C/settings.json"
 
-echo; echo "== BYTES DO INICIO DA LINHA (o que o script emitiu, nao o que voce ve) =="
+echo; echo "== NARROW TERMINAL (the wrap) =="
+printf "%s" "$P" | COLUMNS=60 CLAUDE_CONFIG_DIR=$C bash statusline-command.sh; echo
+
+echo; echo "== FRACTIONAL NUMBERS UNDER YOUR LOCALE =="
+printf "%s" "$P" | jq -c ".rate_limits.five_hour.used_percentage=84.7" \
+  | CLAUDE_CONFIG_DIR=$C bash statusline-command.sh; echo
+
+echo; echo "== FIRST BYTES OF THE LINE (what the script emitted, not what you see) =="
 printf "%s" "$P" | CLAUDE_CONFIG_DIR=$C bash statusline-command.sh \
   | sed "s/\x1b\[[0-9]*m//g" | head -c 24 | xxd
-echo "esperado: 67 69 74 20 = \"git \", depois \"main\""
-echo "referencia dos outros: $(printf "█░│↑" | xxd | head -1)"
+echo "expected: 67 69 74 20 = \"git \", then \"main\""
+echo "reference for the others: $(printf "█░│↑" | xxd | head -1)"
 '
 ```
 
-## 4. O que olhar, e o que cada coisa significa
+## 4. What to look at, and what each thing means
 
-| Conferir | Certo | Errado significa |
+| Check | Right | Wrong means |
 |---|---|---|
-| **Os dois bash** | saída idêntica | incompatibilidade com o bash 3.2 — é bug, e grave: é o bash padrão do Mac |
-| **`git` antes da branch** | a palavra | outra coisa: um `ccsl.branch_icon` no seu `settings.json` real não entra aqui — o diagnóstico usa config vazia |
-| **`█` e `░`** | blocos sólidos e claros | quadrado ou `?`: terminal fora de UTF-8 |
-| **`│`** | barra vertical fina | idem |
-| **Largura da barra** | sempre **10** blocos, inclusive em 100% | 12 blocos = o bug do `seq` voltou |
-| **`resets HH:MM`** | hora daqui a 2h, no **seu** relógio | hora errada ou em branco = o `date -r` do BSD |
-| **`18/09 05:00`** | data daqui a 3 dias | idem |
+| **The two bashes** | identical output | incompatibility with bash 3.2 — a bug, and a serious one: it is the Mac's default bash |
+| **`git` before the branch** | the word | anything else: a `ccsl.branch_icon` in your real `settings.json` does not reach here — the diagnostic uses an empty config |
+| **`█` and `░`** | solid and light blocks | a box or `?`: terminal not in UTF-8 |
+| **`│`** | a thin vertical bar | same |
+| **Bar width** | always **10** blocks, including at 100% | 12 blocks = the `seq` bug came back |
+| **`resets HH:MM`** | two hours from now, on **your** clock | wrong or blank = BSD `date -r` |
+| **`18/09 05:00`** | three days from now | same |
+| **The wrap at 60 columns** | several rows, nothing cut | one long row = `COLUMNS` did not arrive |
+| **`84.7` renders as `85%`** | `85%` | `0%` or a comma in the cost = the locale fix regressed |
 
-**A distinção que importa nos glifos:** se os bytes estão certos (compare com a linha de referência)
-mas a tela mostra `?`, o problema é a fonte do terminal — o script está correto. Só o contrário é bug
-nosso.
+**The distinction that matters for glyphs:** if the bytes are right (compare with the reference line) but
+the screen shows `?`, the problem is the terminal font — the script is correct. Only the reverse is our
+bug.
 
-> Até a v1.5.0 a branch levava o glifo `⎇`, e esta tabela conferia ele. No Mac ele lia como a tecla
-> Option, e virou `git` — veja [[../decisoes/rotulo-da-branch-em-texto]].
+> Up to v1.5.0 the branch carried the `⎇` glyph, and this table checked it. On the Mac it read as the
+> Option key, and it became `git` — see [[../decisoes/rotulo-da-branch-em-texto]].
 
-## 5. Fechando a pendência
+## 5. Closing an open item
 
-- **Tudo certo:** a CCS-1 vira `status: resolvido`, ganha uma linha dizendo em que macOS e em que
-  terminal foi verificado, e vai por `git mv` para `pendentes/arquivo/` no mesmo commit.
-- **Só um glifo sai errado:** abre pendência própria — foi assim que o `⎇` virou `git` (CCS-4).
-- **Qualquer outra divergência:** issue nova com a saída completa do diagnóstico, e a CCS-1 continua
-  aberta até resolver.
+- **All correct:** the note becomes `status: resolvido`, gains a line saying which macOS and which
+  terminal it was verified on, and moves with `git mv` into `pendentes/arquivo/` in the same commit.
+- **Only one glyph comes out wrong:** open a note of its own — that is how `⎇` became `git` (CCS-4).
+- **Any other divergence:** a new issue with the full diagnostic output, and the original note stays
+  open until it is resolved.
 
-Veja também [[testar-local]].
+See also [[testar-local]].

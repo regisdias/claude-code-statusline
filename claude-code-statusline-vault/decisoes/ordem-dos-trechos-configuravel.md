@@ -3,73 +3,76 @@ tipo: decisao
 data: 2026-09-13
 ---
 
-# A ordem é a configuração
+# The order is the configuration
 
-## Decisão
+## Decision
 
-Uma lista só decide **quais** trechos aparecem e **em que ordem**. Trecho fora da lista não desenha.
+One list decides both **which** segments appear and **in what order**. A segment not in the list does
+not render.
 
 ```json
 { "ccsl": { "order": ["branch", "ctx", "5h", "session"] } }
 ```
 
-Sem chave separada de "escondidos", sem booleano por trecho. Tirar a `week` é tirá-la da lista.
+No separate "hidden" key, no boolean per segment. Dropping `week` means dropping it from the list.
 
-## Onde mora, e por que não num arquivo próprio
+## Where it lives, and why not in a file of its own
 
-No `settings.json` do próprio Claude Code, chave `ccsl` no topo.
+In Claude Code's own `settings.json`, under a top-level `ccsl` key.
 
-A objeção óbvia era custo: ler um segundo arquivo significaria uma segunda chamada ao `jq` por desenho,
-contra a regra de nenhum subprocesso. **O `--slurpfile` derruba isso** — o `jq` lê o payload pela
-entrada padrão e o `settings.json` na mesma invocação:
+The obvious objection was cost: reading a second file would mean a second `jq` call per render, against
+the no-subprocess rule. **`--slurpfile` removes it** — `jq` reads the payload from standard input and
+`settings.json` from the flag, in the same invocation:
 
 ```bash
 jq -r --slurpfile cfg "$settings_json" "$CONSULTA"
 ```
 
-Chave desconhecida no `settings.json` foi **verificada na prática**, não suposta: a documentação não diz
-nada sobre validação de schema, então rodei `claude --settings <arquivo com a chave ccsl> --print` e o
-Claude Code aceitou sem aviso.
+That Claude Code tolerates an unknown key in `settings.json` was **verified, not assumed**: the
+documentation says nothing about schema validation, so it was tested with
+`claude --settings <file with the ccsl key> --print`, which ran without a warning.
 
-## Degradação
+## Degradation
 
-Config ausente, lista vazia, nome que ninguém reconhece, entrada que não é string, ou `settings.json`
-quebrado na mão: tudo cai na ordem padrão completa. Para o JSON quebrado, o `jq` falha e o shell
-**repete a chamada sem o arquivo** — um processo a mais só no caso quebrado, e a barra não vai junto.
+A missing key, an empty list, a name nobody recognises, an entry that is not a string, or a
+`settings.json` broken by hand: all fall back to the full default order. For the broken JSON, `jq` fails
+and the shell **retries the call without the file** — one extra process in the broken case only, and the
+bar does not go down with it.
 
-## O custo aceito: separador uniforme
+## The accepted cost: a uniform separator
 
-O `model` virou trecho próprio, para poder mover e sumir. Só que ele era grudado no `ctx` por dois
-espaços, não pelo `│`. Reordenar com duas regras de separação não fecha, então tudo passou a usar `│`:
+`model` became a segment of its own, so it can be moved and removed. But it used to be glued to `ctx` by
+two spaces rather than the `│`. Reordering does not work with two spacing rules, so everything uses `│`
+now:
 
 ```
-antes:   ⎇ main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 33%
-depois:  ⎇ main  │  Opus 5 (1M context)  │  ctx [███░░░░░░░] 33%
+before:  ⎇ main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 33%
+after:   ⎇ main  │  Opus 5 (1M context)  │  ctx [███░░░░░░░] 33%
 ```
 
-Muda a barra de quem não configurou nada, sem opt-out. Foi decisão consciente e está no `CHANGELOG`
-como mudança visível.
+It changes the bar for anyone who configured nothing, with no opt-out. It was a deliberate decision and
+is in the `CHANGELOG` as a visible change.
 
-## Armadilhas que custaram tempo
+## Traps that cost time
 
-**Campo vazio no início do TSV some.** O `read -r` com `IFS=$'\t'` trata tab como espaço em branco, e
-campo vazio no começo **colapsa**, deslocando todos os outros. Por isso o padrão da ordem é aplicado
-dentro do próprio `jq`, para aquele campo nunca sair vazio. Era isso que o código original evitava sem
-dizer, ao começar pelo `display_name`, que nunca é vazio.
+**A leading empty field in the TSV disappears.** `read -r` with `IFS=$'\t'` treats tab as whitespace, so
+an empty first field **collapses**, shifting every other field left. That is why the order default is
+applied inside `jq` itself, so that field can never come out empty. It is what the original code was
+quietly avoiding by starting with `display_name`, which is never empty.
 
-**`case`, não array associativo.** O macOS ainda traz bash 3.2, que não tem.
+**`case`, not an associative array.** macOS still ships bash 3.2, which has none.
 
-**O `.ps1` muda de fim de linha ao trocar de branch.** O `.gitattributes` força CRLF no working tree, e
-o checkout aplica isso. Script que edita o arquivo tem de normalizar antes e restaurar depois, senão
-nenhum `replace` multilinha casa.
+**The `.ps1` changes line endings when you switch branches.** `.gitattributes` forces CRLF in the
+working tree and checkout applies it. A script that edits the file has to normalise first and restore
+afterwards, or no multi-line replacement matches.
 
-## O configurador
+## The configurator
 
-`ccsl-install.sh --configure` não guarda texto de exemplo: ele **roda a statusline instalada** uma vez
-por trecho para montar o menu, e de novo para a prévia. O que você aprova é o que você vai ver.
+`ccsl-install.sh --configure` keeps no sample text: it **runs the installed status line** once per
+segment to build the menu, and again for the preview. What you approve is what you will see.
 
-Lê do `/dev/tty` quando existe — assim funciona mesmo com o instalador vindo por `curl | bash`, onde a
-entrada padrão é o próprio script — e cai para stdin quando não existe, o que de quebra torna tudo
-scriptável e testável.
+It reads from `/dev/tty` when there is one — which is what makes it work with the installer arriving
+through `curl | bash`, where standard input is the script itself — and falls back to stdin when there is
+not, which as a side effect makes the whole thing scriptable and testable.
 
-Veja também [[aviso-de-atualizacao-opt-in]] e [[duas-implementacoes-shell-e-powershell]].
+See also [[aviso-de-atualizacao-opt-in]] and [[duas-implementacoes-shell-e-powershell]].
