@@ -68,6 +68,11 @@ sharp-cli para rasterizar). O GitHub não tem API para ele: sobe à mão em Sett
   `worktree.branch` (só em sessão de worktree). A branch sai da leitura direta do `.git/HEAD` — `git
   branch --show-current` seria um exec por desenho. As duas implementações têm de tratar igual: `.git`
   como diretório e como arquivo (`gitdir:`), HEAD solto (sha curto), CR no fim da linha e walk-up.
+- **A barra se quebra sozinha no `$COLUMNS`**, que o Claude Code define antes de rodar o comando. Quebra
+  só **entre** trechos. `${#s}` conta **bytes** fora de locale UTF-8 e a statusline costuma rodar sem
+  `LANG` — por isso a largura é medida dobrando cada glifo conhecido (`█ ░ │ ⎇ ↑ ·`) para um caractere
+  ASCII antes de contar. Não troque por `${#s}` direto.
+- **O `gerar-svg.py` fixa `COLUMNS=999`**, senão a imagem do README sairia diferente em cada máquina.
 - **A ordem dos trechos vem do `ccsl.order` no `settings.json`**, lido na **mesma** chamada do `jq` via
   `--slurpfile` — nada de segundo processo por desenho. Config ausente, vazia, com nome desconhecido ou
   com JSON quebrado cai na ordem padrão; a barra nunca fica em branco por causa de config.

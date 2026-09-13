@@ -261,6 +261,23 @@ versao_num() {
     VERSAO_NUM=$(( 10#$a * 1000000 + 10#$b * 1000 + 10#$c ))
 }
 
+# Visible width of a string, in columns, regardless of locale.
+#
+# ${#s} counts bytes when the locale is not UTF-8, and the status line often runs
+# with no LANG set: the same line measures 31 under C.UTF-8 and 55 under C,
+# because █ is three bytes. Substitution matches the same bytes either way, so
+# folding each glyph we emit to one ASCII character makes the count right in
+# both. A non-ASCII branch or model name still over-counts, which only wraps a
+# little early — it never loses anything.
+shopt -s extglob
+LARGURA=0
+largura() {
+    local s=${1//$'\033'\[*([0-9;])m/}
+    s=${s//█/#}; s=${s//░/#}; s=${s//│/#}
+    s=${s//⎇/#}; s=${s//↑/#}; s=${s//·/#}
+    LARGURA=${#s}
+}
+
 # ---------------------------------------------------------------------------
 # Emit the configured segments, separated by │
 # ---------------------------------------------------------------------------
@@ -273,8 +290,23 @@ aviso_update
 update_part=""
 [ -n "$NOVA_VERSAO" ] && update_part="↑$NOVA_VERSAO"
 
+# Claude Code sets COLUMNS to the terminal width before running this. Anything
+# missing or not a number means no wrapping, which is the old behaviour.
+colunas=0
+case ${COLUMNS:-} in
+    ''|*[!0-9]*) colunas=0 ;;
+    *)           colunas=$COLUMNS ;;
+esac
+
+SEP="  │  "
+largura "$SEP"; sep_largura=$LARGURA
+
 # `case` rather than an associative array: macOS still ships bash 3.2, which has none.
+# Segments are packed greedily into rows of at most $colunas, breaking only
+# *between* them, so a segment is never cut in half.
 saida=""
+linha=""
+linha_largura=0
 IFS=','
 for nome in $ordem; do
     case $nome in
@@ -287,8 +319,26 @@ for nome in $ordem; do
         update)  parte=$update_part ;;
         *)       parte="" ;;   # a name nobody recognises simply does not render
     esac
-    [ -n "$parte" ] && saida="${saida:+$saida  │  }$parte"
+    [ -n "$parte" ] || continue
+
+    largura "$parte"; parte_largura=$LARGURA
+
+    if [ -z "$linha" ]; then
+        linha=$parte
+        linha_largura=$parte_largura
+    elif [ "$colunas" -gt 0 ] \
+        && [ $((linha_largura + sep_largura + parte_largura)) -gt "$colunas" ]; then
+        saida="${saida:+$saida
+}$linha"
+        linha=$parte
+        linha_largura=$parte_largura
+    else
+        linha="$linha$SEP$parte"
+        linha_largura=$((linha_largura + sep_largura + parte_largura))
+    fi
 done
 unset IFS
+[ -n "$linha" ] && saida="${saida:+$saida
+}$linha"
 
 printf "%b" "$saida"

@@ -25,6 +25,7 @@ Repositório público, licença MIT. A instalação e o uso ficam no README ([in
 | Por que a branch sai do `.git/HEAD`, e não do `git` | [[decisoes/branch-vem-do-git-head]] |
 | Por que o aviso de atualização é opt-in e vive fora da barra | [[decisoes/aviso-de-atualizacao-opt-in]] |
 | Como a ordem dos trechos é configurada | [[decisoes/ordem-dos-trechos-configuravel]] |
+| Por que a barra se quebra sozinha | [[decisoes/quebra-na-largura-do-terminal]] |
 | Testar sem abrir o Claude Code | [[guias/testar-local]] |
 | Regerar as imagens do README | [[guias/regenerar-imagens-do-readme]] |
 | **Validar num Mac** (fecha a CCS-1) | [[guias/validar-no-macos]] |

@@ -6,7 +6,22 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **The bar wraps to the terminal width**
+  ([#28](https://github.com/regisdias/claude-code-statusline/issues/28)). A long branch name used to
+  push the tail of the line off screen; now the segments are packed into as many rows as the window
+  needs, breaking only *between* them so nothing is cut. Nothing to configure, and a wide terminal still
+  gets one line.
+
+  Claude Code sets `COLUMNS` before running the command, which is where the width comes from. Missing or
+  non-numeric means one line, as before. A segment wider than the whole terminal takes a row of its own
+  and overflows — splitting inside one would hide what you are trying to read.
+
+  The measurement had to be locale-proof: `${#s}` counts *bytes* when the locale is not UTF-8, and the
+  status line often runs with no `LANG`. The same line measures 31 under `C.UTF-8` and 55 under `C`,
+  because `█` is three bytes. Folding each glyph to one ASCII character before counting gets the right
+  answer either way, with no subprocess.
 
 ## [1.4.0] — 2026-09-13
 

@@ -27,6 +27,10 @@ trap 'rm -rf "$temporario"' EXIT
 mkdir -p "$temporario/config"
 export CLAUDE_CONFIG_DIR="$temporario/config"
 
+# Wide and pinned: the bar wraps to COLUMNS, and the existing cases assume one
+# line. The wrapping section below sets it per case.
+export COLUMNS=999
+
 # Compare both implementations on one payload file.
 comparar() {
     local nome=$1 payload=$2 saida_sh saida_ps
@@ -226,6 +230,71 @@ ordem_caso "nao-string" '{"ccsl":{"order":[1,true,"ctx"]}}'             "ctx"
 ordem_caso "json-torto" '{ isso nao e json'                             "model,ctx,5h,week,session"
 ordem_caso "sem-ccsl"   '{"statusLine":{"type":"command"}}'             "model,ctx,5h,week,session"
 rm -f "$config/settings.json"
+
+# ---------------------------------------------------------------------------
+# 6. Quebra na largura do terminal
+# ---------------------------------------------------------------------------
+largura_caso() {
+    local nome=$1 cols=$2
+    # Same trap as branch_caso: inside one `local`, bash creates every name
+    # before running the assignments, so "$nome" would still be unset here.
+    local payload="$temporario/payload-larg-$nome.json"
+    local saida_sh saida_ps maior linhas
+    jq --arg d "$temporario/comum" '. + {workspace: {current_dir: $d}}' \
+        "$payloads/verde.json" > "$payload"
+
+    saida_sh=$(COLUMNS=$cols bash "$shell" < "$payload" 2>/dev/null)
+    linhas=$(printf '%s' "$saida_sh" | grep -c '')
+
+    # No line may exceed the width — unless it holds a single segment, which
+    # cannot be split without cutting content. A segment wider than the terminal
+    # gets its own line and overflows, on purpose.
+    maior=$(printf '%s' "$saida_sh" | sed 's/\x1b\[[0-9]*m//g' \
+        | awk -v cols="$cols" '
+            cols > 0 && length($0) > cols && index($0, "  │  ") == 0 { next }
+            { if (length($0) > m) m = length($0) }
+            END { print m+0 }')
+    if [ "$cols" -gt 0 ] && [ "$maior" -gt "$cols" ]; then
+        echo "FALHA  largura/$nome — linha de $maior colunas, com mais de um trecho, em COLUMNS=$cols" >&2
+        falhas=$((falhas + 1))
+        return
+    fi
+    if ! printf '%s' "$saida_sh" | grep -q 'session \$'; then
+        echo "FALHA  largura/$nome — o trecho session sumiu na quebra" >&2
+        falhas=$((falhas + 1))
+        return
+    fi
+
+    if [ "$tem_pwsh" = 0 ]; then
+        echo "ok     largura/$nome — $linhas linha(s), nada estourou (PowerShell pulado)"
+        return
+    fi
+    saida_ps=$(COLUMNS=$cols pwsh -NoProfile -File "$ps1" < "$payload" 2>/dev/null)
+    if [ "$saida_sh" = "$saida_ps" ]; then
+        echo "ok     largura/$nome — $linhas linha(s), as duas implementações batem"
+    else
+        echo "FALHA  largura/$nome — saídas diferentes com COLUMNS=$cols" >&2
+        printf '  sh : %q\n  ps1: %q\n' "$saida_sh" "$saida_ps" >&2
+        falhas=$((falhas + 1))
+    fi
+}
+
+largura_caso "sem-columns" 0
+largura_caso "30"          30
+largura_caso "60"          60
+largura_caso "80"          80
+largura_caso "120"         120
+largura_caso "999"         999
+
+# COLUMNS com lixo não pode quebrar nada
+lixo="$temporario/payload-larg-lixo.json"
+cp "$payloads/verde.json" "$lixo"
+if [ "$(COLUMNS=abc bash "$shell" < "$lixo" 2>/dev/null | grep -c '')" = "1" ]; then
+    echo "ok     largura/columns-invalido — uma linha, sem quebra"
+else
+    echo "FALHA  largura/columns-invalido — COLUMNS não numérico mudou a saída" >&2
+    falhas=$((falhas + 1))
+fi
 
 if [ "$falhas" -gt 0 ]; then
     echo "$falhas falha(s)" >&2
