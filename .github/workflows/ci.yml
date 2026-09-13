@@ -32,7 +32,10 @@ jobs:
         shell: pwsh
         run: |
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
-          $achados = Invoke-ScriptAnalyzer -Path statusline-command.ps1, hooks/ccsl-update-check.ps1 -Severity Error,Warning
+          # -Path takes one path, not a list: loop instead of passing an array
+          $achados = @('statusline-command.ps1', 'hooks/ccsl-update-check.ps1') | ForEach-Object {
+              Invoke-ScriptAnalyzer -Path $_ -Severity Error,Warning
+          }
           if ($achados) { $achados | Format-Table -AutoSize | Out-String | Write-Host; exit 1 }
           Write-Host 'sem achados'
 
@@ -46,8 +49,10 @@ jobs:
       # notice lies about what is installed.
       - name: CCSL_VERSION matches across both scripts and the CHANGELOG
         run: |
-          sh=$(sed -n 's/^CCSL_VERSION="\(.*\)"$/\1/p' statusline-command.sh)
-          ps=$(sed -n "s/^\$CCSL_VERSION = '\(.*\)'$/\1/p" statusline-command.ps1 | tr -d '\r')
+          # The .ps1 is checked out with CRLF (see .gitattributes), so the CR has to
+          # go before sed anchors with $, not after.
+          sh=$(tr -d '\r' < statusline-command.sh | sed -n 's/^CCSL_VERSION="\(.*\)"$/\1/p')
+          ps=$(tr -d '\r' < statusline-command.ps1 | sed -n "s/^\$CCSL_VERSION = '\(.*\)'$/\1/p")
           log=$(sed -n 's/^## \[\([0-9][0-9.]*\)\].*/\1/p' CHANGELOG.md | head -n1)
 
           echo "statusline-command.sh  $sh"
