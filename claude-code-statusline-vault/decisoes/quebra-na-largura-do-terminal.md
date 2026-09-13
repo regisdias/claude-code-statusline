@@ -40,7 +40,9 @@ Medido:
 
 `█` tem 3 bytes. Quebrar por esse número erraria toda a conta.
 
-A saída foi dobrar cada glifo que a barra emite (`█ ░ │ ⎇ ↑ ·`) para um caractere ASCII antes de contar.
+A saída foi dobrar cada glifo que a barra emite (`█ ░ │ ↑ ·`) para um caractere ASCII antes de contar.
+O ícone da branch, que é configurável, dobra para a largura que o `jq` calcula — veja
+[[rotulo-da-branch-em-texto]].
 Substituição casa os mesmos bytes nos dois locales, então a conta fica certa em qualquer um — e sem
 subprocesso. Nome de branch ou de modelo com acento ainda superestima, o que só quebra um pouco cedo
 demais; nunca esconde nada.
