@@ -6,6 +6,12 @@
 # It downloads statusline-command.sh into ~/.claude and wires it into
 # ~/.claude/settings.json. Your settings file is backed up before any change,
 # and an existing `statusLine` is never overwritten without asking.
+#
+# OPTIONAL UPDATE CHECK — off by default, because the status line makes no
+# network call and writes nothing, and that is a property worth keeping:
+#
+#   bash install.sh --enable-update-check    # installs a SessionStart hook
+#   bash install.sh --disable-update-check   # removes it, and stops all checks
 set -euo pipefail
 
 REPO="regisdias/claude-code-statusline"
@@ -20,6 +26,18 @@ ok()    { printf '%s✓%s %s\n' "$VERDE" "$RESET" "$1"; }
 aviso() { printf '%s!%s %s\n' "$AMARELO" "$RESET" "$1"; }
 erro()  { printf '%s✗%s %s\n' "$VERMELHO" "$RESET" "$1" >&2; exit 1; }
 
+MODO="instalar"
+case ${1:-} in
+    --enable-update-check)  MODO="ligar-update" ;;
+    --disable-update-check) MODO="desligar-update" ;;
+    "")                     ;;
+    *) printf 'unknown option: %s\n' "$1" >&2; exit 2 ;;
+esac
+
+MARCADOR="$DESTINO/.ccsl-update-check"
+CACHE="$DESTINO/.ccsl-update-cache"
+HOOK_SH="$DESTINO/ccsl-update-check.sh"
+HOOK_CMD="bash ~/.claude/ccsl-update-check.sh"
 COMANDO='bash ~/.claude/statusline-command.sh'
 TRECHO='{
   "statusLine": {
@@ -32,6 +50,59 @@ command -v jq   >/dev/null 2>&1 || erro "jq not found. Linux: apt install jq · 
 command -v curl >/dev/null 2>&1 || erro "curl not found."
 
 mkdir -p "$DESTINO"
+
+# ---------------------------------------------------------------------------
+# 0. --enable-update-check / --disable-update-check
+# ---------------------------------------------------------------------------
+# The check lives in a SessionStart hook, never in the status line: the bar keeps
+# its promise of no network and no writes either way. The hook drops the result
+# in a cache file, and the bar only reads it.
+mexer_hook() {   # $1 = adicionar|remover
+    [ -f "$SETTINGS" ] || printf '{}\n' > "$SETTINGS"
+    jq empty "$SETTINGS" >/dev/null 2>&1 || {
+        aviso "$SETTINGS is not valid JSON — left untouched."
+        return 1
+    }
+    cp "$SETTINGS" "$SETTINGS.bak"
+    if [ "$1" = "adicionar" ]; then
+        jq --arg cmd "$HOOK_CMD" '
+            .hooks //= {} | .hooks.SessionStart //= []
+            | if ([.hooks.SessionStart[] | select(.command == $cmd)] | length) == 0
+              then .hooks.SessionStart += [{type: "command", command: $cmd}]
+              else . end
+        ' "$SETTINGS" > "$SETTINGS.novo"
+    else
+        jq --arg cmd "$HOOK_CMD" '
+            if .hooks.SessionStart
+            then .hooks.SessionStart |= map(select(.command != $cmd))
+            else . end
+            | if (.hooks.SessionStart // null) == [] then del(.hooks.SessionStart) else . end
+            | if (.hooks // null) == {} then del(.hooks) else . end
+        ' "$SETTINGS" > "$SETTINGS.novo"
+    fi
+    mv "$SETTINGS.novo" "$SETTINGS"
+}
+
+if [ "$MODO" = "ligar-update" ]; then
+    curl -fsSL "https://raw.githubusercontent.com/$REPO/$RAMO/hooks/ccsl-update-check.sh" \
+        -o "$HOOK_SH" || erro "could not download the hook"
+    chmod +x "$HOOK_SH"
+    : > "$MARCADOR"
+    mexer_hook adicionar && ok "update check on (backup at $SETTINGS.bak)" \
+        || aviso "hook downloaded, but add this to $SETTINGS by hand: $HOOK_CMD"
+    printf '\n'
+    printf 'It asks GitHub for the latest release at most once a day, at session start,\n'
+    printf 'and writes only %s. Turn it off with:\n\n' "$CACHE"
+    printf '  bash install.sh --disable-update-check\n'
+    exit 0
+fi
+
+if [ "$MODO" = "desligar-update" ]; then
+    rm -f "$MARCADOR" "$CACHE" "$HOOK_SH"
+    mexer_hook remover && ok "update check off — no request will be made again" \
+        || aviso "marker removed; drop the SessionStart hook from $SETTINGS by hand"
+    exit 0
+fi
 
 # ---------------------------------------------------------------------------
 # 1. Download

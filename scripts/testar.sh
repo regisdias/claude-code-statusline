@@ -22,6 +22,11 @@ command -v jq >/dev/null 2>&1 || { echo "jq não encontrado" >&2; exit 1; }
 temporario=$(mktemp -d)
 trap 'rm -rf "$temporario"' EXIT
 
+# Point the scripts at an empty config dir: whoever runs this may have the update
+# check enabled in their real ~/.claude, which would add a segment to every case.
+mkdir -p "$temporario/config"
+export CLAUDE_CONFIG_DIR="$temporario/config"
+
 # Compare both implementations on one payload file.
 comparar() {
     local nome=$1 payload=$2 saida_sh saida_ps
@@ -128,6 +133,59 @@ else
     echo "FALHA  branch/fora-de-repo — a barra não deveria mudar fora de um repo" >&2
     falhas=$((falhas + 1))
 fi
+
+# ---------------------------------------------------------------------------
+# 4. O aviso de atualização, lido do cache
+# ---------------------------------------------------------------------------
+# The bar only ever reads the cache; the hook is what writes it. These cases feed
+# the bar a cache directly, which is exactly what it sees in real use.
+config="$temporario/config"
+marcador="$config/.ccsl-update-check"
+cache="$config/.ccsl-update-cache"
+
+update_caso() {
+    local nome=$1 conteudo=$2 esperado=$3
+    local payload="$temporario/payload-upd-$nome.json" obtido
+    cp "$payloads/verde.json" "$payload"
+
+    rm -f "$cache"
+    [ -n "$conteudo" ] && printf '%s\n' "$conteudo" > "$cache"
+
+    obtido=$(bash "$shell" < "$payload" 2>/dev/null | sed 's/\x1b\[[0-9]*m//g')
+    case $obtido in
+        *"  │  ↑"*) obtido="↑${obtido##*  │  ↑}" ;;
+        *)          obtido="—" ;;
+    esac
+    if [ "$obtido" != "$esperado" ]; then
+        echo "FALHA  update/$nome — esperava '$esperado', veio '$obtido'" >&2
+        falhas=$((falhas + 1))
+        return
+    fi
+    comparar "update/$nome" "$payload"
+}
+
+# Sem o marcador, nem o cache é lido
+printf '0 9.9.9\n' > "$cache"
+sem_marcador="$temporario/payload-upd-off.json"
+cp "$payloads/verde.json" "$sem_marcador"
+if bash "$shell" < "$sem_marcador" | grep -q '↑'; then
+    echo "FALHA  update/desligado — segmento apareceu sem o marcador" >&2
+    falhas=$((falhas + 1))
+else
+    echo "ok     update/desligado — opt-in respeitado"
+    comparar "update/desligado" "$sem_marcador"
+fi
+
+: > "$marcador"
+update_caso "nova"        "1789204800 9.9.9"   "↑9.9.9"
+instalada=$(sed -n 's/^CCSL_VERSION="\(.*\)"$/\1/p' "$shell")
+update_caso "mesma"       "1789204800 $instalada"   "—"
+update_caso "mais-velha"  "1789204800 0.0.1"   "—"
+update_caso "corrompido"  "lixo aqui"          "—"
+update_caso "so-epoch"    "1789204800"         "—"
+update_caso "quatro-partes" "1789204800 1.2.3.4" "—"
+update_caso "vazio"       ""                   "—"
+rm -f "$marcador" "$cache"
 
 if [ "$falhas" -gt 0 ]; then
     echo "$falhas falha(s)" >&2

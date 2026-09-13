@@ -23,6 +23,7 @@ Repositório público, licença MIT. A instalação e o uso ficam no README ([in
 | Por que o CI roda em push e PR | [[decisoes/ci-em-push-e-pr]] |
 | Fluxo de branches: main → stg → develop → tarefa | [[decisoes/fluxo-de-branches]] |
 | Por que a branch sai do `.git/HEAD`, e não do `git` | [[decisoes/branch-vem-do-git-head]] |
+| Por que o aviso de atualização é opt-in e vive fora da barra | [[decisoes/aviso-de-atualizacao-opt-in]] |
 | Testar sem abrir o Claude Code | [[guias/testar-local]] |
 | Regerar as imagens do README | [[guias/regenerar-imagens-do-readme]] |
 | Armadilhas do PowerShell que já custaram caro | [[bugs-fixes/2026-09-12-powershell-bom-e-colisao-de-variavel]] |
