@@ -19,6 +19,12 @@
 #   5. The bar shows up on the next render. No restart needed.
 #
 # HOW TO READ IT
+#   Which segments appear, and in what order, comes from settings.json:
+#
+#        "ccsl": { "order": ["branch", "model", "ctx", "5h", "week", "session", "update"] }
+#
+#   Leave a name out and it does not render. `install.sh --configure` edits this.
+#
 #   ⎇ <branch> → current git branch, when the session is inside a repository
 #   ctx      → how much of this conversation's context window is used (not a plan quota)
 #   5h       → 5-hour block of your plan, with the time it resets
@@ -137,9 +143,16 @@ hora_reset() {
     fi
 }
 
-# Single read of the payload; "-" marks a missing field
-IFS=$'\t' read -r modelo ctx_pct ctx_size ctx_usados bloco_pct bloco_reset semana_pct semana_reset custo dir_atual <<EOF
-$(printf '%s' "$input" | jq -r '[
+ORDEM_PADRAO="branch,model,ctx,5h,week,session,update"
+
+# One jq call reads both the payload (stdin) and settings.json (--slurpfile), so
+# the configuration costs no extra process on the render path.
+# The default lives inside the query: `read` with IFS=tab treats tab as
+# whitespace, so an empty leading field would collapse and shift every other
+# field left. This one can never be empty.
+CONSULTA='[
+    ($cfg[0].ccsl.order // [] | map(select(type == "string")) | join(",")
+        | if . == "" then "branch,model,ctx,5h,week,session,update" else . end),
     (.model.display_name // "Claude"),
     (.context_window.used_percentage // "-"),
     (.context_window.context_window_size // "-"),
@@ -150,14 +163,30 @@ $(printf '%s' "$input" | jq -r '[
     (.rate_limits.seven_day.resets_at // "-"),
     (.cost.total_cost_usd // "-"),
     (.workspace.current_dir // .cwd // "-")
-] | @tsv' 2>/dev/null)
+] | @tsv'
+
+settings_json="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
+[ -r "$settings_json" ] || settings_json=/dev/null
+
+lido=$(printf '%s' "$input" | jq -r --slurpfile cfg "$settings_json" "$CONSULTA" 2>/dev/null)
+# A settings.json someone broke by hand must not take the bar down with it:
+# retry without the file, which yields the default order.
+[ -n "$lido" ] || lido=$(printf '%s' "$input" | jq -r --slurpfile cfg /dev/null "$CONSULTA" 2>/dev/null)
+
+IFS=$'\t' read -r ordem modelo ctx_pct ctx_size ctx_usados bloco_pct bloco_reset semana_pct semana_reset custo dir_atual <<EOF
+$lido
 EOF
+[ -n "${ordem:-}" ] || ordem=$ORDEM_PADRAO
 
 # ---------------------------------------------------------------------------
 # Context window
 # ---------------------------------------------------------------------------
+model_part=${modelo:-Claude}
+
 if [ -z "$ctx_pct" ] || [ "$ctx_pct" = "-" ]; then
-    ctx_part=$(printf "%s  waiting..." "${modelo:-Claude}")
+    # Nothing to draw yet: say so where the model name goes, and skip the rest
+    model_part=$(printf "%s  waiting..." "${modelo:-Claude}")
+    ctx_part=""
 else
     ctx_int=$(echo "$ctx_pct" | awk '{printf "%.0f", $1}')
     if [ "$ctx_usados" != "-" ] && [ "$ctx_size" != "-" ]; then
@@ -165,8 +194,8 @@ else
     else
         tokens="${ctx_int}%"
     fi
-    ctx_part=$(printf "%s  ctx $(pick_color "$ctx_pct")[%s]${RESET} %s %s%%" \
-        "$modelo" "$(make_bar "$ctx_pct" 10)" "$tokens" "$ctx_int")
+    ctx_part=$(printf "ctx $(pick_color "$ctx_pct")[%s]${RESET} %s %s%%" \
+        "$(make_bar "$ctx_pct" 10)" "$tokens" "$ctx_int")
 fi
 
 # ---------------------------------------------------------------------------
@@ -233,17 +262,33 @@ versao_num() {
 }
 
 # ---------------------------------------------------------------------------
-# Join whatever exists, separated by │
+# Emit the configured segments, separated by │
 # ---------------------------------------------------------------------------
 achar_branch "$dir_atual"
-
-saida="$ctx_part"
-for parte in "$bloco_part" "$semana_part" "$custo_part"; do
-    [ -n "$parte" ] && saida="$saida  │  $parte"
-done
 # U+2387 marks the segment as a branch; it is one column wide, unlike an emoji
-[ -n "$BRANCH" ] && saida="⎇ $BRANCH  │  $saida"
+branch_part=""
+[ -n "$BRANCH" ] && branch_part="⎇ $BRANCH"
 
 aviso_update
-[ -n "$NOVA_VERSAO" ] && saida="$saida  │  ↑$NOVA_VERSAO"
+update_part=""
+[ -n "$NOVA_VERSAO" ] && update_part="↑$NOVA_VERSAO"
+
+# `case` rather than an associative array: macOS still ships bash 3.2, which has none.
+saida=""
+IFS=','
+for nome in $ordem; do
+    case $nome in
+        branch)  parte=$branch_part ;;
+        model)   parte=$model_part ;;
+        ctx)     parte=$ctx_part ;;
+        5h)      parte=$bloco_part ;;
+        week)    parte=$semana_part ;;
+        session) parte=$custo_part ;;
+        update)  parte=$update_part ;;
+        *)       parte="" ;;   # a name nobody recognises simply does not render
+    esac
+    [ -n "$parte" ] && saida="${saida:+$saida  │  }$parte"
+done
+unset IFS
+
 printf "%b" "$saida"

@@ -6,7 +6,43 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **Choose which segments appear, and in what order**
+  ([#19](https://github.com/regisdias/claude-code-statusline/issues/19)). One list does both jobs — a
+  segment left out of `ccsl.order` does not render.
+
+  ```json
+  { "ccsl": { "order": ["branch", "ctx", "5h", "session"] } }
+  ```
+
+  `ccsl-install.sh --configure` lists the segments *as your own status line draws them*, takes the
+  numbers in the order you want, previews the result and saves on confirmation. It reads from
+  `/dev/tty`, so it works even when the installer arrived through `curl | bash`, and falls back to
+  stdin, which makes it scriptable.
+
+  The config lives in Claude Code's `settings.json` under a top-level `ccsl` key — verified empirically
+  that Claude Code accepts an unknown top-level key. It costs no extra process on the render path:
+  `jq --slurpfile` reads the payload and the settings file in the same invocation.
+- A normal install now keeps a copy of the installer at `~/.claude/ccsl-install.sh`.
+
+### Changed
+
+- **The separator is uniform.** `model` became a segment of its own so it can be moved or removed, and
+  it used to be glued to `ctx` with two spaces rather than the `│`. Reordering only makes sense with one
+  rule, so everything is `│`-separated now:
+
+  ```
+  before:  ⎇ main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 33%
+  after:   ⎇ main  │  Opus 5 (1M context)  │  ctx [███░░░░░░░] 33%
+  ```
+
+  This changes the bar for everyone, with no opt-out short of configuring an order.
+
+### Fixed
+
+- The README told people to run `~/.claude/install.sh` for the update-check flags, but the installer
+  never put itself there. It does now, as `ccsl-install.sh`, and both READMEs point at the real path.
 
 ## [1.3.0] — 2026-09-12
 
