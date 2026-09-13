@@ -31,9 +31,27 @@ que reproduz, e se o `.ps1` manteve o BOM.
 coisa que a pessoa vê, e três palavras em português no meio dela liam como bug. A história está em
 [[../pendentes/arquivo/2026-09-12-rotulos-da-barra-em-portugues]].
 
-## As mensagens de commit também são em inglês
+## A regra é por categoria: inglês em toda superfície pública
 
 Decidido em 2026-09-12, depois da v1.2.0. Antes a regra era PT-BR.
+
+| Superfície | Idioma |
+|---|---|
+| README padrão (`README.md`) | inglês — o `README.pt-BR.md` existe ao lado |
+| Rótulos da barra | inglês |
+| Saída do `install.sh` | inglês |
+| Mensagem de commit | inglês, Conventional Commits |
+| **Título e corpo de release** | **inglês** |
+| PR e issue | inglês |
+| Templates de issue e PR | inglês |
+| Este vault | português |
+| Mensagens do `scripts/testar.sh` | português |
+
+**A regra foi formulada estreita demais na primeira vez**, e custou: ela dizia "mensagens de commit", e
+as sete releases saíram em português — quatro delas depois da regra existir. Release é mais visível que
+commit: é o que aparece na home do repositório e no feed de quem dá watch. Ver a [issue #39](https://github.com/regisdias/claude-code-statusline/issues/39).
+
+A pergunta para superfície nova é **"quem lê isso é de fora?"**, não "a regra citou esta superfície?".
 
 **Por quê:** num repositório público o `git log` é documentação. É para onde alguém vai quando quer
 saber por que uma linha é como é — e este projeto tem várias dessas: o `seq` do BSD, o BOM do

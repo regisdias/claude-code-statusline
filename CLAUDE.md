@@ -130,9 +130,15 @@ feat/12-short-description  →  develop  →  stg  →  main
   igual ao do Conventional Commits que o trabalho vai usar. Abre a issue primeiro — o número é o que
   amarra os dois.
 - **Versionamento semântico:** `fix/…` sobe o patch, `feat/…` sobe o minor. Tag só sai da `main`.
-- **Mensagens de commit em inglês**, no padrão Conventional Commits. O repositório é público e o
-  `git log` é a única superfície de leitura que ainda estava em português — o porquê está em
-  `claude-code-statusline-vault/decisoes/readme-em-ingles-e-arquivos-de-comunidade.md`. O histórico
-  anterior fica como está; a regra vale daqui para a frente.
+- **Inglês em tudo que uma pessoa de fora lê.** Não é só mensagem de commit: vale para título e corpo
+  de release, PR, issue, README padrão, rótulos da barra, saída do instalador e templates. Commit segue
+  o padrão Conventional Commits. O porquê está em
+  `claude-code-statusline-vault/decisoes/readme-em-ingles-e-arquivos-de-comunidade.md`.
+
+  Fica em **português**: este vault e as mensagens que o `scripts/testar.sh` imprime — documentação de
+  quem mantém, não superfície de visitante.
+
+  Na dúvida sobre uma superfície nova, a pergunta é "quem lê isso é de fora?", não "a regra citou esta
+  superfície?". Histórico anterior à v1.1.0 fica como está.
 - Commit e push de código só a pedido de quem mantém o repositório; mudança no vault segue a regra acima.
 - O `CHANGELOG.md` é atualizado em **Unreleased** no mesmo PR da mudança.
