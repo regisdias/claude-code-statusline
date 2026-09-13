@@ -27,6 +27,7 @@ decisions lives, and what is still open.
 | Why the update notice is opt-in and lives outside the bar | [[decisions/opt-in-update-notice]] |
 | How the segment order is configured | [[decisions/configurable-segment-order]] |
 | Why the bar wraps itself | [[decisions/wrap-to-terminal-width]] |
+| Why the bar warns about pace, and when it stays quiet | [[decisions/pace-projection]] |
 | Why the branch says `git` rather than a glyph | [[decisions/branch-label-as-text]] |
 | Testing without opening Claude Code | [[guides/testing-locally]] |
 | Regenerating the README images | [[guides/regenerating-readme-images]] |

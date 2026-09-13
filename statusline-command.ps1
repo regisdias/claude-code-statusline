@@ -33,7 +33,7 @@
 
 # Bumped in the same commit that stamps the version in CHANGELOG.md; CI checks
 # that this, the .sh and the CHANGELOG agree.
-$CCSL_VERSION = '1.6.0'
+$CCSL_VERSION = '1.7.0'
 
 $ErrorActionPreference = 'SilentlyContinue'
 # The bars are block characters: without UTF-8 the terminal prints garbage
@@ -122,6 +122,33 @@ function Get-Branch($dir) {
         $current = $parent
     }
     return ''
+}
+
+# When the current pace would take a window to 100% before it resets.
+#
+# Returns nothing unless that is true: a bar that warns constantly is a bar
+# nobody reads. The window length is not in the payload — it is in the field
+# name, so five_hour is 18000 seconds and seven_day is 604800.
+#
+# Must stay identical to projection() in the .sh, silence cases included.
+function Get-Projection($used, $resets, $window) {
+    if ($null -eq $used -or $null -eq $resets) { return '' }
+    try {
+        $u = [double]$used
+        $r = [double]$resets
+    } catch {
+        return ''
+    }
+    $now = [double][System.DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+
+    $elapsed = $window - ($r - $now)
+    if ($elapsed -le 0 -or $u -le 0) { return '' }
+    if ($u -ge 100) { return '' }                      # already out; the 100% bar says so
+    if (($elapsed / $window) -lt 0.10) { return '' }   # too early to project
+    $rate = $u / $elapsed
+    $full = $now + (100 - $u) / $rate
+    if ($full -ge $r) { return '' }                    # the pace gets there in time
+    return (Get-Reset ([long][Math]::Floor($full)))
 }
 
 # Epoch → "06:20" when it is today, "18/09 05:00" otherwise
@@ -225,6 +252,8 @@ if ($limits -and $null -ne $limits.five_hour.used_percentage) {
     $pct = $limits.five_hour.used_percentage
     $resetsWhen = Get-Reset $limits.five_hour.resets_at
     $text = '5h {0}[{1}]{2} {3}%' -f (Get-Color $pct), (Get-Bar $pct), $RESET, (Get-Rounded $pct)
+    $exhausts = Get-Projection $limits.five_hour.used_percentage $limits.five_hour.resets_at 18000
+    if ($exhausts) { $text += " · ${RED}full $exhausts${RESET}" }
     if ($resetsWhen) { $text += " · resets $resetsWhen" }
     $blockPart = $text
 }
@@ -233,6 +262,8 @@ if ($limits -and $null -ne $limits.seven_day.used_percentage) {
     $pct = $limits.seven_day.used_percentage
     $resetsWhen = Get-Reset $limits.seven_day.resets_at
     $text = 'week {0}[{1}]{2} {3}%' -f (Get-Color $pct), (Get-Bar $pct), $RESET, (Get-Rounded $pct)
+    $exhausts = Get-Projection $limits.seven_day.used_percentage $limits.seven_day.resets_at 604800
+    if ($exhausts) { $text += " · ${RED}full $exhausts${RESET}" }
     if ($resetsWhen) { $text += " · $resetsWhen" }
     $weekPart = $text
 }
