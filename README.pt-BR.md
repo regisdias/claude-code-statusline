@@ -64,16 +64,17 @@ A barra aparece no próximo desenho, sem reiniciar nada.
 ## O que aparece
 
 ```
-main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
+⎇ main  │  Opus 5 (1M context)  ctx [███░░░░░░░] 330k/1000k 33%  │  5h [████░░░░░░] 41% · resets 06:20  │  week [█░░░░░░░░░] 11% · 18/09 05:00  │  session $12.35
 ```
 
 | Trecho | O que é |
 |---|---|
-| `main` | Branch do git no momento, lida direto do `.git/HEAD`. Some fora de um repositório. |
+| `⎇ main` | Branch do git no momento, lida direto do `.git/HEAD`. Some fora de um repositório. |
 | `ctx` | Janela de contexto da conversa atual. É local: não tem relação com a cota do plano. |
 | `5h` | Bloco de 5 horas do plano, e a hora em que zera. |
 | `week` | Limite semanal do plano, e quando zera. |
 | `session` | Custo desta conversa, em dólar. |
+| `↑1.3.0` | Existe versão mais nova. Só aparece se você [ligou a checagem](#aviso-de-atualização-opcional). |
 
 As barras ficam **verdes** até 60%, **amarelas** até 85% e **vermelhas** acima disso.
 
@@ -111,6 +112,43 @@ vez de despejar um stack trace no seu terminal.
 <div align="center">
 <img src="assets/demo-fallback.svg" alt="Statusline degradando com elegância: plano sem limites de cota mostra só a barra de contexto, e payload vazio mostra 'waiting...'." width="100%">
 </div>
+
+## Aviso de atualização (opcional)
+
+Desligado por padrão, e de propósito: a statusline não faz chamada de rede nem escreve em disco, e isso
+é uma propriedade que vale manter. Ligando, você é avisado quando sai versão nova — como o `oh-my-zsh`
+faz, sem a parte interativa, que statusline não tem como ter.
+
+```bash
+bash ~/.claude/install.sh --enable-update-check     # ou rode o one-liner com a flag
+```
+
+No começo da sessão:
+
+```
+claude-code-statusline 1.3.0 is available (you have 1.2.0)
+  curl -fsSL https://raw.githubusercontent.com/regisdias/claude-code-statusline/main/install.sh | bash
+```
+
+e um trecho na barra até você atualizar:
+
+```
+⎇ main  │  Opus 5  ctx [███░░░░░░░] 33%  │  …  │  session $12.35  │  ↑1.3.0
+```
+
+A divisão existe para a barra manter a promessa:
+
+| | Statusline | Hook de update |
+|---|---|---|
+| Rede | nunca | uma requisição, no máximo 1x por dia |
+| Escrita | nunca | um arquivo de cache |
+| Roda | a cada desenho | uma vez por sessão |
+
+Para parar de vez — marcador, cache e hook, tudo removido:
+
+```bash
+bash ~/.claude/install.sh --disable-update-check
+```
 
 ## Requisitos
 
@@ -172,6 +210,7 @@ bash scripts/testar.sh
 | Só a barra `ctx` aparece | Claude Code anterior ao 2.1.251, ou plano sem limite de cota (cobrança por API key). |
 | `waiting...` | O payload veio vazio, ou falta o `jq` (versão shell). |
 | Os blocos viram `?` no Windows | O terminal não está em UTF-8. O Windows Terminal resolve; o console antigo pode não. |
+| O `⎇` antes da branch vira `?` | Sua fonte não tem o glifo U+2387. É só exibição — o nome da branch continua certo. |
 | Erro de parser no PowerShell | O `.ps1` perdeu o BOM UTF-8. Baixe de novo. |
 | Sem cores | O terminal está removendo os códigos ANSI. |
 | Hora do reset errada | Fuso do seu computador: o script formata o epoch com o relógio local. |

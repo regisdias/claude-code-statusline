@@ -8,6 +8,30 @@ All notable changes to this project are documented here. The format follows
 
 Nothing yet.
 
+## [1.3.0] — 2026-09-12
+
+### Added
+
+- **An optional update notice** ([#13](https://github.com/regisdias/claude-code-statusline/issues/13)),
+  off unless you run `install.sh --enable-update-check`. A `SessionStart` hook asks GitHub for the
+  latest release at most once a day and says so at the top of the session; the bar carries a `↑1.3.0`
+  segment until you update.
+
+  A status line cannot be interactive, so there is no "press Y" — what it gives you is the line to copy.
+
+  The check is split from the bar deliberately: the hook makes the request and writes the cache, the bar
+  only reads it. So `SECURITY.md`'s claim that the status line opens no network connection and writes
+  nothing stays literally true whether the check is on or off.
+- `CCSL_VERSION` in both implementations, with a CI job that fails when the two drift from each other or
+  from the newest version in this file.
+
+### Changed
+
+- **The branch segment is marked with `⎇`** ([#11](https://github.com/regisdias/claude-code-statusline/issues/11)).
+  Bare, `main` could be read as a model, a profile or a session name. U+2387 is one column wide, so it
+  does not disturb the alignment an emoji would. Fonts without the glyph render it as `?` — display
+  only, and now in the troubleshooting table.
+
 ## [1.2.0] — 2026-09-12
 
 ### Added
@@ -79,7 +103,8 @@ like a fix was a fix to what people could already `curl`.
 - `statusline-command.ps1` no longer trips `PSAvoidUsingEmptyCatchBlock`. The `catch` around the
   console encoding is still deliberate: a terminal that refuses UTF-8 is no reason to stop drawing.
 
-[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/regisdias/claude-code-statusline/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/regisdias/claude-code-statusline/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/regisdias/claude-code-statusline/releases/tag/v1.0.0

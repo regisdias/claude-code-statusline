@@ -19,12 +19,16 @@
 #   5. The bar shows up on the next render. No restart needed.
 #
 # HOW TO READ IT
-#   <branch> → current git branch, when the session is inside a repository
+#   ⎇ <branch> → current git branch, when the session is inside a repository
 #   ctx      → how much of this conversation's context window is used (not a plan quota)
 #   5h       → 5-hour block of your plan, with the time it resets
 #   week     → weekly plan limit
 #   session  → cost of this conversation, in USD
 #   Colors: green up to 60%, yellow up to 85%, red above that.
+
+# Bumped in the same commit that stamps the version in CHANGELOG.md; CI checks
+# that this, the .ps1 and the CHANGELOG agree.
+CCSL_VERSION="1.3.0"
 
 input=$(cat)
 
@@ -188,6 +192,47 @@ if [ "$custo" != "-" ] && [ -n "$custo" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Update notice — opt-in, and read-only
+# ---------------------------------------------------------------------------
+# The bar never opens a network connection and never writes to disk. The
+# SessionStart hook does both, only when the user turned the check on, and drops
+# the result in a cache file. This reads that file and nothing else.
+#
+# Anything unexpected — no marker, no cache, a corrupt line, a version that is
+# not x.y.z — means no segment and no other change to the bar.
+NOVA_VERSAO=""
+aviso_update() {
+    local base marcador cache ultima
+    base=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
+    marcador="$base/.ccsl-update-check"
+    [ -f "$marcador" ] || return
+    cache="$base/.ccsl-update-cache"
+    [ -r "$cache" ] || return
+
+    # Cache format: "<epoch> <version>". The epoch is the hook's business — it
+    # decides when to refresh; the bar only needs the version.
+    read -r _ ultima < "$cache" 2>/dev/null
+    [ -n "${ultima:-}" ] || return
+    [[ $ultima =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || return
+
+    versao_num "$ultima";       local nova=$VERSAO_NUM
+    versao_num "$CCSL_VERSION"; local atual=$VERSAO_NUM
+    [ "$nova" -gt "$atual" ] 2>/dev/null && NOVA_VERSAO=$ultima
+    return 0
+}
+
+# "1.12.3" → 1012003, so a plain integer compare orders versions correctly.
+# Minor and patch are assumed below 1000, which they are.
+VERSAO_NUM=0
+versao_num() {
+    local v=$1 a b c
+    a=${v%%.*}; v=${v#*.}
+    b=${v%%.*}; v=${v#*.}
+    c=${v%%.*}
+    VERSAO_NUM=$(( 10#$a * 1000000 + 10#$b * 1000 + 10#$c ))
+}
+
+# ---------------------------------------------------------------------------
 # Join whatever exists, separated by │
 # ---------------------------------------------------------------------------
 achar_branch "$dir_atual"
@@ -196,5 +241,9 @@ saida="$ctx_part"
 for parte in "$bloco_part" "$semana_part" "$custo_part"; do
     [ -n "$parte" ] && saida="$saida  │  $parte"
 done
-[ -n "$BRANCH" ] && saida="$BRANCH  │  $saida"
+# U+2387 marks the segment as a branch; it is one column wide, unlike an emoji
+[ -n "$BRANCH" ] && saida="⎇ $BRANCH  │  $saida"
+
+aviso_update
+[ -n "$NOVA_VERSAO" ] && saida="$saida  │  ↑$NOVA_VERSAO"
 printf "%b" "$saida"
