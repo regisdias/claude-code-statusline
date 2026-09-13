@@ -3,54 +3,54 @@ tipo: decisao
 data: 2026-09-12
 ---
 
-# A branch sai do `.git/HEAD`, não do `git`
+# The branch comes from `.git/HEAD`, not from `git`
 
-## Decisão
+## Decision
 
-Para mostrar a branch na barra, as duas implementações **leem o arquivo `.git/HEAD`** e sobem os
-diretórios até achá-lo. Nenhuma chama o `git`.
+To show the branch in the bar, both implementations **read the `.git/HEAD` file** and walk up the
+directories until they find it. Neither calls `git`.
 
-## Por quê
+## Why
 
-O Claude Code **não manda a branch no payload**. Confirmado na documentação: existe
-`workspace.repo.host/owner/name` (identidade do repositório, vinda do remote `origin`) e
-`worktree.branch`, que só aparece dentro de uma sessão de worktree. Para o caso comum — checkout normal
-de um repositório — não há campo.
+Claude Code **does not send the branch in the payload**. Confirmed in the documentation: there is
+`workspace.repo.host/owner/name` (the repository identity, from the `origin` remote) and
+`worktree.branch`, which only appears inside a worktree session. For the ordinary case — a normal
+checkout of a repository — there is no field.
 
-Todos os exemplos da documentação oficial resolvem com `git branch --show-current`. Isso é um `exec` do
-git a cada desenho da barra, e a barra é redesenhada o tempo todo. Medido aqui, 20 execuções:
+Every example in the official documentation solves it with `git branch --show-current`. That is an
+`exec` of git on every render, and the bar is redrawn constantly. Measured here, 20 runs:
 
-| Forma | Tempo | Processos |
+| Approach | Time | Processes |
 |---|---|---|
-| `git branch --show-current` | 27 ms (~1,35 ms cada) | 1 por desenho |
-| `read -r linha < .git/HEAD` | 2 ms (~0,1 ms cada) | nenhum |
+| `git branch --show-current` | 27 ms (~1.35 ms each) | 1 per render |
+| `read -r line < .git/HEAD` | 2 ms (~0.1 ms each) | none |
 
-13x no Linux, e a diferença cresce muito no Windows, onde criar processo é caro. O alvo do projeto é
-~50 ms por desenho — ver [[duas-implementacoes-shell-e-powershell]].
+13x on Linux, and the gap widens considerably on Windows, where spawning a process is expensive. The
+project's target is ~50 ms per render — see [[duas-implementacoes-shell-e-powershell]].
 
-O `.git/HEAD` é texto puro:
+`.git/HEAD` is plain text:
 
 ```
 ref: refs/heads/main
 ```
 
-## O que as duas implementações têm de tratar igual
+## What both implementations must handle identically
 
-| Caso | Comportamento |
+| Case | Behaviour |
 |---|---|
-| `refs/heads/docs/assunto` | branch com barra fica inteira |
-| HEAD solto (sha cru) | sha curto, 7 caracteres |
-| `.git` como **arquivo** (worktree, submódulo) | segue o `gitdir: <caminho>`, relativo ou absoluto |
-| `HEAD` escrito no Windows | tira o `\r` do fim |
-| Subdiretório fundo | sobe os pais até achar o `.git` |
-| Fora de repositório | o trecho some, o resto da barra continua |
+| `refs/heads/docs/subject` | a branch name with a slash stays whole |
+| Detached HEAD (raw sha) | short sha, 7 characters |
+| `.git` as a **file** (worktree, submodule) | follows `gitdir: <path>`, relative or absolute |
+| `HEAD` written on Windows | strips the trailing `\r` |
+| Deep subdirectory | walks up the parents until it finds `.git` |
+| Outside a repository | the segment disappears, the rest of the bar stays |
 
-No shell, `achar_branch` define a global `BRANCH` em vez de imprimir: `$(...)` forkaria, que é
-exatamente o que a função existe para evitar.
+In the shell, `achar_branch` sets the global `BRANCH` instead of printing: `$(...)` would fork, which is
+exactly what the function exists to avoid.
 
-## Fixtures de teste não podem ser versionadas
+## Test fixtures cannot be versioned
 
-O git **se recusa a rastrear caminho que contenha `.git`**, então não dá para commitar um
-`scripts/payloads/fixture/.git/HEAD`. O `scripts/testar.sh` cria as fixtures num diretório temporário
-na hora, e o `scripts/gerar-svg.py` faz o mesmo para a imagem do README ficar determinística — senão
-ela mostraria a branch de quem gerou.
+Git **refuses to track a path containing `.git`**, so there is no committing a
+`scripts/payloads/fixture/.git/HEAD`. `scripts/testar.sh` builds the fixtures in a temporary directory
+at run time, and `scripts/gerar-svg.py` does the same so the README image stays deterministic —
+otherwise it would show whichever branch the person generating it happened to be on.

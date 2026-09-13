@@ -15,11 +15,11 @@ instalador="$raiz/install.sh"
 ramo=${CCSL_BRANCH:-main}
 falhas=0
 
-command -v jq >/dev/null 2>&1 || { echo "jq não encontrado" >&2; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo "jq not found" >&2; exit 1; }
 
 if ! curl -fsS --max-time 10 -o /dev/null \
     "https://raw.githubusercontent.com/regisdias/claude-code-statusline/$ramo/statusline-command.sh" 2>/dev/null; then
-    echo "aviso  sem acesso ao raw.githubusercontent ($ramo) — suíte do instalador pulada"
+    echo "aviso  no access to raw.githubusercontent ($ramo) — installer suite skipped"
     exit 0
 fi
 
@@ -60,7 +60,7 @@ caso() {
     fi
 
     if [ "$obtido" != "$esperado" ]; then
-        echo "FALHA  $nome — esperava '$esperado', veio '$obtido'" >&2
+        echo "FALHA  $nome — expected '$esperado', got '$obtido'" >&2
         printf '%s\n' "$saida" | sed 's/^/       /' >&2
         falhas=$((falhas + 1))
         return
@@ -69,7 +69,7 @@ caso() {
     # Recognising our own script must not cut the run short: the version check
     # and the preview live after it, and the early exit was the real damage.
     if [ "$esperado" = "reconhece" ] && ! printf '%s' "$saida" | grep -q 'Preview:'; then
-        echo "FALHA  $nome — saiu antes da prévia" >&2
+        echo "FALHA  $nome — exited before the preview" >&2
         falhas=$((falhas + 1))
         return
     fi
@@ -78,7 +78,7 @@ caso() {
     # was handed invalid JSON and deliberately refused to touch it.
     if [ "$obtido" != "json-invalido" ] \
         && [ -f "$dir/settings.json" ] && ! jq empty "$dir/settings.json" 2>/dev/null; then
-        echo "FALHA  $nome — settings.json ficou inválido" >&2
+        echo "FALHA  $nome — settings.json was left invalid" >&2
         falhas=$((falhas + 1))
         return
     fi
@@ -105,14 +105,14 @@ printf '{"env":{"FOO":"bar"}}\n' > "$dir_up/settings.json"
 instalar_up() { env -u CLAUDE_CONFIG_DIR HOME="$lar_up" CCSL_BRANCH="$ramo" bash "$instalador" "$@" >/dev/null 2>&1; }
 instalar_up
 instalar_up --enable-update-check
-instalar_up --enable-update-check   # duas vezes: não pode duplicar o hook
+instalar_up --enable-update-check   # twice: must not duplicate the hook
 
 n=$(jq '(.hooks.SessionStart // []) | length' "$dir_up/settings.json" 2>/dev/null)
 if [ "$n" = "1" ] && [ -f "$dir_up/.ccsl-update-check" ] \
     && [ "$(jq -r '.env.FOO' "$dir_up/settings.json")" = "bar" ]; then
-    echo "ok     update/ligar — hook único, marcador criado, env preservado"
+    echo "ok     update/ligar — one hook, marker created, env preserved"
 else
-    echo "FALHA  update/ligar — hooks=$n, marcador=$([ -f "$dir_up/.ccsl-update-check" ] && echo sim || echo nao)" >&2
+    echo "FALHA  update/ligar — hooks=$n, marker=$([ -f "$dir_up/.ccsl-update-check" ] && echo sim || echo nao)" >&2
     falhas=$((falhas + 1))
 fi
 
@@ -120,15 +120,15 @@ instalar_up --disable-update-check
 if [ ! -f "$dir_up/.ccsl-update-check" ] \
     && [ "$(jq -r '.hooks // "ausente"' "$dir_up/settings.json")" = "ausente" ] \
     && [ "$(jq -r '.env.FOO' "$dir_up/settings.json")" = "bar" ]; then
-    echo "ok     update/desligar — marcador, cache e hook removidos, env intacto"
+    echo "ok     update/desligar — marker, cache and hook removed, env intact"
 else
-    echo "FALHA  update/desligar — sobrou estado" >&2
+    echo "FALHA  update/desligar — state left behind" >&2
     jq . "$dir_up/settings.json" | sed 's/^/       /' >&2
     falhas=$((falhas + 1))
 fi
 
 if [ "$falhas" -gt 0 ]; then
-    echo "$falhas falha(s)" >&2
+    echo "$falhas failure(s)" >&2
     exit 1
 fi
-echo "tudo certo"
+echo "all good"

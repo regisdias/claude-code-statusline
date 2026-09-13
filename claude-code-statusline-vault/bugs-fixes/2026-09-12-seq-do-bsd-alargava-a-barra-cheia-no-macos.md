@@ -3,42 +3,43 @@ tipo: bug-fix
 data: 2026-09-12
 ---
 
-# `seq` do BSD alargava a barra cheia no macOS
+# BSD `seq` widened a full bar on macOS
 
-## Sintoma
+## Symptom
 
-No macOS, sempre que uma barra enchia (100% dos blocos), ela saía com **12 caracteres** em vez de 10:
+On macOS, whenever a bar filled up (100% of the blocks), it came out with **12 characters** instead of
+10:
 
 ```
-5h [██████████░░] 96%     ← macOS, errado
-5h [██████████]   96%     ← Linux e PowerShell, certo
+5h [██████████░░] 96%     ← macOS, wrong
+5h [██████████]   96%     ← Linux and PowerShell, right
 ```
 
-Só acontecia com a barra cheia. Abaixo disso, as duas plataformas concordavam — por isso passou
-despercebido: o payload de exemplo tem tudo abaixo de 50%.
+It only happened with a full bar. Below that the two platforms agreed — which is why it went unnoticed:
+the example payload has everything below 50%.
 
-## Causa
+## Cause
 
-O `make_bar` desenhava com dois laços:
+`make_bar` drew with two loops:
 
 ```bash
 for i in $(seq 1 "$filled"); do bar="${bar}█"; done
 for i in $(seq 1 "$empty");  do bar="${bar}░"; done
 ```
 
-Com a barra cheia, `empty` é `0`, e aí as duas famílias de `seq` divergem:
+With a full bar, `empty` is `0`, and that is where the two families of `seq` diverge:
 
 | | `seq 1 0` |
 |---|---|
-| GNU (Linux, WSL, Git Bash) | não imprime nada |
-| BSD (macOS) | imprime `1` e `0` |
+| GNU (Linux, WSL, Git Bash) | prints nothing |
+| BSD (macOS) | prints `1` and `0` |
 
-O BSD **infere a direção** pelos operandos: como o último é menor que o primeiro, ele assume passo −1 e
-conta de 1 até 0 — duas linhas, dois `░` a mais.
+BSD **infers the direction** from the operands: since the last is smaller than the first, it assumes a
+step of −1 and counts from 1 down to 0 — two lines, two extra `░`.
 
-## Correção
+## Fix
 
-Sem `seq`. O `printf` preenche com espaços e a substituição de parâmetro troca cada espaço pelo bloco:
+No `seq`. `printf` pads with spaces and parameter substitution turns each space into a block:
 
 ```bash
 cheio=$(printf "%${filled}s" "")
@@ -46,19 +47,19 @@ vazio=$(printf "%${empty}s" "")
 printf "%s%s" "${cheio// /█}" "${vazio// /░}"
 ```
 
-`%0s` imprime string vazia nas duas famílias — não existe caso de borda. De brinde, some um subprocesso
-por barra: são três barras por desenho, então seis `seq` a menos. O tempo caiu para ~43 ms.
+`%0s` prints an empty string in both families — there is no edge case. As a bonus, one subprocess per
+bar disappears: three bars per render, so six fewer `seq`. The time dropped to ~43 ms.
 
-## Como foi encontrado
+## How it was found
 
-Pelo job `paridade` do CI rodando em `macos-latest`, no primeiro push depois de ele existir
-([[../decisoes/ci-em-push-e-pr]]). O `vermelho.json` é o payload que leva o bloco de 5h a 96% — com
-`width` 10, o arredondamento dá `filled` 10 e `empty` 0, exatamente o caso de borda.
+By the CI `paridade` job running on `macos-latest`, on the first push after that job existed
+([[../decisoes/ci-em-push-e-pr]]). `vermelho.json` is the payload that takes the 5-hour block to 96% —
+with `width` 10, the rounding gives `filled` 10 and `empty` 0, exactly the edge case.
 
-É a resposta prática para [[../pendentes/arquivo/2026-09-12-confirmar-no-macos]]: o caminho BSD tinha mesmo um
-problema, e não era o `date -r` que se suspeitava.
+It is the practical answer to [[../pendentes/arquivo/2026-09-12-confirmar-no-macos]]: the BSD path did
+have a problem, and it was not the `date -r` everyone suspected.
 
-## Lição
+## Lesson
 
-Payload de teste tem de incluir os extremos, não só o caso bonito. Três dos seis payloads de
-`scripts/payloads/` existem só para isso, e foi um deles que pegou.
+A test payload has to include the extremes, not just the pretty case. Three of the six payloads in
+`scripts/payloads/` exist only for that, and one of them is what caught this.

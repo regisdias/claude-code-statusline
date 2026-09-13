@@ -5,44 +5,44 @@ data: 2026-09-12
 codigo: CCS-3
 ---
 
-# Rótulos da barra em português, num projeto de README em inglês
+# The bar's labels were in Portuguese, in an English-README project
 
-**Resolvida em 2026-09-12: os rótulos foram traduzidos.** `semana` → `week`, `· reseta` → `· resets`,
-`sessão $` → `session $` e `aguardando...` → `waiting...`, nas duas implementações no mesmo commit.
+**Resolved on 2026-09-12: the labels were translated.** `semana` → `week`, `· reseta` → `· resets`,
+`sessão $` → `session $` and `aguardando...` → `waiting...`, in both implementations in the same commit.
 
-A statusline desenhava `semana`, `sessão` e `reseta` em português, enquanto o README, o `install.sh` e
-os templates de issue estão em inglês — a decisão registrada em
-[[../decisoes/readme-em-ingles-e-arquivos-de-comunidade]]. Para quem chega de fora, três palavras numa
-língua que não lê no meio de uma barra em inglês pareciam bug, não escolha.
+The status line drew `semana`, `sessão` and `reseta` in Portuguese while the README, `install.sh` and
+the issue templates were in English — the decision recorded in
+[[../../decisoes/readme-em-ingles-e-arquivos-de-comunidade]]. To someone arriving from outside, three
+words in a language they do not read, in the middle of an English bar, looked like a bug rather than a
+choice.
 
-## O que pesou na escolha
+## What decided it
 
-| Opção | Custo |
+| Option | Cost |
 |---|---|
-| **Traduzir** ← escolhida | Muda a barra de quem já instalou; entra nas duas implementações no mesmo commit |
-| Deixar como está | Continua estranho para quem não fala português |
-| Tornar configurável por variável de ambiente | Dobra os casos de teste de paridade; conflita com "sem dependência, sem custo por desenho" |
+| **Translate** ← chosen | Changes the bar for anyone who already installed; lands in both implementations in the same commit |
+| Leave it | Stays strange for anyone who does not speak Portuguese |
+| Make it configurable by environment variable | Doubles the parity test matrix; conflicts with "no dependency, no cost per render" |
 
-Decidiu-se traduzir justamente por ser cedo: o repositório tinha acabado de ganhar a primeira tag, e
-mudança que aparece na barra de todo mundo custa mais quanto mais gente instalou.
+Translating won precisely because it was early: the repository had just gained its first tag, and a
+change that shows up in everyone's bar costs more the more people have installed.
 
-A opção configurável foi descartada porque dobraria a matriz de paridade — cada payload teria de ser
-comparado nos dois idiomas, nas duas implementações — para resolver um problema que a tradução resolve
-de vez.
+The configurable option was dropped because it would have doubled the parity matrix — every payload
+compared in two languages, in two implementations — to solve a problem translation solves outright.
 
-## O que mudou junto
+## What changed with it
 
-- `statusline-command.sh` e `.ps1`: só as strings de saída. Os nomes internos (`semana_part`,
-  `custo_part`, `$partes`) continuam em português, como o resto do código.
-- `assets/demo.svg`, `assets/demo-fallback.svg` e `assets/social-preview.png` regerados.
-- A linha de exemplo e as tabelas dos dois READMEs, o `CONTRIBUTING` e os templates de issue.
+- `statusline-command.sh` and `.ps1`: the output strings only. Internal names (`semana_part`,
+  `custo_part`, `$partes`) stayed in Portuguese, like the rest of the code.
+- `assets/demo.svg`, `assets/demo-fallback.svg` and `assets/social-preview.png` regenerated.
+- The example line and the tables in both READMEs, `CONTRIBUTING` and the issue templates.
 
-## O que **não** mudou, e continua em aberto
+## What did **not** change, and is still open
 
-O formato da data do reset semanal: `18/09 05:00` é `dd/mm`. Num projeto de porta de entrada em inglês,
-isso é ambíguo para quem lê `mm/dd` — `18/09` é 18 de setembro aqui e uma data inválida lá, mas
-`05/09` passaria como 5 de setembro sem ninguém perceber. Algo como `18 Sep 05:00` não tem ambiguidade
-em lugar nenhum, e custa dois caracteres a mais na barra.
+The weekly reset's date format: `18/09 05:00` is `dd/mm`. In a project whose front door is English, that
+is ambiguous to anyone reading `mm/dd` — `18/09` is 18 September here and an invalid date there, but
+`05/09` would pass as 5 September without anyone noticing. Something like `18 Sep 05:00` is unambiguous
+everywhere, and costs two more characters in the bar.
 
-Ficou de fora porque não é rótulo, é formato — e mexer nisso pede o mesmo cuidado de paridade
-(`%d/%m %H:%M` no shell, `'dd/MM HH:mm'` no PowerShell) que a tradução acabou de exigir.
+It was left out because it is not a label, it is a format — and touching it demands the same parity care
+(`%d/%m %H:%M` in the shell, `'dd/MM HH:mm'` in PowerShell) that the translation had just required.

@@ -3,35 +3,35 @@ tipo: decisao
 data: 2026-09-12
 ---
 
-# Duas implementações, com a mesma saída
+# Two implementations, with identical output
 
-**Decisão:** manter `statusline-command.sh` e `statusline-command.ps1` como implementações paralelas, em
-vez de exigir um ambiente único.
+**Decision:** keep `statusline-command.sh` and `statusline-command.ps1` as parallel implementations
+rather than requiring a single environment.
 
-## Por quê
+## Why
 
-O Claude Code roda o comando da statusline pelo shell do sistema. No Windows nativo isso é o PowerShell,
-onde não existem `bash`, `jq` nem `awk`. As saídas possíveis eram:
+Claude Code runs the status line command through the system shell. On native Windows that is PowerShell,
+where `bash`, `jq` and `awk` do not exist. The options were:
 
-| Caminho | Problema |
+| Path | Problem |
 |---|---|
-| Só shell, exigindo Git Bash | Afasta justamente quem usa Claude Code no Windows sem WSL |
-| Só shell, exigindo WSL | Mesma coisa, com peso maior |
-| Reescrever em Node | Traz dependência de runtime e sobe um processo a cada desenho da barra |
-| **Duas implementações** | Duplica ~100 linhas, e cada uma usa só o que o sistema já tem |
+| Shell only, requiring Git Bash | Pushes away exactly the people running Claude Code on Windows without WSL |
+| Shell only, requiring WSL | The same, with more weight |
+| Rewrite in Node | Adds a runtime dependency and spawns a process on every render |
+| **Two implementations** | Duplicates ~100 lines, and each uses only what the system already has |
 
-A duplicação é pequena e o ganho é direto: quem está no Windows copia um arquivo e pronto; quem está em
-Linux, WSL ou macOS copia o outro.
+The duplication is small and the gain is direct: someone on Windows copies one file and is done; someone
+on Linux, WSL or macOS copies the other.
 
-## Contrato entre as duas
+## The contract between them
 
-A saída tem de ser **idêntica byte a byte** para o mesmo payload. É o teste que vale antes de publicar
-qualquer mudança — ver [[../guias/testar-local]].
+The output has to be **byte-for-byte identical** for the same payload. That is the test that matters
+before publishing any change — see [[../guias/testar-local]].
 
-Consequências práticas: nenhuma das duas pode ganhar um campo que a outra não tenha, e mudança de
-formato entra nas duas no mesmo commit.
+Practical consequences: neither may gain a field the other lacks, and a format change lands in both in
+the same commit.
 
-## Dependências aceitas
+## Accepted dependencies
 
-- Shell: `jq`, `awk`, `bash` — presentes ou triviais de instalar nos três sistemas
-- PowerShell: nada além do Windows PowerShell 5.1, que já vem no Windows
+- Shell: `jq`, `awk`, `bash` — present or trivial to install on all three systems
+- PowerShell: nothing beyond the Windows PowerShell 5.1 that ships with Windows

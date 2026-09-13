@@ -1,76 +1,86 @@
 ---
 tipo: decisao
 data: 2026-09-12
+atualizado: 2026-09-13
 ---
 
-# README em inglês na porta de entrada, e o pacote de comunidade
+# English at the front door, and the community file set
 
-## Decisão
+## Decision
 
-O `README.md` é **em inglês**; o português vive no `README.pt-BR.md`, com seletor de idioma no topo dos
-dois. Antes era um arquivo só, com as duas línguas em sequência.
+`README.md` is **in English**; Portuguese lives in `README.pt-BR.md`, with a language switcher at the
+top of both. It used to be one file with the two languages in sequence.
 
-Junto entraram os arquivos que o GitHub reconhece e exibe sozinho: `CONTRIBUTING.md`, `SECURITY.md`,
-`CODE_OF_CONDUCT.md`, `CHANGELOG.md`, `.github/ISSUE_TEMPLATE/` e `.github/PULL_REQUEST_TEMPLATE.md`.
+Alongside it came the files GitHub recognises and surfaces on its own: `CONTRIBUTING.md`,
+`SECURITY.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`, `.github/ISSUE_TEMPLATE/` and
+`.github/PULL_REQUEST_TEMPLATE.md`.
 
-## Por quê
+## Why
 
-O público do projeto é quem usa Claude Code, e esse público é majoritariamente internacional — quem
-chega pela busca do GitHub ou por um link não lê português. Um README bilíngue num arquivo só resolvia
-isso, mas ao custo de dobrar o comprimento: quem chega tem de rolar por uma língua que não lê para achar
-a seção de instalação.
+The project's audience is people using Claude Code, and that audience is mostly international — whoever
+arrives from GitHub search or a link does not read Portuguese. A bilingual README in one file solved
+that, but at the cost of doubling its length: a newcomer had to scroll past a language they do not read
+to find the install section.
 
-O pacote de comunidade não é burocracia: o GitHub monta o *community profile* a partir desses arquivos e
-usa a presença deles em ranqueamento e nos avisos que mostra a quem abre uma issue. Os templates de
-issue também filtram na entrada as três perguntas que se repetiriam — versão do Claude Code, o payload
-que reproduz, e se o `.ps1` manteve o BOM.
+The community set is not bureaucracy: GitHub assembles the *community profile* from those files and uses
+their presence in ranking and in the notices it shows whoever opens an issue. The issue templates also
+filter, at the door, the three questions that would otherwise repeat — the Claude Code version, the
+payload that reproduces it, and whether the `.ps1` kept its BOM.
 
-## Os rótulos da barra acompanharam
+## The bar's labels followed
 
-`semana`, `sessão` e `reseta` viraram `week`, `session` e `resets` pouco depois — a barra é a primeira
-coisa que a pessoa vê, e três palavras em português no meio dela liam como bug. A história está em
+`semana`, `sessão` and `reseta` became `week`, `session` and `resets` shortly after — the bar is the
+first thing a person sees, and three Portuguese words in the middle of it read as a bug. The story is in
 [[../pendentes/arquivo/2026-09-12-rotulos-da-barra-em-portugues]].
 
-## A regra é por categoria: inglês em toda superfície pública
+## The rule is by category: English everywhere except `README.pt-BR.md`
 
-Decidido em 2026-09-12, depois da v1.2.0. Antes a regra era PT-BR.
-
-| Superfície | Idioma |
+| Surface | Language |
 |---|---|
-| README padrão (`README.md`) | inglês — o `README.pt-BR.md` existe ao lado |
-| Rótulos da barra | inglês |
-| Saída do `install.sh` | inglês |
-| Mensagem de commit | inglês, Conventional Commits |
-| **Título e corpo de release** | **inglês** |
-| PR e issue | inglês |
-| Templates de issue e PR | inglês |
-| Este vault | português |
-| Mensagens do `scripts/testar.sh` | português |
+| Default README (`README.md`) | English — `README.pt-BR.md` sits beside it |
+| The bar's labels | English |
+| `install.sh` output | English |
+| Commit messages | English, Conventional Commits |
+| Release titles and bodies | English |
+| Pull requests and issues | English |
+| Issue and pull request templates | English |
+| `CLAUDE.md` | English |
+| **This vault** | **English** |
+| What the test scripts print | English |
+| `README.pt-BR.md` | Portuguese — the only one |
 
-**A regra foi formulada estreita demais na primeira vez**, e custou: ela dizia "mensagens de commit", e
-as sete releases saíram em português — quatro delas depois da regra existir. Release é mais visível que
-commit: é o que aparece na home do repositório e no feed de quem dá watch. Ver a [issue #39](https://github.com/regisdias/claude-code-statusline/issues/39).
+Two structural exceptions, which are not editorial: **vault folder names** (`decisoes/`, `pendentes/`,
+`guias/`…) and the **frontmatter values** the maintainer's cross-project vault tooling greps for
+(`tipo: pendente`, `status: aberto|fazendo|resolvido`). Renaming those would break tooling outside this
+repository for no reader benefit. Everything a person reads inside the files is English.
 
-A pergunta para superfície nova é **"quem lê isso é de fora?"**, não "a regra citou esta superfície?".
+## It took two tries to state the rule correctly
 
-**Por quê:** num repositório público o `git log` é documentação. É para onde alguém vai quando quer
-saber por que uma linha é como é — e este projeto tem várias dessas: o `seq` do BSD, o BOM do
-PowerShell, o `read` que devolve erro mas preenche a variável. Esse raciocínio estava escrito numa
-língua que a maior parte de quem lê o repositório não fala, enquanto README, rótulos da barra,
-instalador e templates já estavam em inglês. O log era a última superfície fora do padrão.
+The first version said "commit messages are in English", and listed what stayed Portuguese: the vault,
+and the test output. **Releases were in neither list**, so nothing contradicted writing them in
+Portuguese — and seven of them went out that way, four written after the rule existed. A release is more
+visible than a commit: it is what shows on the repository home page and in the feed of anyone watching.
+See [issue #39](https://github.com/regisdias/claude-code-statusline/issues/39).
 
-**O histórico anterior fica como está.** Reescrever significaria trocar todos os SHA já publicados nas
-releases, nos PRs e nos links do CHANGELOG, para retraduzir commit que ninguém vai reler.
+The lesson is about how rules are written, not about this rule: **state the category, not the example.**
+A rule that enumerates surfaces creates a blind spot for every surface it did not think of. The question
+for a new one is "does someone outside read this?", not "did the rule name this surface?".
 
-**O formato não muda:** Conventional Commits do mesmo jeito, só a língua.
+The second try then went further and took the vault with it: the maintainer's call, on the grounds that
+a public repository has no half-public documentation.
 
-## O que ficou em português mesmo assim
+## Why the log matters
 
-- **Este vault inteiro.** É a documentação de trabalho de quem mantém, não superfície de visitante.
-- **As mensagens que o `scripts/testar.sh` imprime:** ferramenta interna, lida por quem desenvolve.
-- **As mensagens do `install.sh` são em inglês**, porque ele é a porta de entrada citada no README.
+In a public repository `git log` is documentation. It is where someone goes to find out why a line is
+the way it is — and this project has several of those: BSD `seq`, the PowerShell BOM, `read` returning
+an error while still filling the variable. That reasoning was written in a language most readers of the
+repository do not speak.
 
-## Consequência
+**History stays as it is.** Rewriting it would change every SHA already published in the releases, the
+pull requests and the CHANGELOG links, to retranslate commits nobody will read again. The seven release
+notes *were* rewritten, since editing them changes no SHA.
 
-Mudança de conteúdo no README entra nos **dois** arquivos. Não há geração automática de um a partir do
-outro: são textos irmãos, mantidos à mão.
+## Consequence
+
+A content change in the README lands in **both** files. Neither is generated from the other: they are
+sibling texts, maintained by hand.

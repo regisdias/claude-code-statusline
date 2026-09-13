@@ -3,46 +3,49 @@ tipo: arquitetura
 data: 2026-09-12
 ---
 
-# Como a statusline funciona
+# How the status line works
 
-O Claude Code executa o comando configurado em `statusLine` a cada desenho da barra e **passa um JSON
-pela entrada padrão**. O script lê esse JSON, monta uma linha de texto com códigos ANSI e escreve na
-saída padrão. Não há estado, arquivo temporário nem chamada de rede.
+Claude Code runs the command configured under `statusLine` on every render and **passes JSON on standard
+input**. The script reads that JSON, assembles a line of text with ANSI codes, and writes it to standard
+output. There is no state, no temporary file and no network call.
 
-## O que o payload traz
+## What the payload carries
 
-Os campos usados, todos opcionais na leitura (campo ausente vira `-` no shell e `$null` no PowerShell):
+The fields used, all optional on read (a missing field becomes `-` in the shell and `$null` in
+PowerShell):
 
-| Campo | Vira |
+| Field | Becomes |
 |---|---|
-| `model.display_name` | nome do modelo no começo da linha |
-| `context_window.used_percentage` | barra `ctx` |
-| `context_window.context_window_size` e `current_usage.input_tokens` | `330k/1000k` |
-| `rate_limits.five_hour.used_percentage` e `.resets_at` | barra `5h` e a hora do reset |
-| `rate_limits.seven_day.used_percentage` e `.resets_at` | barra `week` |
+| `model.display_name` | the model name at the head of the line |
+| `context_window.used_percentage` | the `ctx` bar |
+| `context_window.context_window_size` and `current_usage.input_tokens` | `330k/1000k` |
+| `rate_limits.five_hour.used_percentage` and `.resets_at` | the `5h` bar and its reset time |
+| `rate_limits.seven_day.used_percentage` and `.resets_at` | the `week` bar |
 | `cost.total_cost_usd` | `session $12.35` |
-| `workspace.current_dir` (ou `cwd`) | ponto de partida para achar o `.git/HEAD` → trecho da branch |
+| `workspace.current_dir` (or `cwd`) | the starting point for finding `.git/HEAD` → the branch segment |
 
-`resets_at` é epoch em segundos, formatado com o relógio local: só a hora quando o reset é hoje, dia e
-hora quando é outro dia.
+`resets_at` is epoch seconds, formatted against the local clock: the time alone when the reset is today,
+day and time otherwise.
 
-## Montagem da linha
+## Assembling the line
 
-1. Uma única leitura do JSON (`jq` com `@tsv` no shell; `ConvertFrom-Json` no PowerShell).
-2. Cada trecho vira uma barra de 10 blocos (`█` e `░`) com cor pela faixa: verde até 60%, amarelo até
-   85%, vermelho acima disso.
-3. Os trechos existentes são unidos por `│`. Trecho sem dado simplesmente não aparece.
+1. A single read of the JSON (`jq` with `@tsv` in the shell; `ConvertFrom-Json` in PowerShell), which
+   also picks up `ccsl.order` from `settings.json` in the same call.
+2. Each segment becomes a 10-block bar (`█` and `░`) coloured by band: green to 60%, yellow to 85%, red
+   above that.
+3. The segments that exist are joined by `│`, in the configured order, and packed into as many rows as
+   `$COLUMNS` allows. A segment with no data simply does not appear.
 
-## Degradação
+## Degradation
 
-- Sem `rate_limits` (Claude Code anterior ao 2.1.251, ou cobrança por API key): sai só a barra `ctx`.
-- Payload vazio, inválido, ou `jq` ausente: sai `<modelo>  waiting...`.
+- No `rate_limits` (Claude Code older than 2.1.251, or API key billing): only the `ctx` bar.
+- Empty or invalid payload, or `jq` missing: `<model>  waiting...`.
 
-Nenhum caminho de erro imprime stack trace: a statusline é uma linha do terminal, e barulho ali atrapalha
-quem está trabalhando.
+No error path prints a stack trace: the status line is one row of the terminal, and noise there gets in
+the way of whoever is working.
 
-## Desempenho
+## Performance
 
-A barra é redesenhada com frequência, então o custo por execução importa: a implementação atual fica em
-torno de 50 ms. É o motivo de haver uma leitura só do JSON e nenhuma dependência que precise subir um
-runtime — ver [[../decisoes/uso-do-plano-vem-do-payload]].
+The bar is redrawn constantly, so the cost per execution matters: the current implementation sits around
+50 ms. That is why there is a single read of the JSON and no dependency that has to boot a runtime — see
+[[../decisoes/uso-do-plano-vem-do-payload]].

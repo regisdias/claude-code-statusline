@@ -5,43 +5,40 @@ data: 2026-09-13
 codigo: CCS-4
 ---
 
-# O `⎇` não lê como git no macOS
+# `⎇` does not read as git on macOS
 
-**Resolvida em 2026-09-13: rótulo em texto com ícone configurável** (#35). A barra mostra `git main`, e
-`ccsl.branch_icon` troca a palavra por um ícone. O porquê está em
+**Resolved on 2026-09-13: a text label with a configurable icon** (#35). The bar shows `git main`, and
+`ccsl.branch_icon` swaps the word for an icon. The reasoning is in
 [[../../decisoes/rotulo-da-branch-em-texto]].
 
-Saiu da [[2026-09-12-confirmar-no-macos|CCS-1]], pelo caminho que o [[../../guias/validar-no-macos]] prevê:
-"só o `⎇` sai errado".
+Came out of [[2026-09-12-confirmar-no-macos|CCS-1]], by the path [[../../guias/validar-no-macos]]
+anticipates: "only the glyph comes out wrong".
 
-## O que foi visto
+## What was seen
 
-Na barra do Claude Code no **Terminal.app** (macOS 15.6), o glifo **desenha** — não é `?` nem
-quadrado, e os bytes são `e2 8e 87`, os certos. Mas ele não lembra uma branch: parece o **símbolo da
-tecla Option**, invertido. No WSL (Windows Terminal) o mesmo caractere parece uma setinha que bifurca,
-que é o efeito que a issue #11 queria.
+In the Claude Code bar in **Terminal.app** (macOS 15.6), the glyph **draws** — it is not a `?` or a box,
+and the bytes are `e2 8e 87`, the right ones. But it does not suggest a branch: it looks like the
+**Option key symbol**, inverted. In WSL (Windows Terminal) the same character looks like a forking
+arrow, which is the effect issue #11 wanted.
 
-Não é bug de fonte nem do script. O U+2387 se chama *ALTERNATIVE KEY SYMBOL*: é, de fato, um símbolo de
-teclado. A fonte do Mac desenha o que o nome diz; a do Windows desenha a leitura que os prompts de git
-popularizaram. **O problema é a escolha do glifo**, e ela falha justamente na plataforma cujo símbolo
-de tecla as pessoas reconhecem.
+It is not a font bug, nor a script bug. U+2387 is called *ALTERNATIVE KEY SYMBOL*: it really is a
+keyboard symbol. The Mac's font draws what the name says; Windows' draws the reading that git prompts
+popularised. **The problem is the choice of glyph**, and it fails precisely on the platform whose key
+symbol people recognise.
 
-## Opções
+## Options
 
-| Opção | Exemplo | A favor | Contra |
+| Option | Example | For | Against |
 |---|---|---|---|
-| Manter `⎇` | `⎇ main` | nada muda | lê como tecla Option no Mac |
-| Rótulo em texto | `branch main` / `git main` | igual aos outros trechos (`ctx`, `5h`, `week`, `session`); zero risco de fonte | mais largo |
-| Glifo de fonte Powerline/Nerd (U+E0A0) | ` main` | é o ícone de branch "de verdade" | área de uso privado: sem a fonte instalada vira quadrado para quase todo mundo |
-| Outro Unicode (ex.: `⑂` U+2442) | `⑂ main` | lembra bifurcação | cobertura de fonte pior que a do `⎇`; precisa de nova rodada em Mac e Windows |
-| Configurável | `ccsl.branch_icon` | cada um escolhe | mais uma chave, e o padrão ainda precisa ser decidido |
+| Keep `⎇` | `⎇ main` | nothing changes | reads as the Option key on the Mac |
+| Text label | `branch main` / `git main` | matches the other segments (`ctx`, `5h`, `week`, `session`); zero font risk | wider |
+| Powerline/Nerd font glyph (U+E0A0) | ` main` | it is the "real" branch icon | private use area: without the font it is a box for almost everyone |
+| Another Unicode character (`⑂` U+2442) | `⑂ main` | suggests a fork | worse font coverage than `⎇`; needs another round on Mac and Windows |
+| Configurable | `ccsl.branch_icon` | everyone picks | one more key, and the default still has to be decided |
 
-Qualquer mudança entra nas duas implementações, regera `assets/`, e muda o `testar.sh` (que tira o
-prefixo `⎇ ` na seção 3) e o menu do `--configure`.
+Any change lands in both implementations, regenerates `assets/`, and touches `testar.sh` (which strips
+the `⎇ ` prefix in section 3) and the `--configure` menu.
 
-## Para resolver
+## How it was resolved
 
-Decidir a opção, registrar em `decisoes/`, e só então implementar. Enquanto estiver aberta, a CCS-1
-também fica.
-
-Escolhida a combinação das linhas 2 e 5: rótulo `git` por padrão, ícone configurável.
+The combination of rows 2 and 5 was chosen: `git` as the default label, with a configurable icon.

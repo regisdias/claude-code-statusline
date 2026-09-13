@@ -3,19 +3,19 @@ tipo: bug-fix
 data: 2026-09-13
 ---
 
-# Locale com vírgula decimal quebrava os números
+# A comma-decimal locale broke the numbers
 
 Issue #27.
 
-## Sintoma
+## Symptom
 
-Num Mac com `LANG=pt_BR.UTF-8`, rodando o [[../guias/validar-no-macos]]:
+On a Mac with `LANG=pt_BR.UTF-8`, running [[../guias/validar-no-macos]]:
 
 ```
-session $12,00      ← o payload mandava 12.3456; o certo é $12.35
+session $12,00      ← the payload sent 12.3456; the right answer is $12.35
 ```
 
-Com percentual **fracionado** ficava pior — os limites do plano zeravam, e o stderr reclamava:
+With a **fractional** percentage it got worse — the plan limits went to zero, and stderr complained:
 
 ```
 LC_ALL=C          ctx [██████░░░░] 130k/200k 65%  │  5h [████████░░] 85%  │  week [██████░░░░] 60%  │  session $12.35
@@ -24,56 +24,59 @@ LANG=pt_BR.UTF-8  ctx [██████░░░░] 130k/200k 64%  │  5h [�
 printf: 84.7: invalid number
 ```
 
-Repare que a **barra** do 5h continua com 8 blocos e só o número zera: são dois caminhos de formatação
-diferentes quebrando de jeitos diferentes.
+Note that the 5-hour **bar** still has 8 blocks and only the number zeroes: two different formatting
+paths breaking in two different ways.
 
-## Causa
+## Cause
 
-JSON sempre usa ponto. O script formata número em dois lugares, e os dois obedecem `LC_NUMERIC`:
+JSON always uses a dot. The script formats numbers in two places, and both obey `LC_NUMERIC`:
 
-| Quem | Onde | Em `pt_BR` |
+| Who | Where | Under `pt_BR` |
 |---|---|---|
-| `awk` | custo, % do ctx, tokens, preenchimento da barra, cor | lê `12.3456` até o ponto → `12`, e imprime com vírgula |
-| `printf %.0f` do bash | % do 5h e da semana | recusa `84.7` como número inválido → `0` |
+| `awk` | cost, ctx %, tokens, bar fill, colour | reads `12.3456` up to the dot → `12`, and prints with a comma |
+| bash's `printf %.0f` | 5-hour and weekly % | rejects `84.7` as an invalid number → `0` |
 
-O PowerShell nunca teve o problema: formata com `InvariantCulture` desde o início.
+PowerShell never had the problem: it has formatted with `InvariantCulture` from the start.
 
-## Por que o CI não pegou
+## Why CI did not catch it
 
-Dois motivos somados. O runner roda no locale padrão, com ponto. E todos os payloads de
-`scripts/payloads/` têm percentual **inteiro** — `printf %.0f 41` funciona em qualquer locale, e o custo
-só erra na parte decimal, que o `verde.json` até tem, mas nunca rodou num locale com vírgula.
+Two reasons together. The runner runs in the default locale, with a dot. And every payload in
+`scripts/payloads/` has an **integer** percentage — `printf %.0f 41` works in any locale, and the cost
+only goes wrong in the decimal part, which `verde.json` does have but which never ran under a
+comma locale.
 
-## Correção
+## Fix
 
-Uma linha no topo do `statusline-command.sh`:
+One line at the top of `statusline-command.sh`:
 
 ```bash
 export LC_ALL=C
 ```
 
-`LC_ALL`, e não `LC_NUMERIC`: quem tem `LC_ALL` definido no próprio shell passaria por cima da variável
-mais estreita. Nada no script depende do locale de caractere — os glifos passam como bytes, e o `date`
-só formata `%H:%M` e `%d/%m`.
+`LC_ALL`, not `LC_NUMERIC`: anyone with `LC_ALL` set in their own shell would override the narrower
+variable. Nothing in the script depends on the character locale — the glyphs pass through as bytes, and
+`date` only formats `%H:%M` and `%d/%m`.
 
-## O teste
+## The test
 
-A seção 6 do `scripts/testar.sh` monta um payload fracionado a partir do `verde.json`, desenha em C como
-referência e compara com `pt_BR.UTF-8` e `de_DE.UTF-8`, via `LC_ALL` e via `LANG`, **incluindo o
-stderr**. Confirmado vermelho sem a correção (4 falhas) e verde com ela.
+Section 6 of `scripts/testar.sh` builds a fractional payload from `verde.json`, renders it under C as
+the reference, and compares with `pt_BR.UTF-8` and `de_DE.UTF-8`, via both `LC_ALL` and `LANG`,
+**including stderr**. Confirmed red without the fix (4 failures) and green with it.
 
-Duas armadilhas no próprio teste:
+Two traps inside the test itself:
 
-- **Locale não instalado cai em C calado** e o caso passaria sem testar nada. Por isso a sonda confere
-  se o locale imprime vírgula de verdade antes de contar — e avisa quando pula.
-- **A sonda precisa de um bash novo com `env -i`.** O bash 3.2 ignora `LC_ALL=x printf …` num builtin, e
-  um `LANG` herdado mascararia o locale ausente. E ela formata `1`, não `1.5`: em `pt_BR` o próprio
-  `1.5` é número inválido.
+- **A locale that is not installed falls back to C silently**, and the case would pass without testing
+  anything. So the probe checks that the locale really prints a comma before counting — and says so when
+  it skips.
+- **The probe needs a fresh bash with `env -i`.** Bash 3.2 ignores `LC_ALL=x printf …` on a builtin, and
+  an inherited `LANG` would mask the missing locale. And it formats `1`, not `1.5`: under `pt_BR`,
+  `1.5` is itself an invalid number.
 
-O runner Ubuntu não traz `pt_BR`; o CI gera com `locale-gen` antes do `testar.sh`. O macOS já tem.
+The Ubuntu runner does not ship `pt_BR`; CI generates it with `locale-gen` before `testar.sh`. macOS
+already has it.
 
-## Lição
+## Lesson
 
-A mesma da [[2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]]: o payload de teste tem de ter os
-extremos — aqui, número fracionado — e o ambiente de teste tem de variar o que a pessoa de fora varia.
-Locale é uma dessas coisas.
+The same one as [[2026-09-12-seq-do-bsd-alargava-a-barra-cheia-no-macos]]: the test payload has to carry
+the extremes — here, a fractional number — and the test environment has to vary what an outsider varies.
+Locale is one of those things.
