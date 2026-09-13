@@ -21,8 +21,10 @@
 #        "ccsl": { "order": ["branch", "model", "ctx", "5h", "week", "session", "update"] }
 #
 #   Leave a name out and it does not render. `install.sh --configure` edits this.
+#   "branch_icon" in the same object replaces the `git` label — "\ue0a0" with a
+#   Nerd Font, "" for the bare branch name.
 #
-#   ⎇ <branch> → current git branch, when the session is inside a repository
+#   git <branch> → current git branch, when the session is inside a repository
 #   ctx      → how much of this conversation's context window is used (not a plan quota)
 #   5h       → 5-hour block of your plan, with the time it resets
 #   week     → weekly plan limit
@@ -136,23 +138,47 @@ function Get-Reset($epoch) {
 
 $ORDEM_PADRAO = 'branch,model,ctx,5h,week,session,update'
 
-# Which segments to draw, and in what order. Anything unreadable or malformed
-# falls back to the default rather than taking the bar down.
-function Get-Ordem {
+# The `ccsl` object from settings.json, read once. Anything unreadable or
+# malformed is $null, and every setting falls back to its default rather than
+# taking the bar down.
+function Read-Ccsl {
     $base = $env:CLAUDE_CONFIG_DIR
     if (-not $base) { $base = [System.IO.Path]::Combine($HOME, '.claude') }
     $arquivo = [System.IO.Path]::Combine($base, 'settings.json')
-    if (-not [System.IO.File]::Exists($arquivo)) { return $ORDEM_PADRAO }
+    if (-not [System.IO.File]::Exists($arquivo)) { return $null }
     try {
         $cfg = [System.IO.File]::ReadAllText($arquivo) | ConvertFrom-Json
     } catch {
-        return $ORDEM_PADRAO
+        return $null
     }
-    if (-not $cfg -or -not $cfg.ccsl -or -not $cfg.ccsl.order) { return $ORDEM_PADRAO }
-    $nomes = @($cfg.ccsl.order | Where-Object { $_ -is [string] })
+    if (-not $cfg) { return $null }
+    return $cfg.ccsl
+}
+
+# Which segments to draw, and in what order.
+function Get-Ordem($ccsl) {
+    if (-not $ccsl -or -not $ccsl.order) { return $ORDEM_PADRAO }
+    $nomes = @($ccsl.order | Where-Object { $_ -is [string] })
     if ($nomes.Count -eq 0) { return $ORDEM_PADRAO }
     return ($nomes -join ',')
 }
+
+# What goes before the branch name. Must match the jq query in the .sh: a string
+# is used as given, minus control characters and backslashes; anything else means
+# the `git` label.
+function Get-IconeBranch($ccsl) {
+    if (-not $ccsl) { return 'git' }
+    $icone = $ccsl.branch_icon
+    if ($icone -isnot [string]) { return 'git' }
+    $limpo = New-Object System.Text.StringBuilder
+    foreach ($c in $icone.ToCharArray()) {
+        $n = [int]$c
+        if ($n -gt 31 -and $n -ne 127 -and $n -ne 92) { [void]$limpo.Append($c) }
+    }
+    return $limpo.ToString()
+}
+
+$ccsl = Read-Ccsl
 
 $bruto = [Console]::In.ReadToEnd()
 $dados = $null
@@ -253,19 +279,22 @@ if ($dados) {
     elseif ($dados.cwd) { $dirAtual = $dados.cwd }
 }
 $branch = Get-Branch $dirAtual
-# U+2387 marks the segment as a branch; it is one column wide, unlike an emoji
-# [char] and not "\u{2387}": the \u escape is PowerShell 7+, and this file
-# has to parse on Windows PowerShell 5.1
+# A word, not a glyph: U+2387 read as the Option key on macOS, and the real git
+# icons need a Nerd Font. `branch_icon` is there for people who have one.
+$icone = Get-IconeBranch $ccsl
 $branchPart = ''
-if ($branch) { $branchPart = [string][char]0x2387 + " " + $branch }
+if ($branch) {
+    if ($icone) { $branchPart = $icone + ' ' + $branch } else { $branchPart = $branch }
+}
 
 $nova = Get-NovaVersao $CCSL_VERSION
 $updatePart = ''
 if ($nova) { $updatePart = [string][char]0x2191 + $nova }
 
 # Visible width in columns: strip the ANSI codes and count. PowerShell has no
-# locale trap here — .Length counts UTF-16 units, one per glyph we emit — but it
-# must land on the same number the .sh computes.
+# locale trap here — .Length counts UTF-16 units, one per glyph we emit, and two
+# for a branch icon outside the BMP — but it must land on the same number the .sh
+# computes.
 function Get-Largura($s) {
     # [char]27 and not `e: the `e escape is PowerShell 6+, and on 5.1 it would
     # silently fail to match, leaving the ANSI codes in the count and wrapping
@@ -287,7 +316,7 @@ $linhas = @()
 $linha = ''
 $linhaLargura = 0
 
-foreach ($nome in (Get-Ordem).Split(',')) {
+foreach ($nome in (Get-Ordem $ccsl).Split(',')) {
     $parte = switch ($nome) {
         'branch'  { $branchPart }
         'model'   { $modelPart }

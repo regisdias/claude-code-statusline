@@ -5,7 +5,7 @@ data: 2026-09-13
 
 # Validar no macOS — passo a passo
 
-Fecha a pendência [[../pendentes/2026-09-12-confirmar-no-macos|CCS-1]]. Feito num Mac de verdade, não
+Nasceu para fechar a [[../pendentes/arquivo/2026-09-12-confirmar-no-macos|CCS-1]], já resolvida; continua valendo para validar qualquer mudança num Mac. Feito num Mac de verdade, não
 em runner: o CI já cobre o resto.
 
 **O que só um Mac responde:** se os glifos desenham na tela, e se a hora do reset sai certa num fuso
@@ -77,7 +77,7 @@ rm -f "$C/settings.json"
 echo; echo "== BYTES DO INICIO DA LINHA (o que o script emitiu, nao o que voce ve) =="
 printf "%s" "$P" | CLAUDE_CONFIG_DIR=$C bash statusline-command.sh \
   | sed "s/\x1b\[[0-9]*m//g" | head -c 24 | xxd
-echo "esperado: e2 8e 87 = U+2387 (⎇), depois \" main\""
+echo "esperado: 67 69 74 20 = \"git \", depois \"main\""
 echo "referencia dos outros: $(printf "█░│↑" | xxd | head -1)"
 '
 ```
@@ -87,24 +87,25 @@ echo "referencia dos outros: $(printf "█░│↑" | xxd | head -1)"
 | Conferir | Certo | Errado significa |
 |---|---|---|
 | **Os dois bash** | saída idêntica | incompatibilidade com o bash 3.2 — é bug, e grave: é o bash padrão do Mac |
-| **`⎇` antes da branch** | desenha o símbolo | vira `?` ou quadrado: **fonte**, não o script. Confira os bytes na última seção antes de acusar |
+| **`git` antes da branch** | a palavra | outra coisa: um `ccsl.branch_icon` no seu `settings.json` real não entra aqui — o diagnóstico usa config vazia |
 | **`█` e `░`** | blocos sólidos e claros | quadrado ou `?`: terminal fora de UTF-8 |
 | **`│`** | barra vertical fina | idem |
 | **Largura da barra** | sempre **10** blocos, inclusive em 100% | 12 blocos = o bug do `seq` voltou |
 | **`resets HH:MM`** | hora daqui a 2h, no **seu** relógio | hora errada ou em branco = o `date -r` do BSD |
 | **`18/09 05:00`** | data daqui a 3 dias | idem |
 
-**A distinção que importa nos glifos:** se os bytes na última seção estão certos (`e2 8e 87` para o
-`⎇`) mas a tela mostra `?`, o problema é a fonte do terminal — o script está correto. Só o contrário
-é bug nosso.
+**A distinção que importa nos glifos:** se os bytes estão certos (compare com a linha de referência)
+mas a tela mostra `?`, o problema é a fonte do terminal — o script está correto. Só o contrário é bug
+nosso.
+
+> Até a v1.5.0 a branch levava o glifo `⎇`, e esta tabela conferia ele. No Mac ele lia como a tecla
+> Option, e virou `git` — veja [[../decisoes/rotulo-da-branch-em-texto]].
 
 ## 5. Fechando a pendência
 
 - **Tudo certo:** a CCS-1 vira `status: resolvido`, ganha uma linha dizendo em que macOS e em que
   terminal foi verificado, e vai por `git mv` para `pendentes/arquivo/` no mesmo commit.
-- **Só o `⎇` sai errado:** isso **não** resolve a CCS-1. Abre pendência própria — a escolha do glifo
-  volta à mesa, e as opções estão em [[../decisoes/ordem-dos-trechos-configuravel]] e no histórico da
-  issue #11.
+- **Só um glifo sai errado:** abre pendência própria — foi assim que o `⎇` virou `git` (CCS-4).
 - **Qualquer outra divergência:** issue nova com a saída completa do diagnóstico, e a CCS-1 continua
   aberta até resolver.
 

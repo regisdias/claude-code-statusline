@@ -55,7 +55,7 @@ Pelo job `paridade` do CI rodando em `macos-latest`, no primeiro push depois de 
 ([[../decisoes/ci-em-push-e-pr]]). O `vermelho.json` é o payload que leva o bloco de 5h a 96% — com
 `width` 10, o arredondamento dá `filled` 10 e `empty` 0, exatamente o caso de borda.
 
-É a resposta prática para [[../pendentes/2026-09-12-confirmar-no-macos]]: o caminho BSD tinha mesmo um
+É a resposta prática para [[../pendentes/arquivo/2026-09-12-confirmar-no-macos]]: o caminho BSD tinha mesmo um
 problema, e não era o `date -r` que se suspeitava.
 
 ## Lição

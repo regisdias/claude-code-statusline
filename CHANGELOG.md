@@ -6,21 +6,36 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **The branch segment reads `git main` instead of `⎇ main`**
+  ([#35](https://github.com/regisdias/claude-code-statusline/issues/35)). On macOS, U+2387 is drawn as
+  the Option key symbol, not as a branch — it is literally *ALTERNATIVE KEY SYMBOL*. There is no standard
+  Unicode glyph for git, and the real icons need a Nerd Font, so the default is now a word, like every
+  other segment.
+
+### Added
+
+- **`ccsl.branch_icon`** replaces the `git` label: `"\ue0a0"` for the Powerline icon with a Nerd Font,
+  `"⎇"` for the old look, `""` for the bare branch name. Read in the same `jq` call as `ccsl.order`.
+  The wrap counts the icon in columns — one per code point, two outside the BMP — so the shell, which
+  counts bytes, and PowerShell break at the same place. Control characters and backslashes are dropped.
+  `--configure` previews with your own icon.
+- `scripts/testar-instalador.sh`, and a CI job for it. The installer had no tests and this was its
+  second bug, after `~/.claude/install.sh` being documented at a path it never created. Nine cases:
+  each spelling of our own path, a genuinely foreign status line, invalid JSON, and the update check
+  going on and off without duplicating hooks or dropping your `env`.
+
 ### Fixed
 
+- `ccsl-install.sh --configure` exited silently when `settings.json` was missing: under `set -e`, a
+  failing `jq` inside an assignment ended the script before the menu.
 - **The installer called your own status line a stranger's**
   ([#36](https://github.com/regisdias/claude-code-statusline/issues/36)). It compared the configured
   command against the literal string `bash ~/.claude/statusline-command.sh`, so a `settings.json`
   holding the absolute path — which is what you get writing it by hand — was reported as somebody
   else's. Worse than the scare: that path ends in `exit 0`, so every update silently skipped the Claude
   Code version check and the preview. It now compares the resolved path.
-
-### Added
-
-- `scripts/testar-instalador.sh`, and a CI job for it. The installer had no tests and this was its
-  second bug, after `~/.claude/install.sh` being documented at a path it never created. Nine cases:
-  each spelling of our own path, a genuinely foreign status line, invalid JSON, and the update check
-  going on and off without duplicating hooks or dropping your `env`.
 
 ## [1.5.0] — 2026-09-13
 
