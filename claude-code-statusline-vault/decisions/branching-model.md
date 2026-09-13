@@ -1,6 +1,6 @@
 ---
-tipo: decisao
-data: 2026-09-12
+type: decision
+date: 2026-09-12
 ---
 
 # main → stg → develop → task branch
@@ -69,4 +69,4 @@ merging" means `develop` is permanently behind `stg` by exactly the promotion me
 cycle would demand a back-merge just to satisfy the checker. Verified before switching it off that the
 divergence was topology and not content: `git diff develop...stg` came back empty.
 
-See also [[ci-em-push-e-pr]].
+See also [[ci-on-push-and-pull-request]].

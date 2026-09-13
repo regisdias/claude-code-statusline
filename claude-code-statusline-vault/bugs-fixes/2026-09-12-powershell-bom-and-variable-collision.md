@@ -1,6 +1,6 @@
 ---
-tipo: bug-fix
-data: 2026-09-12
+type: bug-fix
+date: 2026-09-12
 ---
 
 # PowerShell: a file without a BOM, and a variable collision
@@ -50,4 +50,4 @@ in case.
 ## How both were caught
 
 Running the script through Windows' `powershell.exe` from WSL, with four different payloads — see
-[[../guias/testar-local]]. Code review would have caught neither.
+[[../guides/testing-locally]]. Code review would have caught neither.

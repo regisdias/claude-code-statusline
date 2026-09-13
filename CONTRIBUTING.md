@@ -11,7 +11,7 @@ the same commit, never in one alone.
 Run the check before opening a PR:
 
 ```bash
-bash scripts/testar.sh
+bash scripts/test.sh
 ```
 
 It feeds every payload in `scripts/payloads/` to both implementations, diffs the bytes, and verifies the
@@ -20,7 +20,7 @@ It feeds every payload in `scripts/payloads/` to both implementations, diffs the
 The installer has its own suite, kept apart because it needs the network:
 
 ```bash
-CCSL_BRANCH=your-branch bash scripts/testar-instalador.sh
+CCSL_BRANCH=your-branch bash scripts/test-installer.sh
 ```
 
 It installs into a throwaway `HOME` and checks the outcomes that matter — recognising its own script
@@ -77,8 +77,8 @@ installed.
 ```bash
 git clone https://github.com/regisdias/claude-code-statusline.git
 cd claude-code-statusline
-bash statusline-command.sh < scripts/payloads/verde.json   # see it render
-bash scripts/testar.sh                                     # see it pass
+bash statusline-command.sh < scripts/payloads/green.json   # see it render
+bash scripts/test.sh                                     # see it pass
 ```
 
 You need `jq` and `awk`. For the PowerShell half, install `pwsh`
@@ -106,7 +106,7 @@ These are not style preferences — each one comes from a bug that already happe
 them is hand-drawn. After any format change:
 
 ```bash
-python3 scripts/gerar-svg.py
+python3 scripts/generate-svg.py
 ```
 
 Commit the regenerated SVGs along with the change.
@@ -121,7 +121,7 @@ Commit the regenerated SVGs along with the change.
   the default README, the bar's labels, installer output. Commits follow
   [Conventional Commits](https://www.conventionalcommits.org) (`feat: …`, `fix: …`, `docs(vault): …`).
   History older than v1.1.0 is in Portuguese and stays as it is.
-- The project vault and what `scripts/testar.sh` prints stay in Portuguese: maintainer surfaces, not
+- The project vault and what `scripts/test.sh` prints stay in Portuguese: maintainer surfaces, not
   visitor ones.
 - Say *why* in the body, not just *what* — the diff already shows what changed. On a public repository
   the log is where someone goes to find out why a line looks the way it does.

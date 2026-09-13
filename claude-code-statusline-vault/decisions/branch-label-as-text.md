@@ -1,6 +1,6 @@
 ---
-tipo: decisao
-data: 2026-09-13
+type: decision
+date: 2026-09-13
 ---
 
 # The branch carries the word `git`, with an optional icon
@@ -15,12 +15,12 @@ Issue #35, replacing the `⎇` that #11 had introduced.
 
 `⎇` was chosen in #11 for being real Unicode and one column wide. In Windows Terminal it looks like a
 fork. **On macOS it looks like the Option key** — seen on screen, in Terminal.app, during
-[[../pendentes/arquivo/2026-09-12-confirmar-no-macos|CCS-1]].
+[[../pending/archive/2026-09-12-confirm-on-macos|CCS-1]].
 
 It is not a font defect. U+2387 is named *ALTERNATIVE KEY SYMBOL*, and on the Mac it is drawn by Lucida
 Grande, the same font behind `⌥`. The Mac draws what the name says.
 
-The alternatives, checked in [[../pendentes/arquivo/2026-09-13-glifo-da-branch-no-macos|CCS-4]]:
+The alternatives, checked in [[../pending/archive/2026-09-13-branch-glyph-on-macos|CCS-4]]:
 
 - **There is no standard Unicode glyph for git.** The icons every prompt uses — Powerline's `U+E0A0`,
   the Nerd Fonts' `U+F418` and `U+E725` — sit in the private use area. Without the font they become a
@@ -39,16 +39,16 @@ whoever has the font.
   the TSV as `<width>:<icon>`, which is never empty: `""` is a valid icon, and an empty field would
   collapse in `read` with a tab `IFS`.
 - **The width is computed, not measured.** Since the
-  [[../bugs-fixes/2026-09-13-locale-com-virgula-quebrava-os-numeros|locale fix]] the shell runs under
+  [[../bugs-fixes/2026-09-13-comma-locale-broke-the-numbers|locale fix]] the shell runs under
   `LC_ALL=C` and counts bytes. A configured icon is unknown, so it cannot be listed in the glyph folding
-  of [[quebra-na-largura-do-terminal]]: `jq` counts one column per code point, two outside the BMP, and
+  of [[wrap-to-terminal-width]]: `jq` counts one column per code point, two outside the BMP, and
   the shell folds the icon to that many `#`. That is exactly what PowerShell's `.Length` gives, because
   a character outside the BMP is two UTF-16 units.
 - **Control characters and backslashes are discarded** in both implementations. The shell prints with
   `%b`, and a configuration value must not be able to inject an escape into the bar.
 - A value that is not a string (a number, `null`, an object) counts as absent: `git`.
 
-`testar.sh` covers the values (section 8) and the wrap exactly at the boundary, with a 3-byte icon and a
+`test.sh` covers the values (section 8) and the wrap exactly at the boundary, with a 3-byte icon and a
 4-byte emoji — confirmed red without the icon folding.
 
 ## Cost

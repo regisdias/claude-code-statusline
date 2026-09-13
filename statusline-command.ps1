@@ -63,15 +63,15 @@ function Get-Bar([double]$pct, [int]$width = 10) {
     return ([string][char]0x2588 * $filled) + ([string][char]0x2591 * ($width - $filled))
 }
 
-function Get-Inteiro([double]$n) {
+function Get-Rounded([double]$n) {
     return [int][Math]::Round($n)
 }
 
 # First line of a file, without the trailing CR a Windows-written .git/HEAD carries
-function Read-PrimeiraLinha($caminho) {
-    try { $linhas = [System.IO.File]::ReadAllLines($caminho) } catch { return '' }
-    if ($linhas.Count -eq 0) { return '' }
-    return ([string]$linhas[0]).TrimEnd("`r")
+function Read-FirstLine($path) {
+    try { $lines = [System.IO.File]::ReadAllLines($path) } catch { return '' }
+    if ($lines.Count -eq 0) { return '' }
+    return ([string]$lines[0]).TrimEnd("`r")
 }
 
 # Current git branch, read straight from .git/HEAD.
@@ -85,41 +85,41 @@ function Read-PrimeiraLinha($caminho) {
 # same fallbacks.
 function Get-Branch($dir) {
     if ([string]::IsNullOrWhiteSpace($dir) -or $dir -eq '-') { return '' }
-    try { $atual = [System.IO.Path]::GetFullPath($dir) } catch { return '' }
+    try { $current = [System.IO.Path]::GetFullPath($dir) } catch { return '' }
 
-    while ($atual) {
-        $marca = [System.IO.Path]::Combine($atual, '.git')
+    while ($current) {
+        $marker = [System.IO.Path]::Combine($current, '.git')
         $head = ''
 
-        if ([System.IO.Directory]::Exists($marca)) {
-            $head = [System.IO.Path]::Combine($marca, 'HEAD')
-        } elseif ([System.IO.File]::Exists($marca)) {
-            # Worktree or submodule: ".git" is a file holding "gitdir: <path>"
-            $gitdir = Read-PrimeiraLinha $marca
-            if (-not $gitdir.StartsWith('gitdir: ')) { return '' }
-            $gitdir = $gitdir.Substring(8)
-            if (-not [System.IO.Path]::IsPathRooted($gitdir)) {
-                $gitdir = [System.IO.Path]::Combine($atual, $gitdir)
+        if ([System.IO.Directory]::Exists($marker)) {
+            $head = [System.IO.Path]::Combine($marker, 'HEAD')
+        } elseif ([System.IO.File]::Exists($marker)) {
+            # Worktree or submodule: ".git" is a file holding "gitDir: <path>"
+            $gitDir = Read-FirstLine $marker
+            if (-not $gitDir.StartsWith('gitDir: ')) { return '' }
+            $gitDir = $gitDir.Substring(8)
+            if (-not [System.IO.Path]::IsPathRooted($gitDir)) {
+                $gitDir = [System.IO.Path]::Combine($current, $gitDir)
             }
-            $head = [System.IO.Path]::Combine($gitdir, 'HEAD')
+            $head = [System.IO.Path]::Combine($gitDir, 'HEAD')
         }
 
         if ($head) {
             if (-not [System.IO.File]::Exists($head)) { return '' }
-            $cabeca = Read-PrimeiraLinha $head
-            if ($cabeca.StartsWith('ref: ')) {
-                $ref = $cabeca.Substring(5)
+            $headLine = Read-FirstLine $head
+            if ($headLine.StartsWith('ref: ')) {
+                $ref = $headLine.Substring(5)
                 if ($ref.StartsWith('refs/heads/')) { $ref = $ref.Substring(11) }
                 return $ref
             }
             # Detached HEAD: short sha
-            if ($cabeca.Length -gt 7) { return $cabeca.Substring(0, 7) }
-            return $cabeca
+            if ($headLine.Length -gt 7) { return $headLine.Substring(0, 7) }
+            return $headLine
         }
 
-        $pai = [System.IO.Path]::GetDirectoryName($atual)
-        if (-not $pai -or $pai -eq $atual) { return '' }
-        $atual = $pai
+        $parent = [System.IO.Path]::GetDirectoryName($current)
+        if (-not $parent -or $parent -eq $current) { return '' }
+        $current = $parent
     }
     return ''
 }
@@ -128,15 +128,15 @@ function Get-Branch($dir) {
 function Get-Reset($epoch) {
     if ($null -eq $epoch) { return '' }
     try {
-        $quando = [DateTimeOffset]::FromUnixTimeSeconds([long]$epoch).ToLocalTime().DateTime
+        $when = [DateTimeOffset]::FromUnixTimeSeconds([long]$epoch).ToLocalTime().DateTime
     } catch {
         return ''
     }
-    if ($quando.Date -eq (Get-Date).Date) { return $quando.ToString('HH:mm', $INV) }
-    return $quando.ToString('dd/MM HH:mm', $INV)
+    if ($when.Date -eq (Get-Date).Date) { return $when.ToString('HH:mm', $INV) }
+    return $when.ToString('dd/MM HH:mm', $INV)
 }
 
-$ORDEM_PADRAO = 'branch,model,ctx,5h,week,session,update'
+$DEFAULT_ORDER = 'branch,model,ctx,5h,week,session,update'
 
 # The `ccsl` object from settings.json, read once. Anything unreadable or
 # malformed is $null, and every setting falls back to its default rather than
@@ -144,10 +144,10 @@ $ORDEM_PADRAO = 'branch,model,ctx,5h,week,session,update'
 function Read-Ccsl {
     $base = $env:CLAUDE_CONFIG_DIR
     if (-not $base) { $base = [System.IO.Path]::Combine($HOME, '.claude') }
-    $arquivo = [System.IO.Path]::Combine($base, 'settings.json')
-    if (-not [System.IO.File]::Exists($arquivo)) { return $null }
+    $file = [System.IO.Path]::Combine($base, 'settings.json')
+    if (-not [System.IO.File]::Exists($file)) { return $null }
     try {
-        $cfg = [System.IO.File]::ReadAllText($arquivo) | ConvertFrom-Json
+        $cfg = [System.IO.File]::ReadAllText($file) | ConvertFrom-Json
     } catch {
         return $null
     }
@@ -156,89 +156,89 @@ function Read-Ccsl {
 }
 
 # Which segments to draw, and in what order.
-function Get-Ordem($ccsl) {
-    if (-not $ccsl -or -not $ccsl.order) { return $ORDEM_PADRAO }
-    $nomes = @($ccsl.order | Where-Object { $_ -is [string] })
-    if ($nomes.Count -eq 0) { return $ORDEM_PADRAO }
-    return ($nomes -join ',')
+function Get-Order($ccsl) {
+    if (-not $ccsl -or -not $ccsl.order) { return $DEFAULT_ORDER }
+    $names = @($ccsl.order | Where-Object { $_ -is [string] })
+    if ($names.Count -eq 0) { return $DEFAULT_ORDER }
+    return ($names -join ',')
 }
 
 # What goes before the branch name. Must match the jq query in the .sh: a string
 # is used as given, minus control characters and backslashes; anything else means
 # the `git` label.
-function Get-IconeBranch($ccsl) {
+function Get-BranchIcon($ccsl) {
     if (-not $ccsl) { return 'git' }
-    $icone = $ccsl.branch_icon
-    if ($icone -isnot [string]) { return 'git' }
-    $limpo = New-Object System.Text.StringBuilder
-    foreach ($c in $icone.ToCharArray()) {
+    $icon = $ccsl.branch_icon
+    if ($icon -isnot [string]) { return 'git' }
+    $clean = New-Object System.Text.StringBuilder
+    foreach ($c in $icon.ToCharArray()) {
         $n = [int]$c
-        if ($n -gt 31 -and $n -ne 127 -and $n -ne 92) { [void]$limpo.Append($c) }
+        if ($n -gt 31 -and $n -ne 127 -and $n -ne 92) { [void]$clean.Append($c) }
     }
-    return $limpo.ToString()
+    return $clean.ToString()
 }
 
 $ccsl = Read-Ccsl
 
-$bruto = [Console]::In.ReadToEnd()
-$dados = $null
-if ($bruto) { $dados = $bruto | ConvertFrom-Json }
+$raw = [Console]::In.ReadToEnd()
+$data = $null
+if ($raw) { $data = $raw | ConvertFrom-Json }
 
-$modelo = 'Claude'
-if ($dados -and $dados.model -and $dados.model.display_name) { $modelo = $dados.model.display_name }
+$model = 'Claude'
+if ($data -and $data.model -and $data.model.display_name) { $model = $data.model.display_name }
 
 # ---------------------------------------------------------------------------
 # Context window
 # ---------------------------------------------------------------------------
 $ctxPct = $null
-if ($dados -and $dados.context_window) { $ctxPct = $dados.context_window.used_percentage }
+if ($data -and $data.context_window) { $ctxPct = $data.context_window.used_percentage }
 
-$modelPart = $modelo
+$modelPart = $model
 $ctxPart = ''
 
 if ($null -eq $ctxPct) {
     # Nothing to draw yet: say so where the model name goes, and skip the rest
-    $modelPart = "$modelo  waiting..."
+    $modelPart = "$model  waiting..."
 } else {
-    $tamanho = $dados.context_window.context_window_size
-    $usados = $null
-    if ($dados.context_window.current_usage) { $usados = $dados.context_window.current_usage.input_tokens }
-    if ($null -ne $usados -and $null -ne $tamanho) {
-        $tokens = '{0}k/{1}k' -f (Get-Inteiro ($usados / 1000)), (Get-Inteiro ($tamanho / 1000))
+    $size = $data.context_window.context_window_size
+    $used = $null
+    if ($data.context_window.current_usage) { $used = $data.context_window.current_usage.input_tokens }
+    if ($null -ne $used -and $null -ne $size) {
+        $tokens = '{0}k/{1}k' -f (Get-Rounded ($used / 1000)), (Get-Rounded ($size / 1000))
     } else {
-        $tokens = '{0}%' -f (Get-Inteiro $ctxPct)
+        $tokens = '{0}%' -f (Get-Rounded $ctxPct)
     }
-    $ctxPart = 'ctx {0}[{1}]{2} {3} {4}%' -f (Get-Color $ctxPct), (Get-Bar $ctxPct), $RESET, $tokens, (Get-Inteiro $ctxPct)
+    $ctxPart = 'ctx {0}[{1}]{2} {3} {4}%' -f (Get-Color $ctxPct), (Get-Bar $ctxPct), $RESET, $tokens, (Get-Rounded $ctxPct)
 }
 
 # ---------------------------------------------------------------------------
 # Plan limits: 5-hour block and week
 # ---------------------------------------------------------------------------
-$blocoPart = ''
-$semanaPart = ''
-$custoPart = ''
+$blockPart = ''
+$weekPart = ''
+$costPart = ''
 
-$limites = $null
-if ($dados) { $limites = $dados.rate_limits }
+$limits = $null
+if ($data) { $limits = $data.rate_limits }
 
-if ($limites -and $null -ne $limites.five_hour.used_percentage) {
-    $pct = $limites.five_hour.used_percentage
-    $quandoReseta = Get-Reset $limites.five_hour.resets_at
-    $texto = '5h {0}[{1}]{2} {3}%' -f (Get-Color $pct), (Get-Bar $pct), $RESET, (Get-Inteiro $pct)
-    if ($quandoReseta) { $texto += " · resets $quandoReseta" }
-    $blocoPart = $texto
+if ($limits -and $null -ne $limits.five_hour.used_percentage) {
+    $pct = $limits.five_hour.used_percentage
+    $resetsWhen = Get-Reset $limits.five_hour.resets_at
+    $text = '5h {0}[{1}]{2} {3}%' -f (Get-Color $pct), (Get-Bar $pct), $RESET, (Get-Rounded $pct)
+    if ($resetsWhen) { $text += " · resets $resetsWhen" }
+    $blockPart = $text
 }
 
-if ($limites -and $null -ne $limites.seven_day.used_percentage) {
-    $pct = $limites.seven_day.used_percentage
-    $quandoReseta = Get-Reset $limites.seven_day.resets_at
-    $texto = 'week {0}[{1}]{2} {3}%' -f (Get-Color $pct), (Get-Bar $pct), $RESET, (Get-Inteiro $pct)
-    if ($quandoReseta) { $texto += " · $quandoReseta" }
-    $semanaPart = $texto
+if ($limits -and $null -ne $limits.seven_day.used_percentage) {
+    $pct = $limits.seven_day.used_percentage
+    $resetsWhen = Get-Reset $limits.seven_day.resets_at
+    $text = 'week {0}[{1}]{2} {3}%' -f (Get-Color $pct), (Get-Bar $pct), $RESET, (Get-Rounded $pct)
+    if ($resetsWhen) { $text += " · $resetsWhen" }
+    $weekPart = $text
 }
 
-if ($dados -and $dados.cost -and $dados.cost.total_cost_usd -gt 0) {
-    $custoPart = 'session $' + ([Math]::Round([double]$dados.cost.total_cost_usd, 2)).ToString('0.00', $INV)
+if ($data -and $data.cost -and $data.cost.total_cost_usd -gt 0) {
+    $costPart = 'session $' + ([Math]::Round([double]$data.cost.total_cost_usd, 2)).ToString('0.00', $INV)
 }
 
 # Update notice — opt-in, and read-only.
@@ -249,7 +249,7 @@ if ($dados -and $dados.cost -and $dados.cost.total_cost_usd -gt 0) {
 #
 # Must stay byte-identical to aviso_update() in the .sh: same marker, same cache
 # format, same validation, same comparison.
-function Get-NovaVersao($instalada) {
+function Get-NewVersion($installed) {
     $base = $env:CLAUDE_CONFIG_DIR
     if (-not $base) { $base = [System.IO.Path]::Combine($HOME, '.claude') }
 
@@ -257,45 +257,45 @@ function Get-NovaVersao($instalada) {
     $cache = [System.IO.Path]::Combine($base, '.ccsl-update-cache')
     if (-not [System.IO.File]::Exists($cache)) { return '' }
 
-    $linha = Read-PrimeiraLinha $cache
-    if (-not $linha) { return '' }
+    $line = Read-FirstLine $cache
+    if (-not $line) { return '' }
     # Cache format: "<epoch> <version>". The epoch is the hook's business.
-    $campos = $linha.Split(' ', [StringSplitOptions]::RemoveEmptyEntries)
-    if ($campos.Count -lt 2) { return '' }
-    $ultima = $campos[1]
-    if ($ultima -notmatch '^\d+\.\d+\.\d+$') { return '' }
+    $fields = $line.Split(' ', [StringSplitOptions]::RemoveEmptyEntries)
+    if ($fields.Count -lt 2) { return '' }
+    $latest = $fields[1]
+    if ($latest -notmatch '^\d+\.\d+\.\d+$') { return '' }
 
     try {
-        if ([version]$ultima -gt [version]$instalada) { return $ultima }
+        if ([version]$latest -gt [version]$installed) { return $latest }
     } catch {
         return ''
     }
     return ''
 }
 
-$dirAtual = ''
-if ($dados) {
-    if ($dados.workspace -and $dados.workspace.current_dir) { $dirAtual = $dados.workspace.current_dir }
-    elseif ($dados.cwd) { $dirAtual = $dados.cwd }
+$currentDir = ''
+if ($data) {
+    if ($data.workspace -and $data.workspace.current_dir) { $currentDir = $data.workspace.current_dir }
+    elseif ($data.cwd) { $currentDir = $data.cwd }
 }
-$branch = Get-Branch $dirAtual
+$branch = Get-Branch $currentDir
 # A word, not a glyph: U+2387 read as the Option key on macOS, and the real git
 # icons need a Nerd Font. `branch_icon` is there for people who have one.
-$icone = Get-IconeBranch $ccsl
+$icon = Get-BranchIcon $ccsl
 $branchPart = ''
 if ($branch) {
-    if ($icone) { $branchPart = $icone + ' ' + $branch } else { $branchPart = $branch }
+    if ($icon) { $branchPart = $icon + ' ' + $branch } else { $branchPart = $branch }
 }
 
-$nova = Get-NovaVersao $CCSL_VERSION
+$newer = Get-NewVersion $CCSL_VERSION
 $updatePart = ''
-if ($nova) { $updatePart = [string][char]0x2191 + $nova }
+if ($newer) { $updatePart = [string][char]0x2191 + $newer }
 
 # Visible width in columns: strip the ANSI codes and count. PowerShell has no
 # locale trap here — .Length counts UTF-16 units, one per glyph we emit, and two
 # for a branch icon outside the BMP — but it must land on the same number the .sh
 # computes.
-function Get-Largura($s) {
+function Get-Width($s) {
     # [char]27 and not `e: the `e escape is PowerShell 6+, and on 5.1 it would
     # silently fail to match, leaving the ANSI codes in the count and wrapping
     # at the wrong place.
@@ -304,44 +304,44 @@ function Get-Largura($s) {
 
 # Claude Code sets COLUMNS to the terminal width before running this. Anything
 # missing or not a number means no wrapping, which is the old behaviour.
-$colunas = 0
-if ($env:COLUMNS -match '^[0-9]+$') { $colunas = [int]$env:COLUMNS }
+$columns = 0
+if ($env:COLUMNS -match '^[0-9]+$') { $columns = [int]$env:COLUMNS }
 
 $SEP = '  ' + [string][char]0x2502 + '  '
-$sepLargura = $SEP.Length
+$sepWidth = $SEP.Length
 
-# Segments are packed greedily into rows of at most $colunas, breaking only
+# Segments are packed greedily into rows of at most $columns, breaking only
 # *between* them, so a segment is never cut in half.
-$linhas = @()
-$linha = ''
-$linhaLargura = 0
+$lines = @()
+$line = ''
+$lineWidth = 0
 
-foreach ($nome in (Get-Ordem $ccsl).Split(',')) {
-    $parte = switch ($nome) {
+foreach ($name in (Get-Order $ccsl).Split(',')) {
+    $part = switch ($name) {
         'branch'  { $branchPart }
         'model'   { $modelPart }
         'ctx'     { $ctxPart }
-        '5h'      { $blocoPart }
-        'week'    { $semanaPart }
-        'session' { $custoPart }
+        '5h'      { $blockPart }
+        'week'    { $weekPart }
+        'session' { $costPart }
         'update'  { $updatePart }
         default   { '' }   # a name nobody recognises simply does not render
     }
-    if (-not $parte) { continue }
+    if (-not $part) { continue }
 
-    $parteLargura = Get-Largura $parte
-    if (-not $linha) {
-        $linha = $parte
-        $linhaLargura = $parteLargura
-    } elseif ($colunas -gt 0 -and ($linhaLargura + $sepLargura + $parteLargura) -gt $colunas) {
-        $linhas += $linha
-        $linha = $parte
-        $linhaLargura = $parteLargura
+    $partWidth = Get-Width $part
+    if (-not $line) {
+        $line = $part
+        $lineWidth = $partWidth
+    } elseif ($columns -gt 0 -and ($lineWidth + $sepWidth + $partWidth) -gt $columns) {
+        $lines += $line
+        $line = $part
+        $lineWidth = $partWidth
     } else {
-        $linha = $linha + $SEP + $parte
-        $linhaLargura = $linhaLargura + $sepLargura + $parteLargura
+        $line = $line + $SEP + $part
+        $lineWidth = $lineWidth + $sepWidth + $partWidth
     }
 }
-if ($linha) { $linhas += $linha }
+if ($line) { $lines += $line }
 
-[Console]::Out.Write(($linhas -join "`n"))
+[Console]::Out.Write(($lines -join "`n"))

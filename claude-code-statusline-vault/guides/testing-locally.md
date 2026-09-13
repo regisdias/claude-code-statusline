@@ -1,7 +1,7 @@
 ---
-tipo: guia
-data: 2026-09-12
-atualizado: 2026-09-13
+type: guide
+date: 2026-09-12
+updated: 2026-09-13
 ---
 
 # Testing without opening Claude Code
@@ -11,17 +11,17 @@ cases that matter are already in `scripts/payloads/`:
 
 | Payload | Covers |
 |---|---|
-| `verde.json` | the complete case, everything below 60% |
-| `amarelo.json` | the yellow band (60–85%) |
-| `vermelho.json` | the red band (above 85%) |
-| `sem-limites.json` | a plan with no quota, only the `ctx` bar |
-| `vazio.json` | `{}` → `Claude  waiting...` |
-| `invalido.json` | text that is not JSON → `Claude  waiting...` |
+| `green.json` | the complete case, everything below 60% |
+| `yellow.json` | the yellow band (60–85%) |
+| `red.json` | the red band (above 85%) |
+| `no-limits.json` | a plan with no quota, only the `ctx` bar |
+| `empty.json` | `{}` → `Claude  waiting...` |
+| `invalid.json` | text that is not JSON → `Claude  waiting...` |
 
-## The shortcut: `scripts/testar.sh`
+## The shortcut: `scripts/test.sh`
 
 ```bash
-bash scripts/testar.sh
+bash scripts/test.sh
 ```
 
 Runs **every** payload through both implementations, diffs the bytes and checks the `.ps1` still has its
@@ -31,29 +31,29 @@ runs.
 ## By hand, one payload at a time
 
 ```bash
-bash statusline-command.sh < scripts/payloads/verde.json
+bash statusline-command.sh < scripts/payloads/green.json
 ```
 
 On Windows:
 
 ```powershell
-Get-Content scripts\payloads\verde.json | powershell -NoProfile -File .\statusline-command.ps1
+Get-Content scripts\payloads\green.json | powershell -NoProfile -File .\statusline-command.ps1
 ```
 
 From WSL, using Windows' PowerShell — this is how the `.ps1` was validated without leaving Linux:
 
 ```bash
-cat scripts/payloads/verde.json | powershell.exe -NoProfile -ExecutionPolicy Bypass \
+cat scripts/payloads/green.json | powershell.exe -NoProfile -ExecutionPolicy Bypass \
   -File "$(wslpath -w statusline-command.ps1)"
 ```
 
 ## Comparing the two by hand
 
-When `testar.sh` reports a difference and you want to see where:
+When `test.sh` reports a difference and you want to see where:
 
 ```bash
-bash statusline-command.sh < scripts/payloads/verde.json > /tmp/sh.txt
-cat scripts/payloads/verde.json | powershell.exe -NoProfile -ExecutionPolicy Bypass \
+bash statusline-command.sh < scripts/payloads/green.json > /tmp/sh.txt
+cat scripts/payloads/green.json | powershell.exe -NoProfile -ExecutionPolicy Bypass \
   -File "$(wslpath -w statusline-command.ps1)" | tr -d '\r' > /tmp/ps.txt
 cmp /tmp/sh.txt /tmp/ps.txt && echo identical
 ```
@@ -73,7 +73,7 @@ thing.
 ## Seeing the ANSI codes
 
 ```bash
-bash statusline-command.sh < scripts/payloads/verde.json | cat -v
+bash statusline-command.sh < scripts/payloads/green.json | cat -v
 ```
 
 Useful when a colour does not close: `^[[0m` has to appear right after each bar.
@@ -81,8 +81,8 @@ Useful when a colour does not close: `^[[0m` has to appear right after each bar.
 ## Running the lint the way CI runs it
 
 ```bash
-shellcheck --severity=warning statusline-command.sh install.sh scripts/testar.sh \
-    scripts/testar-instalador.sh hooks/ccsl-update-check.sh
+shellcheck --severity=warning statusline-command.sh install.sh scripts/test.sh \
+    scripts/test-installer.sh hooks/ccsl-update-check.sh
 pwsh -c 'Invoke-ScriptAnalyzer -Path statusline-command.ps1 -Severity Error,Warning'
 ```
 
@@ -91,7 +91,7 @@ pwsh -c 'Invoke-ScriptAnalyzer -Path statusline-command.ps1 -Severity Error,Warn
 The installer has its own suite, kept apart because it needs the network:
 
 ```bash
-CCSL_BRANCH=your-branch bash scripts/testar-instalador.sh
+CCSL_BRANCH=your-branch bash scripts/test-installer.sh
 ```
 
 It installs into a throwaway `HOME`, so `~`, `$HOME` and the absolute path all name the same file —
@@ -107,4 +107,4 @@ CLAUDE_CONFIG_DIR=/tmp/teste-ccsl bash install.sh
 It downloads the script from GitHub, so that exercises the real path — including whether
 `raw.githubusercontent` already has the commit you just pushed.
 
-See also [[regenerar-imagens-do-readme]] and [[validar-no-macos]].
+See also [[regenerating-readme-images]] and [[validating-on-macos]].

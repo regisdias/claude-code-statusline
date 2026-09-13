@@ -1,6 +1,6 @@
 ---
-tipo: bug-fix
-data: 2026-09-12
+type: bug-fix
+date: 2026-09-12
 ---
 
 # BSD `seq` widened a full bar on macOS
@@ -53,10 +53,10 @@ bar disappears: three bars per render, so six fewer `seq`. The time dropped to ~
 ## How it was found
 
 By the CI `paridade` job running on `macos-latest`, on the first push after that job existed
-([[../decisoes/ci-em-push-e-pr]]). `vermelho.json` is the payload that takes the 5-hour block to 96% —
+([[../decisions/ci-on-push-and-pull-request]]). `red.json` is the payload that takes the 5-hour block to 96% —
 with `width` 10, the rounding gives `filled` 10 and `empty` 0, exactly the edge case.
 
-It is the practical answer to [[../pendentes/arquivo/2026-09-12-confirmar-no-macos]]: the BSD path did
+It is the practical answer to [[../pending/archive/2026-09-12-confirm-on-macos]]: the BSD path did
 have a problem, and it was not the `date -r` everyone suspected.
 
 ## Lesson

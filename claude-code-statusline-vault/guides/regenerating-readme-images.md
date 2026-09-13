@@ -1,17 +1,17 @@
 ---
-tipo: guia
-data: 2026-09-12
+type: guide
+date: 2026-09-12
 ---
 
 # Regenerating the README images
 
 The two README images (`assets/demo.svg` and `assets/demo-fallback.svg`) are **not drawn by hand**:
-`scripts/gerar-svg.py` runs `statusline-command.sh` against the payloads in `scripts/payloads/`,
+`scripts/generate-svg.py` runs `statusline-command.sh` against the payloads in `scripts/payloads/`,
 captures the real ANSI output and converts it to SVG. What appears in the README is what the script
 prints.
 
 ```bash
-python3 scripts/gerar-svg.py
+python3 scripts/generate-svg.py
 ```
 
 Commit the regenerated SVGs **in the same commit** as the format change.
@@ -32,14 +32,14 @@ midnight.
 ## What CI checks
 
 ```bash
-python3 scripts/gerar-svg.py --verificar
+python3 scripts/generate-svg.py --check
 ```
 
 It renders everything into a temporary directory — never writing to `assets/` — and compares against
 what is committed, **ignoring the reset clock and the `x` coordinates**. Without that normalisation the
 check would fail every midnight.
 
-Failed? That means the output format changed and the images fell behind. Run it without `--verificar`.
+Failed? That means the output format changed and the images fell behind. Run it without `--check`.
 
 ## Swapping for a real terminal screenshot
 
@@ -47,4 +47,4 @@ If it is ever worth it, replace the files in `assets/` and drop the `imagens` jo
 `.github/workflows/ci.yml`. As long as the images are generated, that job is what stops the README from
 advertising a bar the script no longer draws.
 
-See also [[testar-local]].
+See also [[testing-locally]].

@@ -1,6 +1,6 @@
 ---
-tipo: decisao
-data: 2026-09-13
+type: decision
+date: 2026-09-13
 ---
 
 # The order is the configuration
@@ -75,4 +75,4 @@ It reads from `/dev/tty` when there is one — which is what makes it work with 
 through `curl | bash`, where standard input is the script itself — and falls back to stdin when there is
 not, which as a side effect makes the whole thing scriptable and testable.
 
-See also [[aviso-de-atualizacao-opt-in]] and [[duas-implementacoes-shell-e-powershell]].
+See also [[opt-in-update-notice]] and [[two-implementations-shell-and-powershell]].

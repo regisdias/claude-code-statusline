@@ -1,6 +1,6 @@
 ---
-tipo: decisao
-data: 2026-09-12
+type: decision
+date: 2026-09-12
 ---
 
 # The branch comes from `.git/HEAD`, not from `git`
@@ -26,7 +26,7 @@ Every example in the official documentation solves it with `git branch --show-cu
 | `read -r line < .git/HEAD` | 2 ms (~0.1 ms each) | none |
 
 13x on Linux, and the gap widens considerably on Windows, where spawning a process is expensive. The
-project's target is ~50 ms per render — see [[duas-implementacoes-shell-e-powershell]].
+project's target is ~50 ms per render — see [[two-implementations-shell-and-powershell]].
 
 `.git/HEAD` is plain text:
 
@@ -51,6 +51,6 @@ exactly what the function exists to avoid.
 ## Test fixtures cannot be versioned
 
 Git **refuses to track a path containing `.git`**, so there is no committing a
-`scripts/payloads/fixture/.git/HEAD`. `scripts/testar.sh` builds the fixtures in a temporary directory
-at run time, and `scripts/gerar-svg.py` does the same so the README image stays deterministic —
+`scripts/payloads/fixture/.git/HEAD`. `scripts/test.sh` builds the fixtures in a temporary directory
+at run time, and `scripts/generate-svg.py` does the same so the README image stays deterministic —
 otherwise it would show whichever branch the person generating it happened to be on.

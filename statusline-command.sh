@@ -74,14 +74,14 @@ pick_color() {
 make_bar() {
     local pct=$1
     local width=${2:-10}
-    local filled empty cheio vazio
+    local filled empty full blank
     filled=$(echo "$pct $width" | awk '{printf "%d", ($1/100)*$2 + 0.5}')
     [ "$filled" -gt "$width" ] && filled=$width
     [ "$filled" -lt 0 ] && filled=0
     empty=$((width - filled))
-    cheio=$(printf "%${filled}s" "")
-    vazio=$(printf "%${empty}s" "")
-    printf "%s%s" "${cheio// /█}" "${vazio// /░}"
+    full=$(printf "%${filled}s" "")
+    blank=$(printf "%${empty}s" "")
+    printf "%s%s" "${full// /█}" "${blank// /░}"
 }
 
 # Current git branch, read straight from .git/HEAD.
@@ -95,20 +95,20 @@ make_bar() {
 # Sets BRANCH instead of printing: a command substitution would fork, which is the one
 # thing this function exists to avoid.
 BRANCH=""
-achar_branch() {
-    local dir=$1 marca head cabeca gitdir
+find_branch() {
+    local dir=$1 marker head head_line gitdir
     [ -n "$dir" ] && [ "$dir" != "-" ] || return
     while [ -n "$dir" ] && [ "$dir" != "/" ]; do
-        marca="$dir/.git"
+        marker="$dir/.git"
         head=""
-        if [ -d "$marca" ]; then
-            head="$marca/HEAD"
-        elif [ -f "$marca" ]; then
+        if [ -d "$marker" ]; then
+            head="$marker/HEAD"
+        elif [ -f "$marker" ]; then
             # Worktree or submodule: ".git" is a file holding "gitdir: <path>"
             # `read` returns non-zero on a file with no trailing newline but still
             # fills the variable, so check the content instead of the exit code —
             # PowerShell's ReadAllLines has no such quirk, and the two must agree.
-            read -r gitdir < "$marca"
+            read -r gitdir < "$marker"
             gitdir=${gitdir%$'\r'}
             [ -n "$gitdir" ] || return
             case $gitdir in
@@ -123,15 +123,15 @@ achar_branch() {
         fi
 
         [ -r "$head" ] || return
-        read -r cabeca < "$head"
-        cabeca=${cabeca%$'\r'}   # .git/HEAD written on Windows carries a CR
-        [ -n "$cabeca" ] || return
-        case $cabeca in
+        read -r head_line < "$head"
+        head_line=${head_line%$'\r'}   # .git/HEAD written on Windows carries a CR
+        [ -n "$head_line" ] || return
+        case $head_line in
             "ref: "*)
-                cabeca=${cabeca#ref: }
-                BRANCH=${cabeca#refs/heads/}
+                head_line=${head_line#ref: }
+                BRANCH=${head_line#refs/heads/}
                 ;;
-            *) BRANCH=${cabeca:0:7} ;;   # detached HEAD: short sha
+            *) BRANCH=${head_line:0:7} ;;   # detached HEAD: short sha
         esac
         return
     done
@@ -143,7 +143,7 @@ fmt_epoch() {
 }
 
 # Epoch → "06:20" when it is today, "18/09 05:00" otherwise
-hora_reset() {
+reset_time() {
     [ "$1" = "-" ] && return
     if [ "$(fmt_epoch "$1" %F)" = "$(date +%F)" ]; then
         fmt_epoch "$1" %H:%M
@@ -152,7 +152,7 @@ hora_reset() {
     fi
 }
 
-ORDEM_PADRAO="branch,model,ctx,5h,week,session,update"
+DEFAULT_ORDER="branch,model,ctx,5h,week,session,update"
 
 # One jq call reads both the payload (stdin) and settings.json (--slurpfile), so
 # the configuration costs no extra process on the render path.
@@ -165,7 +165,7 @@ ORDEM_PADRAO="branch,model,ctx,5h,week,session,update"
 # under LC_ALL=C: one column per code point, two outside the BMP, which is what
 # PowerShell's .Length gives. Control characters and backslashes are dropped: the
 # bar is printed with %b, and a config value must not be able to inject escapes.
-CONSULTA='[
+QUERY='[
     ($cfg[0].ccsl.order // [] | map(select(type == "string")) | join(",")
         | if . == "" then "branch,model,ctx,5h,week,session,update" else . end),
     (.model.display_name // "Claude"),
@@ -183,18 +183,18 @@ CONSULTA='[
         | "\(map(if . > 65535 then 2 else 1 end) | add // 0):\(implode)")
 ] | @tsv'
 
-settings_json="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
-[ -r "$settings_json" ] || settings_json=/dev/null
+settings_file="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json"
+[ -r "$settings_file" ] || settings_file=/dev/null
 
-lido=$(printf '%s' "$input" | jq -r --slurpfile cfg "$settings_json" "$CONSULTA" 2>/dev/null)
+read_fields=$(printf '%s' "$input" | jq -r --slurpfile cfg "$settings_file" "$QUERY" 2>/dev/null)
 # A settings.json someone broke by hand must not take the bar down with it:
 # retry without the file, which yields the default order.
-[ -n "$lido" ] || lido=$(printf '%s' "$input" | jq -r --slurpfile cfg /dev/null "$CONSULTA" 2>/dev/null)
+[ -n "$read_fields" ] || read_fields=$(printf '%s' "$input" | jq -r --slurpfile cfg /dev/null "$QUERY" 2>/dev/null)
 
-IFS=$'\t' read -r ordem modelo ctx_pct ctx_size ctx_usados bloco_pct bloco_reset semana_pct semana_reset custo dir_atual icone <<EOF
-$lido
+IFS=$'\t' read -r order model ctx_pct ctx_size ctx_used block_pct block_reset week_pct week_reset cost current_dir icone <<EOF
+$read_fields
 EOF
-[ -n "${ordem:-}" ] || ordem=$ORDEM_PADRAO
+[ -n "${order:-}" ] || order=$DEFAULT_ORDER
 case ${icone:-} in
     *:*) icone_largura=${icone%%:*}; icone=${icone#*:} ;;
     *)   icone_largura=3; icone=git ;;
@@ -203,16 +203,16 @@ esac
 # ---------------------------------------------------------------------------
 # Context window
 # ---------------------------------------------------------------------------
-model_part=${modelo:-Claude}
+model_part=${model:-Claude}
 
 if [ -z "$ctx_pct" ] || [ "$ctx_pct" = "-" ]; then
     # Nothing to draw yet: say so where the model name goes, and skip the rest
-    model_part=$(printf "%s  waiting..." "${modelo:-Claude}")
+    model_part=$(printf "%s  waiting..." "${model:-Claude}")
     ctx_part=""
 else
     ctx_int=$(echo "$ctx_pct" | awk '{printf "%.0f", $1}')
-    if [ "$ctx_usados" != "-" ] && [ "$ctx_size" != "-" ]; then
-        tokens=$(echo "$ctx_usados $ctx_size" | awk '{printf "%.0fk/%.0fk", $1/1000, $2/1000}')
+    if [ "$ctx_used" != "-" ] && [ "$ctx_size" != "-" ]; then
+        tokens=$(echo "$ctx_used $ctx_size" | awk '{printf "%.0fk/%.0fk", $1/1000, $2/1000}')
     else
         tokens="${ctx_int}%"
     fi
@@ -223,23 +223,23 @@ fi
 # ---------------------------------------------------------------------------
 # Plan limits: 5-hour block and week
 # ---------------------------------------------------------------------------
-bloco_part=""
-if [ "$bloco_pct" != "-" ] && [ -n "$bloco_pct" ]; then
-    reset=$(hora_reset "$bloco_reset")
-    bloco_part=$(printf "5h $(pick_color "$bloco_pct")[%s]${RESET} %.0f%%%s" \
-        "$(make_bar "$bloco_pct" 10)" "$bloco_pct" "${reset:+ · resets $reset}")
+block_part=""
+if [ "$block_pct" != "-" ] && [ -n "$block_pct" ]; then
+    reset=$(reset_time "$block_reset")
+    block_part=$(printf "5h $(pick_color "$block_pct")[%s]${RESET} %.0f%%%s" \
+        "$(make_bar "$block_pct" 10)" "$block_pct" "${reset:+ · resets $reset}")
 fi
 
-semana_part=""
-if [ "$semana_pct" != "-" ] && [ -n "$semana_pct" ]; then
-    reset=$(hora_reset "$semana_reset")
-    semana_part=$(printf "week $(pick_color "$semana_pct")[%s]${RESET} %.0f%%%s" \
-        "$(make_bar "$semana_pct" 10)" "$semana_pct" "${reset:+ · $reset}")
+week_part=""
+if [ "$week_pct" != "-" ] && [ -n "$week_pct" ]; then
+    reset=$(reset_time "$week_reset")
+    week_part=$(printf "week $(pick_color "$week_pct")[%s]${RESET} %.0f%%%s" \
+        "$(make_bar "$week_pct" 10)" "$week_pct" "${reset:+ · $reset}")
 fi
 
-custo_part=""
-if [ "$custo" != "-" ] && [ -n "$custo" ]; then
-    custo_part=$(echo "$custo" | awk '{if ($1 > 0) printf "session $%.2f", $1}')
+cost_part=""
+if [ "$cost" != "-" ] && [ -n "$cost" ]; then
+    cost_part=$(echo "$cost" | awk '{if ($1 > 0) printf "session $%.2f", $1}')
 fi
 
 # ---------------------------------------------------------------------------
@@ -251,8 +251,8 @@ fi
 #
 # Anything unexpected — no marker, no cache, a corrupt line, a version that is
 # not x.y.z — means no segment and no other change to the bar.
-NOVA_VERSAO=""
-aviso_update() {
+NEW_VERSION=""
+update_notice() {
     local base marcador cache ultima
     base=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
     marcador="$base/.ccsl-update-check"
@@ -266,21 +266,21 @@ aviso_update() {
     [ -n "${ultima:-}" ] || return
     [[ $ultima =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || return
 
-    versao_num "$ultima";       local nova=$VERSAO_NUM
-    versao_num "$CCSL_VERSION"; local atual=$VERSAO_NUM
-    [ "$nova" -gt "$atual" ] 2>/dev/null && NOVA_VERSAO=$ultima
+    version_num "$ultima";       local nova=$VERSION_NUM
+    version_num "$CCSL_VERSION"; local atual=$VERSION_NUM
+    [ "$nova" -gt "$atual" ] 2>/dev/null && NEW_VERSION=$ultima
     return 0
 }
 
 # "1.12.3" → 1012003, so a plain integer compare orders versions correctly.
 # Minor and patch are assumed below 1000, which they are.
-VERSAO_NUM=0
-versao_num() {
+VERSION_NUM=0
+version_num() {
     local v=$1 a b c
     a=${v%%.*}; v=${v#*.}
     b=${v%%.*}; v=${v#*.}
     c=${v%%.*}
-    VERSAO_NUM=$(( 10#$a * 1000000 + 10#$b * 1000 + 10#$c ))
+    VERSION_NUM=$(( 10#$a * 1000000 + 10#$b * 1000 + 10#$c ))
 }
 
 # Visible width of a string, in columns, regardless of locale.
@@ -295,78 +295,78 @@ versao_num() {
 shopt -s extglob
 icone_dobrado=$(printf "%${icone_largura}s" "")
 icone_dobrado=${icone_dobrado// /#}
-LARGURA=0
-largura() {
+WIDTH=0
+visible_width() {
     local s=${1//$'\033'\[*([0-9;])m/}
     s=${s//█/#}; s=${s//░/#}; s=${s//│/#}
     s=${s//↑/#}; s=${s//·/#}
     # Quoted: the icon is a literal, not a pattern. An ASCII icon folds to itself.
     [ -n "$icone" ] && s=${s//"$icone"/$icone_dobrado}
-    LARGURA=${#s}
+    WIDTH=${#s}
 }
 
 # ---------------------------------------------------------------------------
 # Emit the configured segments, separated by │
 # ---------------------------------------------------------------------------
-achar_branch "$dir_atual"
+find_branch "$current_dir"
 # A word, not a glyph: U+2387 read as the Option key on macOS, and the real git
 # icons need a Nerd Font. `branch_icon` is there for people who have one.
 branch_part=""
 [ -n "$BRANCH" ] && branch_part="${icone:+$icone }$BRANCH"
 
-aviso_update
+update_notice
 update_part=""
-[ -n "$NOVA_VERSAO" ] && update_part="↑$NOVA_VERSAO"
+[ -n "$NEW_VERSION" ] && update_part="↑$NEW_VERSION"
 
 # Claude Code sets COLUMNS to the terminal width before running this. Anything
 # missing or not a number means no wrapping, which is the old behaviour.
-colunas=0
+columns=0
 case ${COLUMNS:-} in
-    ''|*[!0-9]*) colunas=0 ;;
-    *)           colunas=$COLUMNS ;;
+    ''|*[!0-9]*) columns=0 ;;
+    *)           columns=$COLUMNS ;;
 esac
 
 SEP="  │  "
-largura "$SEP"; sep_largura=$LARGURA
+visible_width "$SEP"; sep_width=$WIDTH
 
 # `case` rather than an associative array: macOS still ships bash 3.2, which has none.
-# Segments are packed greedily into rows of at most $colunas, breaking only
+# Segments are packed greedily into rows of at most $columns, breaking only
 # *between* them, so a segment is never cut in half.
-saida=""
-linha=""
-linha_largura=0
+output=""
+line=""
+line_width=0
 IFS=','
-for nome in $ordem; do
-    case $nome in
-        branch)  parte=$branch_part ;;
-        model)   parte=$model_part ;;
-        ctx)     parte=$ctx_part ;;
-        5h)      parte=$bloco_part ;;
-        week)    parte=$semana_part ;;
-        session) parte=$custo_part ;;
-        update)  parte=$update_part ;;
-        *)       parte="" ;;   # a name nobody recognises simply does not render
+for name in $order; do
+    case $name in
+        branch)  part=$branch_part ;;
+        model)   part=$model_part ;;
+        ctx)     part=$ctx_part ;;
+        5h)      part=$block_part ;;
+        week)    part=$week_part ;;
+        session) part=$cost_part ;;
+        update)  part=$update_part ;;
+        *)       part="" ;;   # a name nobody recognises simply does not render
     esac
-    [ -n "$parte" ] || continue
+    [ -n "$part" ] || continue
 
-    largura "$parte"; parte_largura=$LARGURA
+    visible_width "$part"; part_width=$WIDTH
 
-    if [ -z "$linha" ]; then
-        linha=$parte
-        linha_largura=$parte_largura
-    elif [ "$colunas" -gt 0 ] \
-        && [ $((linha_largura + sep_largura + parte_largura)) -gt "$colunas" ]; then
-        saida="${saida:+$saida
-}$linha"
-        linha=$parte
-        linha_largura=$parte_largura
+    if [ -z "$line" ]; then
+        line=$part
+        line_width=$part_width
+    elif [ "$columns" -gt 0 ] \
+        && [ $((line_width + sep_width + part_width)) -gt "$columns" ]; then
+        output="${output:+$output
+}$line"
+        line=$part
+        line_width=$part_width
     else
-        linha="$linha$SEP$parte"
-        linha_largura=$((linha_largura + sep_largura + parte_largura))
+        line="$line$SEP$part"
+        line_width=$((line_width + sep_width + part_width))
     fi
 done
 unset IFS
-[ -n "$linha" ] && saida="${saida:+$saida
-}$linha"
+[ -n "$line" ] && output="${output:+$output
+}$line"
 
-printf "%b" "$saida"
+printf "%b" "$output"

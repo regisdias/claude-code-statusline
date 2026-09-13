@@ -271,18 +271,18 @@ No `~/.claude/settings.json`:
 Jogue qualquer payload de [`scripts/payloads/`](scripts/payloads) na entrada:
 
 ```bash
-bash statusline-command.sh < scripts/payloads/verde.json       # verde
-bash statusline-command.sh < scripts/payloads/vermelho.json    # vermelho
+bash statusline-command.sh < scripts/payloads/green.json       # verde
+bash statusline-command.sh < scripts/payloads/red.json    # vermelho
 ```
 
 ```powershell
-Get-Content scripts\payloads\verde.json | powershell -NoProfile -File .\statusline-command.ps1
+Get-Content scripts\payloads\green.json | powershell -NoProfile -File .\statusline-command.ps1
 ```
 
 Para conferir se as duas implementações continuam batendo, e se o `.ps1` manteve o BOM:
 
 ```bash
-bash scripts/testar.sh
+bash scripts/test.sh
 ```
 
 ## Se algo não aparecer

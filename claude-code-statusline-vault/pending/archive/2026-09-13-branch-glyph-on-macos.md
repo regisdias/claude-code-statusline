@@ -1,17 +1,17 @@
 ---
-tipo: pendente
-status: resolvido
-data: 2026-09-13
-codigo: CCS-4
+type: pending
+status: resolved
+date: 2026-09-13
+code: CCS-4
 ---
 
 # `⎇` does not read as git on macOS
 
 **Resolved on 2026-09-13: a text label with a configurable icon** (#35). The bar shows `git main`, and
 `ccsl.branch_icon` swaps the word for an icon. The reasoning is in
-[[../../decisoes/rotulo-da-branch-em-texto]].
+[[../../decisions/branch-label-as-text]].
 
-Came out of [[2026-09-12-confirmar-no-macos|CCS-1]], by the path [[../../guias/validar-no-macos]]
+Came out of [[2026-09-12-confirm-on-macos|CCS-1]], by the path [[../../guides/validating-on-macos]]
 anticipates: "only the glyph comes out wrong".
 
 ## What was seen
@@ -36,7 +36,7 @@ symbol people recognise.
 | Another Unicode character (`⑂` U+2442) | `⑂ main` | suggests a fork | worse font coverage than `⎇`; needs another round on Mac and Windows |
 | Configurable | `ccsl.branch_icon` | everyone picks | one more key, and the default still has to be decided |
 
-Any change lands in both implementations, regenerates `assets/`, and touches `testar.sh` (which strips
+Any change lands in both implementations, regenerates `assets/`, and touches `test.sh` (which strips
 the `⎇ ` prefix in section 3) and the `--configure` menu.
 
 ## How it was resolved

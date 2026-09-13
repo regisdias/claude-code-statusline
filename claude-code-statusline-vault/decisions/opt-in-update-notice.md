@@ -1,6 +1,6 @@
 ---
-tipo: decisao
-data: 2026-09-12
+type: decision
+date: 2026-09-12
 ---
 
 # The update notice is opt-in, and lives outside the bar
@@ -57,4 +57,4 @@ reliably the person's shell. A file is deterministic and behaves identically in 
 **`CCSL_VERSION` in both implementations**, bumped together with the `CHANGELOG` stamp. A CI job fails
 if the three disagree — otherwise the notice lies about what is installed.
 
-See also [[branch-vem-do-git-head]] and [[duas-implementacoes-shell-e-powershell]].
+See also [[branch-from-git-head]] and [[two-implementations-shell-and-powershell]].

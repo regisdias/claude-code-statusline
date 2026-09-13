@@ -1,7 +1,7 @@
 ---
-tipo: decisao
-data: 2026-09-12
-atualizado: 2026-09-13
+type: decision
+date: 2026-09-12
+updated: 2026-09-13
 ---
 
 # English at the front door, and the community file set
@@ -31,7 +31,7 @@ payload that reproduces it, and whether the `.ps1` kept its BOM.
 
 `semana`, `sessão` and `reseta` became `week`, `session` and `resets` shortly after — the bar is the
 first thing a person sees, and three Portuguese words in the middle of it read as a bug. The story is in
-[[../pendentes/arquivo/2026-09-12-rotulos-da-barra-em-portugues]].
+[[../pending/archive/2026-09-12-bar-labels-in-portuguese]].
 
 ## The rule is by category: English everywhere except `README.pt-BR.md`
 
@@ -49,9 +49,9 @@ first thing a person sees, and three Portuguese words in the middle of it read a
 | What the test scripts print | English |
 | `README.pt-BR.md` | Portuguese — the only one |
 
-Two structural exceptions, which are not editorial: **vault folder names** (`decisoes/`, `pendentes/`,
-`guias/`…) and the **frontmatter values** the maintainer's cross-project vault tooling greps for
-(`tipo: pendente`, `status: aberto|fazendo|resolvido`). Renaming those would break tooling outside this
+Two structural exceptions, which are not editorial: **vault folder names** (`decisions/`, `pending/`,
+`guides/`…) and the **frontmatter values** the maintainer's cross-project vault tooling greps for
+(`type: pending`, `status: open|fazendo|resolvido`). Renaming those would break tooling outside this
 repository for no reader benefit. Everything a person reads inside the files is English.
 
 ## It took two tries to state the rule correctly

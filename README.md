@@ -268,18 +268,18 @@ In `~/.claude/settings.json`:
 Feed it any of the payloads in [`scripts/payloads/`](scripts/payloads):
 
 ```bash
-bash statusline-command.sh < scripts/payloads/verde.json       # green
-bash statusline-command.sh < scripts/payloads/vermelho.json    # red
+bash statusline-command.sh < scripts/payloads/green.json       # green
+bash statusline-command.sh < scripts/payloads/red.json    # red
 ```
 
 ```powershell
-Get-Content scripts\payloads\verde.json | powershell -NoProfile -File .\statusline-command.ps1
+Get-Content scripts\payloads\green.json | powershell -NoProfile -File .\statusline-command.ps1
 ```
 
 To check both implementations still agree, and that the `.ps1` kept its BOM:
 
 ```bash
-bash scripts/testar.sh
+bash scripts/test.sh
 ```
 
 ## Troubleshooting
